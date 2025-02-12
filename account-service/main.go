@@ -1,38 +1,12 @@
 package main
 
 import (
-	"net/http"
-	"github.com/gin-gonic/gin"
-	"account-service/utils"
+    "github.com/gin-gonic/gin"
+    "account-service/utils"
+    "account-service/routers"
 )
 
-type album struct {
-    ID     string  `json:"id"`
-    Title  string  `json:"title"`
-    Artist string  `json:"artist"`
-    Price  float64 `json:"price"`
-}
-
-var albums = []album{
-    {ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-    {ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-    {ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
-}
-
-func getAlbums(c *gin.Context) {
-    c.IndentedJSON(http.StatusOK, albums)
-}
-
-func getRoot(c *gin.Context) {
-    c.String(http.StatusOK, "Welcome to the Home Page!")
-}
-
-func getHello(c *gin.Context) {
-    c.String(http.StatusOK, "Hello, World!")
-}
-
 func main() {
-
     router := gin.New()
     logger, err := utils.NewLogger()
     if err != nil {
@@ -40,14 +14,18 @@ func main() {
     }
     logger.Info("Starting the application...")
 
-	serviceAPI := router.Group("/api/account-service") // base path
+    // router group with base path for each services (to identify the service)
+    serviceAPI := router.Group("/api/account-service")
     {
-        serviceAPI.GET("/", getRoot)
-        serviceAPI.GET("/albums", getAlbums)
-        serviceAPI.GET("/hello", getHello)
+        // Use the group for your routes
+        routers.AccountRouter(serviceAPI)
     }
+    
+    routers.InitializeSwagger(router)
 
-    if err := router.Run("localhost:8081"); err != nil {
-        logger.Fatal("Failed to start server: %v", err)
+    logger.Info("Server running on http://localhost:8082")
+
+    if err := router.Run("localhost:8082"); err != nil {
+        logger.Error("Failed to start server: %v", err)
     }
 }
