@@ -1,56 +1,31 @@
 definitions:
-  controller.CreateAlbumRequest:
+  service.Account:
     properties:
-      artist:
+      account_number:
         type: string
-      price:
+      account_type:
+        type: string
+      address:
+        type: string
+      balance:
         type: number
-      title:
+      email:
         type: string
-    required:
-    - artist
-    - price
-    - title
-    type: object
-  controller.HelloRequest:
-    properties:
-      message:
+      full_name:
         type: string
-      name:
+      has_card:
+        type: boolean
+      password:
         type: string
-    required:
-    - name
-    type: object
-  controller.album:
-    properties:
-      artist:
-        type: string
-      id:
-        type: string
-      price:
-        type: number
-      title:
+      phone_number:
         type: string
     type: object
 info:
   contact: {}
 paths:
-  /:
+  /accounts:
     get:
-      description: Welcome message for root endpoint
-      produces:
-      - text/plain
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-      summary: Get root endpoint
-      tags:
-      - root
-  /albums:
-    get:
-      description: Get a list of all albums
+      description: Fetch all accounts
       produces:
       - application/json
       responses:
@@ -58,85 +33,37 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.album'
+              $ref: '#/definitions/service.Account'
             type: array
-      summary: Get all albums
+      summary: Get accounts
       tags:
-      - albums
+      - accounts
+  /register-acc:
     post:
       consumes:
       - application/json
-      description: Add a new album to the collection
+      description: Create a new account
       parameters:
-      - description: Album to create
+      - description: Account data
         in: body
-        name: album
+        name: request
         required: true
         schema:
-          $ref: '#/definitions/controller.CreateAlbumRequest'
+          $ref: '#/definitions/service.Account'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.album'
+            $ref: '#/definitions/service.Account'
         "400":
           description: Bad Request
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Create new album
+      summary: Register an account
       tags:
-      - albums
-  /albums/{id}:
-    get:
-      description: Get a single album by its ID
-      parameters:
-      - description: Album ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/controller.album'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Get album by ID
-      tags:
-      - albums
-  /hello:
-    post:
-      consumes:
-      - application/json
-      description: Post hello message with custom payload
-      parameters:
-      - description: Hello request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/controller.HelloRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Post hello endpoint
-      tags:
-      - hello
+      - accounts
 swagger: "2.0"

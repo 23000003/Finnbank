@@ -1,144 +1,110 @@
 package service
 
-// Comments with "@" are for Swagger, if samokan mo tanawn e erase lng and just use <<postman>> lng
-// run ==swag init== if namoy bag o service ge add for the routers
-// https://github.com/swaggo/swag for api operiations ( " @ " )
-
 import (
+	"encoding/json"
+	"log"
 	"net/http"
+	"os"
+
 	"github.com/gin-gonic/gin"
-	"fmt"
+	"github.com/joho/godotenv"
+	"github.com/supabase-community/supabase-go"
 )
 
-// types => for data validation
-type album struct {
-    ID     string  `json:"id"`
-    Title  string  `json:"title"`
-    Artist string  `json:"artist"`
-    Price  float64 `json:"price"`
+type AccountService struct {
+	Client *supabase.Client
 }
 
-type AccountService struct {}
-
-type HelloRequest struct {
-    Name    string `json:"name" binding:"required"`
-    Message string `json:"message"`
+type Account struct {
+	Email         string  `json:"email"`
+	Full_Name     string  `json:"full_name"`
+	Phone         string  `json:"phone_number"`
+	Password      string  `json:"password"`
+	HasCard       bool    `json:"has_card"`
+	AccountNumber string  `json:"account_number"`
+	Address       string  `json:"address"`
+	Balance       float64 `json:"balance"`
+	AccountType   string  `json:"account_type"`
 }
 
-type CreateAlbumRequest struct {
-    Title  string  `json:"title" binding:"required"`
-    Artist string  `json:"artist" binding:"required"`
-    Price  float64 `json:"price" binding:"required"`
+func SupabaseInit() *supabase.Client {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Missing env files")
+	}
+	url := os.Getenv("DB_URL")
+	key := os.Getenv("DB_KEY")
+
+	if url == "" || key == "" {
+		log.Fatalf("Supabase URL and Keys missing")
+	}
+	client, err := supabase.NewClient(url, key, &supabase.ClientOptions{})
+	if err != nil {
+		log.Fatalf("Failed to initialize Supabase client: %v", err)
+	}
+
+	return client
 }
 
-var albums = []album{
-    {ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-    {ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-    {ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
-}
-
-
-// @Summary Get root endpoint
-// @Description Welcome message for root endpoint
-// @Tags root
-// @Produce plain
-// @Success 200 {string} string
-// @Router / [get]
-func (c *AccountService) GetRoot(ctx *gin.Context) {
-	ctx.String(http.StatusOK, "Welcome to the Home Page!")
-}
-
-// @Summary Get all albums
-// @Description Get a list of all albums
-// @Tags albums
+// @Summary Get accounts
+// @Description Fetch all accounts
+// @Tags accounts
 // @Produce json
-// @Success 200 {array} album
-// @Router /albums [get]
-func (c *AccountService) GetAlbums(ctx *gin.Context) {
-	ctx.IndentedJSON(http.StatusOK, albums)
+// @Success 200 {array} Account
+// @Router /accounts [get]
+func (s *AccountService) GetAccounts(c *gin.Context) {
+	data, count, err := s.Client.From("account").Select("*", "exact", false).Execute()
+	if err != nil  || count == 0{
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch accounts"})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, data)
 }
 
-// @Summary Get album by ID
-// @Description Get a single album by its ID
-// @Tags albums
-// @Produce json
-// @Param id path string true "Album ID"
-// @Success 200 {object} album
-// @Failure 404 {object} map[string]string
-// @Router /albums/{id} [get]
-func (c *AccountService) GetAlbumsById(ctx *gin.Context) { // Dynamic through Params
-    id := ctx.Param("id")
-
-    // Loop through albums looking for matching id
-    for _, a := range albums {
-        if a.ID == id {
-            ctx.JSON(http.StatusOK, a)
-            return
-        }
-    }
-
-    ctx.JSON(http.StatusNotFound, gin.H{"message": "album not found"})
-}
-
-// @Summary Post hello endpoint
-// @Description Post hello message with custom payload
-// @Tags hello
+// @Summary Register an account
+// @Description Create a new account
+// @Tags accounts
 // @Accept json
 // @Produce json
-// @Param request body HelloRequest true "Hello request"
-// @Success 200 {object} map[string]string
-// @Router /hello [post]
-func (c *AccountService) PostHello(ctx *gin.Context) {
-
-    // Get headers
-    // userAgent := ctx.GetHeader("authorization")
-
-    // parse request body and handle validation
-    var request HelloRequest
-    if err := ctx.ShouldBindJSON(&request); err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-
-    // return response via body
-    ctx.JSON(http.StatusOK, gin.H{
-        "message": fmt.Sprintf("Hello, %s!", request.Name),
-        "yourMessage": request.Message,
-    })
-}
-
-// @Summary Create new album
-// @Description Add a new album to the collection
-// @Tags albums
-// @Accept json
-// @Produce json
-// @Param album body CreateAlbumRequest true "Album to create"
-// @Success 201 {object} album
+// @Param request body Account true "Account data"
+// @Success 201 {object} Account
 // @Failure 400 {object} map[string]string
-// @Router /albums [post]
-func (c *AccountService) CreateAlbum(ctx *gin.Context) {
-    var newAlbum CreateAlbumRequest
+// @Router /register-acc [post]
+func (s *AccountService) AddAccount(c *gin.Context) {
+	var newAcc Account
+	if err := c.ShouldBindJSON(&newAcc); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON request", "details": err.Error()})
+		return
+	}
+	if !dataCheck(newAcc) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Missing data"})
+		return
+	}
+	response, count, err := s.Client.From("account").Insert(newAcc, false, "", "", "exact").Execute()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    // parse request body and handle validation
-    if err := ctx.ShouldBindJSON(&newAlbum); err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{
-            "error": "Invalid request format",
-            "details": err.Error(),
-        })
-        return
-    }
+	if count == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No account was inserted"})
+		return
+	}
+	var insertedAcc []Account
+	err = json.Unmarshal(response, &insertedAcc)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response " + err.Error()})
+		return
+	}
 
-    // create new album with generated ID
-    album := album{
-        ID:     fmt.Sprintf("%d", len(albums) + 1),
-        Title:  newAlbum.Title,
-        Artist: newAlbum.Artist,
-        Price:  newAlbum.Price,
-    }
+	c.JSON(http.StatusOK, gin.H{"message": "Account created successfully", "account": insertedAcc})
+}
 
-    // add to albums slice
-    albums = append(albums, album)
-
-    // return created album
-    ctx.JSON(http.StatusCreated, album)
+func dataCheck(account Account) bool {
+	return account.Email != "" &&
+		account.Full_Name != "" &&
+		account.Phone != "" &&
+		account.Password != "" &&
+		account.AccountNumber != "" &&
+		account.AccountType != ""
 }

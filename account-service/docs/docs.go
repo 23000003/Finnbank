@@ -15,50 +15,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/": {
+        "/accounts": {
             "get": {
-                "description": "Welcome message for root endpoint",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "root"
-                ],
-                "summary": "Get root endpoint",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/albums": {
-            "get": {
-                "description": "Get a list of all albums",
+                "description": "Fetch all accounts",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "albums"
+                    "accounts"
                 ],
-                "summary": "Get all albums",
+                "summary": "Get accounts",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.album"
+                                "$ref": "#/definitions/service.Account"
                             }
                         }
                     }
                 }
-            },
+            }
+        },
+        "/register-acc": {
             "post": {
-                "description": "Add a new album to the collection",
+                "description": "Create a new account",
                 "consumes": [
                     "application/json"
                 ],
@@ -66,17 +48,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "albums"
+                    "accounts"
                 ],
-                "summary": "Create new album",
+                "summary": "Register an account",
                 "parameters": [
                     {
-                        "description": "Album to create",
-                        "name": "album",
+                        "description": "Account data",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.CreateAlbumRequest"
+                            "$ref": "#/definitions/service.Account"
                         }
                     }
                 ],
@@ -84,7 +66,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.album"
+                            "$ref": "#/definitions/service.Account"
                         }
                     },
                     "400": {
@@ -98,130 +80,37 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/albums/{id}": {
-            "get": {
-                "description": "Get a single album by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "albums"
-                ],
-                "summary": "Get album by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Album ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controller.album"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/hello": {
-            "post": {
-                "description": "Post hello message with custom payload",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "hello"
-                ],
-                "summary": "Post hello endpoint",
-                "parameters": [
-                    {
-                        "description": "Hello request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.HelloRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "controller.CreateAlbumRequest": {
+        "service.Account": {
             "type": "object",
-            "required": [
-                "artist",
-                "price",
-                "title"
-            ],
             "properties": {
-                "artist": {
+                "account_number": {
                     "type": "string"
                 },
-                "price": {
+                "account_type": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "balance": {
                     "type": "number"
                 },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.HelloRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "message": {
+                "email": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.album": {
-            "type": "object",
-            "properties": {
-                "artist": {
+                "full_name": {
                     "type": "string"
                 },
-                "id": {
+                "has_card": {
+                    "type": "boolean"
+                },
+                "password": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "number"
-                },
-                "title": {
+                "phone_number": {
                     "type": "string"
                 }
             }
