@@ -1,4 +1,4 @@
-module statement-service
+module bankcard-service
 
 go 1.23.6
 
