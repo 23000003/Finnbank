@@ -2,8 +2,8 @@ package main
 
 import (
     "github.com/gin-gonic/gin"
-    "gateway/utils"
-    "gateway/routers"
+    "bankcard-service/utils"
+    "bankcard-service/routers"
 )
 
 func main() {
@@ -15,17 +15,17 @@ func main() {
     logger.Info("Starting the application...")
 
     // router group with base path for each services (to identify the service)
-    serviceAPI := router.Group("/api")
+    serviceAPI := router.Group("/api/bankcard-service")
     {
         // Use the group for your routes
-        routers.GatewayRouter(serviceAPI)
+        routers.BankcardRouter(serviceAPI)
     }
     
     routers.InitializeSwagger(router)
 
-    logger.Info("Server running on http://localhost:8080")
+    logger.Info("Server running on http://localhost:8081")
 
-    if err := router.Run("localhost:8080"); err != nil {
+    if err := router.Run("localhost:8081"); err != nil {
         logger.Error("Failed to start server: %v", err)
     }
 }

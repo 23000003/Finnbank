@@ -1,0 +1,142 @@
+definitions:
+  controller.CreateAlbumRequest:
+    properties:
+      artist:
+        type: string
+      price:
+        type: number
+      title:
+        type: string
+    required:
+    - artist
+    - price
+    - title
+    type: object
+  controller.HelloRequest:
+    properties:
+      message:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  controller.album:
+    properties:
+      artist:
+        type: string
+      id:
+        type: string
+      price:
+        type: number
+      title:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    get:
+      description: Welcome message for root endpoint
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get root endpoint
+      tags:
+      - root
+  /albums:
+    get:
+      description: Get a list of all albums
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.album'
+            type: array
+      summary: Get all albums
+      tags:
+      - albums
+    post:
+      consumes:
+      - application/json
+      description: Add a new album to the collection
+      parameters:
+      - description: Album to create
+        in: body
+        name: album
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateAlbumRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.album'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create new album
+      tags:
+      - albums
+  /albums/{id}:
+    get:
+      description: Get a single album by its ID
+      parameters:
+      - description: Album ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.album'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get album by ID
+      tags:
+      - albums
+  /hello:
+    post:
+      consumes:
+      - application/json
+      description: Post hello message with custom payload
+      parameters:
+      - description: Hello request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.HelloRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Post hello endpoint
+      tags:
+      - hello
+swagger: "2.0"

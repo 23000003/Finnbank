@@ -1,4 +1,4 @@
-module statement-service
+module graphql-service
 
 go 1.23.6
 
