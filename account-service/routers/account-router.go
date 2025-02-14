@@ -8,5 +8,8 @@ import (
 
 func AccountRouter(r *gin.RouterGroup, accountService *service.AccountService) {
 	r.GET("/accounts", accountService.GetAccounts)
-	r.POST("/register-acc", accountService.AddAccount)
+	r.GET("/fetch-acc/:acc_num", accountService.GetAccoutById)
+	r.POST("/register", accountService.AddAccount)
+	r.PATCH("/update_acc/:acc_num", accountService.UpdateHasCard)
+
 }

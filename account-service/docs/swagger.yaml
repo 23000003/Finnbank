@@ -38,7 +38,44 @@ paths:
       summary: Get accounts
       tags:
       - accounts
-  /register-acc:
+  /fetch-acc/{acc_num}:
+    get:
+      description: Fetch an account using the account number
+      parameters:
+      - description: Account Number
+        in: path
+        name: acc_num
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.Account'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Account not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get an account by ID
+      tags:
+      - accounts
+  /registers:
     post:
       consumes:
       - application/json
@@ -64,6 +101,48 @@ paths:
               type: string
             type: object
       summary: Register an account
+      tags:
+      - accounts
+  /update_acc/{acc_num}:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the has_card attribute of an account using account_number
+      parameters:
+      - description: Account Number
+        in: path
+        name: account_number
+        required: true
+        type: string
+      - description: Updated has_card value
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account updated OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update HasCard field
       tags:
       - accounts
 swagger: "2.0"
