@@ -1,14 +1,10 @@
 definitions:
   service.Account:
     properties:
-      account_number:
-        type: string
       account_type:
         type: string
       address:
         type: string
-      balance:
-        type: number
       email:
         type: string
       full_name:
@@ -38,6 +34,48 @@ paths:
       summary: Get accounts
       tags:
       - accounts
+  /delete-user/{email}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a user from the "account" table and removes them from Supabase
+        Auth.
+      parameters:
+      - description: User Email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a user
+      tags:
+      - Users
   /fetch-acc/{acc_num}:
     get:
       description: Fetch an account using the account number

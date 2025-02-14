@@ -38,6 +38,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/delete-user/{email}": {
+            "delete": {
+                "description": "Deletes a user from the \"account\" table and removes them from Supabase Auth.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted user",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/fetch-acc/{acc_num}": {
             "get": {
                 "description": "Fetch an account using the account number",
@@ -154,7 +216,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Account Number",
-                        "name": "account_number",
+                        "name": "acc_num",
                         "in": "path",
                         "required": true
                     },
@@ -205,17 +267,11 @@ const docTemplate = `{
         "service.Account": {
             "type": "object",
             "properties": {
-                "account_number": {
-                    "type": "string"
-                },
                 "account_type": {
                     "type": "string"
                 },
                 "address": {
                     "type": "string"
-                },
-                "balance": {
-                    "type": "number"
                 },
                 "email": {
                     "type": "string"

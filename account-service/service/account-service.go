@@ -1,12 +1,14 @@
 package service
 
 import (
+	"account-service/middleware"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -22,35 +24,31 @@ type AccountService struct {
 }
 
 type Account struct {
-	Email     string `json:"email"`
-	Full_Name string `json:"full_name"`
-	Phone     string `json:"phone_number"`
-	Password  string `json:"password"`
-	HasCard   bool   `json:"has_card"`
-	// AccountNumber string  `json:"account_number"`
-	Address string `json:"address"`
-	// Balance       float64 `json:"balance"`
+	Email       string `json:"email"`
+	Full_Name   string `json:"full_name"`
+	Phone       string `json:"phone_number"`
+	Password    string `json:"password"`
+	Address     string `json:"address"`
 	AccountType string `json:"account_type"`
 }
 
 func SupabaseInit() (*supabase.Client, auth.Client) {
 	// var local_url string = "LOCAL_DB_URL"
 	// var local_key string = "LOCAL_DB_KEY"
+	var super_key string = "SERVICE_ROLE_KEY"
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Missing env files")
 	}
 	url := os.Getenv("DB_URL")
-	key := os.Getenv("DB_KEY")
+	key := os.Getenv(super_key)
 	auth_url := os.Getenv("AUTH_DB_URL")
 	if url == "" || key == "" || auth_url == "" {
 		log.Fatalf("Supabase URL and Keys missing")
 	}
 	client, err := supabase.NewClient(url, key, &supabase.ClientOptions{})
 	authClient := auth.New(auth_url, key)
-	fmt.Println("Supabase URL:", url)
-	fmt.Println("Auth Client URL:", auth_url)
-
+	fmt.Print(key)
 	if err != nil {
 		log.Fatalf("Failed to initialize Supabase client: %v", err)
 	}
@@ -103,7 +101,6 @@ func (s *AccountService) GetAccoutById(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse data", "details": err.Error()})
 	}
 	c.IndentedJSON(http.StatusOK, accGot[0])
-
 }
 
 // @Summary Update HasCard field
@@ -121,6 +118,11 @@ func (s *AccountService) UpdateHasCard(c *gin.Context) {
 	accountNum := c.Param("acc_num")
 	var updateData map[string]interface{}
 
+	if s.Client == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database client not initialized"})
+		return
+	}
+
 	if err := c.ShouldBindJSON(&updateData); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid Server Request " + err.Error()})
 		return
@@ -134,11 +136,54 @@ func (s *AccountService) UpdateHasCard(c *gin.Context) {
 		return
 	}
 	if count == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not find account "})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Could not find account "})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Account Updated Succesfully", "response": response})
+
+}
+
+// @Summary Delete a user
+// @Description Deletes a user from the "account" table and removes them from Supabase Auth.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param email path string true "User Email"
+// @Success 200 {object} map[string]string "Successfully deleted user"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 404 {object} map[string]string "User not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /delete-user/{email} [delete]
+func (s *AccountService) DeleteUser(c *gin.Context) {
+	encodedEmail := c.Param("email")
+
+	email, err := url.QueryUnescape(encodedEmail)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		return
+	}
+	uuid, err := middleware.GetUserUUIDByEmail(email)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	res, _, err := s.Client.From("account").
+		Delete("", "exact").
+		Eq("email", email).
+		Execute()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed Deleting Account: " + err.Error()})
+		return
+	}
+	err = middleware.DeleteUserByUUID(uuid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Deleted User successfully: ", "response": string(res)})
 
 }
 
