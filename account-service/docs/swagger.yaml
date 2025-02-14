@@ -75,7 +75,7 @@ paths:
       summary: Get an account by ID
       tags:
       - accounts
-  /registers:
+  /register:
     post:
       consumes:
       - application/json

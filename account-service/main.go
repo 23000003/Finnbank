@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	client := service.SupabaseInit()
-	accountService := &service.AccountService{Client: client}
+	client, auth := service.SupabaseInit()
+	accountService := &service.AccountService{Client: client, Auth: auth}
 
 	router := gin.New()
 	logger, err := utils.NewLogger()

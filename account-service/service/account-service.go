@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"net/http"
@@ -10,42 +11,51 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/supabase-community/auth-go"
+	"github.com/supabase-community/auth-go/types"
 	"github.com/supabase-community/supabase-go"
 )
 
 type AccountService struct {
 	Client *supabase.Client
+	Auth   auth.Client
 }
 
 type Account struct {
-	Email         string  `json:"email"`
-	Full_Name     string  `json:"full_name"`
-	Phone         string  `json:"phone_number"`
-	Password      string  `json:"password"`
-	HasCard       bool    `json:"has_card"`
-	AccountNumber string  `json:"account_number"`
-	Address       string  `json:"address"`
-	Balance       float64 `json:"balance"`
-	AccountType   string  `json:"account_type"`
+	Email     string `json:"email"`
+	Full_Name string `json:"full_name"`
+	Phone     string `json:"phone_number"`
+	Password  string `json:"password"`
+	HasCard   bool   `json:"has_card"`
+	// AccountNumber string  `json:"account_number"`
+	Address string `json:"address"`
+	// Balance       float64 `json:"balance"`
+	AccountType string `json:"account_type"`
 }
 
-func SupabaseInit() *supabase.Client {
+func SupabaseInit() (*supabase.Client, auth.Client) {
+	// var local_url string = "LOCAL_DB_URL"
+	// var local_key string = "LOCAL_DB_KEY"
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Missing env files")
 	}
 	url := os.Getenv("DB_URL")
 	key := os.Getenv("DB_KEY")
-
-	if url == "" || key == "" {
+	auth_url := os.Getenv("AUTH_DB_URL")
+	if url == "" || key == "" || auth_url == "" {
 		log.Fatalf("Supabase URL and Keys missing")
 	}
 	client, err := supabase.NewClient(url, key, &supabase.ClientOptions{})
+	authClient := auth.New(auth_url, key)
+	fmt.Println("Supabase URL:", url)
+	fmt.Println("Auth Client URL:", auth_url)
+
 	if err != nil {
 		log.Fatalf("Failed to initialize Supabase client: %v", err)
 	}
 
-	return client
+	return client, authClient
 }
 
 // @Summary Get accounts
@@ -140,7 +150,7 @@ func (s *AccountService) UpdateHasCard(c *gin.Context) {
 // @Param request body Account true "Account data"
 // @Success 201 {object} Account
 // @Failure 400 {object} map[string]string
-// @Router /registers [post]
+// @Router /register [post]
 func (s *AccountService) AddAccount(c *gin.Context) {
 	var newAcc Account
 	if err := c.ShouldBindJSON(&newAcc); err != nil {
@@ -156,12 +166,31 @@ func (s *AccountService) AddAccount(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate account number"})
 	}
 
-	newAcc.AccountNumber = accNum
-	newAcc.Balance = 0.00
-	newAcc.HasCard = false
+	authRes, err := s.Auth.Signup(types.SignupRequest{
+		Email:    newAcc.Email,
+		Password: newAcc.Password,
+		Data: map[string]interface{}{
+			"account_number": accNum,
+			"phone":          newAcc.Phone,
+		},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user in Auth: " + err.Error()})
+		return
+	}
 
+	accountData := map[string]interface{}{
+		"email":          newAcc.Email,
+		"full_name":      newAcc.Full_Name,
+		"phone_number":   newAcc.Phone,
+		"has_card":       false,
+		"account_number": accNum,
+		"address":        newAcc.Address,
+		"balance":        0.00,
+		"account_type":   newAcc.AccountType,
+	}
 	response, count, err := s.Client.From("account").
-		Insert(newAcc, false, "", "", "exact").
+		Insert(accountData, false, "", "", "exact").
 		Execute()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -179,7 +208,7 @@ func (s *AccountService) AddAccount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Account created successfully", "account": insertedAcc})
+	c.JSON(http.StatusOK, gin.H{"message": "Account created successfully", "account": insertedAcc, "user": authRes})
 }
 
 func generateAccountNumber(client *supabase.Client) (string, error) {

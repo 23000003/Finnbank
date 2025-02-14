@@ -94,7 +94,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/registers": {
+        "/register": {
             "post": {
                 "description": "Create a new account",
                 "consumes": [
