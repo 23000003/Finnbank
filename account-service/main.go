@@ -23,7 +23,7 @@ func main() {
 	serviceAPI := router.Group("/api/account-service") // base path
 	routers.AccountRouter(serviceAPI, accountService)
 
-	if err := router.Run("localhost:8081"); err != nil {
+	if err := router.Run("localhost:8079"); err != nil {
 		logger.Fatal("Failed to start server: %v", err)
 	}
 }
