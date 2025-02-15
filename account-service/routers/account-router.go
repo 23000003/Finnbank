@@ -1,20 +1,26 @@
 package routers
 
 import (
+	"account-service/middleware"
 	"account-service/service"
+
 	"github.com/gin-gonic/gin"
 )
 
+func AccountRouter(r *gin.RouterGroup, accountService *service.AccountService) {
+	r.GET("/accounts", accountService.GetAccounts)
+	r.GET("/fetch-acc/:acc_num", accountService.GetAccoutById)
 
-func AccountRouter(r *gin.RouterGroup) {
+	// Adding new User
+	r.POST("/register", accountService.AddAccount)
 
-	// new instance of account-service
-    accountService := &service.AccountService{}
+	// Update has_card field
+	r.PATCH("/update_acc/:acc_num", accountService.UpdateHasCard)
 
-    // routes
-    r.GET("/", accountService.GetRoot)
-    r.GET("/albums", accountService.GetAlbums)
-    r.GET("/albums/:id", accountService.GetAlbumsById)
-    r.POST("/hello", accountService.PostHello)
-    r.POST("/albums", accountService.CreateAlbum)
+	// Delete User
+	r.DELETE("/delete-user/:email",
+		middleware.FetchUserUUID(),
+		middleware.DeleteAuthUser(),
+		accountService.DeleteUser,
+	)
 }

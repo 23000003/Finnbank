@@ -1,31 +1,29 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin"
-    "account-service/utils"
-    "account-service/routers"
+	"account-service/routers"
+	"account-service/service"
+	"account-service/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-    router := gin.New()
-    logger, err := utils.NewLogger()
-    if err != nil {
-        panic(err)
-    }
-    logger.Info("Starting the application...")
+	client, auth := service.SupabaseInit()
+	accountService := &service.AccountService{Client: client, Auth: auth}
 
-    // router group with base path for each services (to identify the service)
-    serviceAPI := router.Group("/api/account-service")
-    {
-        // Use the group for your routes
-        routers.AccountRouter(serviceAPI)
-    }
-    
-    routers.InitializeSwagger(router)
+	router := gin.New()
+	logger, err := utils.NewLogger()
+	if err != nil {
+		panic(err)
+	}
+	logger.Info("Starting the application...")
+	routers.InitializeSwagger(router)
 
-    logger.Info("Server running on http://localhost:8082")
+	serviceAPI := router.Group("/api/account-service") // base path
+	routers.AccountRouter(serviceAPI, accountService)
 
-    if err := router.Run("localhost:8082"); err != nil {
-        logger.Error("Failed to start server: %v", err)
-    }
+	if err := router.Run("localhost:8082"); err != nil {
+		logger.Fatal("Failed to start server: %v", err)
+	}
 }

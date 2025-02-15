@@ -1,19 +1,20 @@
 package routers
 
 import (
-	"github.com/gin-gonic/gin"
+	"account-service/docs"
 	"account-service/utils"
-    "github.com/swaggo/gin-swagger"
-    "github.com/swaggo/files"
-    "account-service/docs"
+
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func InitializeSwagger(r *gin.Engine) {
-	
+
 	logger, err := utils.NewLogger()
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
 	docs.SwaggerInfo.Title = "Bank-It Account Service Documentation API"
 	docs.SwaggerInfo.Description = "This is an api Testing and Documentation for Bank-It services."

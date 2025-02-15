@@ -15,50 +15,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/": {
+        "/accounts": {
             "get": {
-                "description": "Welcome message for root endpoint",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "root"
-                ],
-                "summary": "Get root endpoint",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/albums": {
-            "get": {
-                "description": "Get a list of all albums",
+                "description": "Fetch all accounts",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "albums"
+                    "accounts"
                 ],
-                "summary": "Get all albums",
+                "summary": "Get accounts",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.album"
+                                "$ref": "#/definitions/service.Account"
                             }
                         }
                     }
                 }
-            },
-            "post": {
-                "description": "Add a new album to the collection",
+            }
+        },
+        "/delete-user/{email}": {
+            "delete": {
+                "description": "Deletes a user from the \"account\" table and removes them from Supabase Auth.",
                 "consumes": [
                     "application/json"
                 ],
@@ -66,17 +48,135 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "albums"
+                    "Users"
                 ],
-                "summary": "Create new album",
+                "summary": "Delete a user",
                 "parameters": [
                     {
-                        "description": "Album to create",
-                        "name": "album",
+                        "type": "string",
+                        "description": "User Email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted user",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/fetch-acc/{acc_num}": {
+            "get": {
+                "description": "Fetch an account using the account number",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Get an account by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Account Number",
+                        "name": "acc_num",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.Account"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Account not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Create a new account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Register an account",
+                "parameters": [
+                    {
+                        "description": "Account data",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.CreateAlbumRequest"
+                            "$ref": "#/definitions/service.Account"
                         }
                     }
                 ],
@@ -84,7 +184,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.album"
+                            "$ref": "#/definitions/service.Account"
                         }
                     },
                     "400": {
@@ -99,47 +199,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/albums/{id}": {
-            "get": {
-                "description": "Get a single album by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "albums"
-                ],
-                "summary": "Get album by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Album ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controller.album"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/hello": {
-            "post": {
-                "description": "Post hello message with custom payload",
+        "/update_acc/{acc_num}": {
+            "patch": {
+                "description": "Updates the has_card attribute of an account using account_number",
                 "consumes": [
                     "application/json"
                 ],
@@ -147,23 +209,49 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "hello"
+                    "accounts"
                 ],
-                "summary": "Post hello endpoint",
+                "summary": "Update HasCard field",
                 "parameters": [
                     {
-                        "description": "Hello request",
+                        "type": "string",
+                        "description": "Account Number",
+                        "name": "account_number",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated has_card value",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.HelloRequest"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Account updated OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -176,52 +264,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controller.CreateAlbumRequest": {
-            "type": "object",
-            "required": [
-                "artist",
-                "price",
-                "title"
-            ],
-            "properties": {
-                "artist": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.HelloRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.album": {
+        "service.Account": {
             "type": "object",
             "properties": {
-                "artist": {
+                "account_type": {
                     "type": "string"
                 },
-                "id": {
+                "address": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "number"
+                "email": {
+                    "type": "string"
                 },
-                "title": {
+                "full_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone_number": {
                     "type": "string"
                 }
             }
