@@ -1,14 +1,12 @@
 package service
 
 import (
-	"account-service/middleware"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
 	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -156,30 +154,21 @@ func (s *AccountService) UpdateHasCard(c *gin.Context) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /delete-user/{email} [delete]
 func (s *AccountService) DeleteUser(c *gin.Context) {
-	encodedEmail := c.Param("email")
+	
+	email, exists := c.Get("email")
 
-	email, err := url.QueryUnescape(encodedEmail)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
-		return
-	}
-	uuid, err := middleware.GetUserUUIDByEmail(email)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "UUID not found in context"})
+		c.Abort()
 		return
 	}
 
 	res, _, err := s.Client.From("account").
 		Delete("", "exact").
-		Eq("email", email).
+		Eq("email", email.(string)).
 		Execute()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed Deleting Account: " + err.Error()})
-		return
-	}
-	err = middleware.DeleteUserByUUID(uuid)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
 	}
 

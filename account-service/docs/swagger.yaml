@@ -9,8 +9,6 @@ definitions:
         type: string
       full_name:
         type: string
-      has_card:
-        type: boolean
       password:
         type: string
       phone_number:

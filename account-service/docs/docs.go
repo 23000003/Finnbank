@@ -216,7 +216,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Account Number",
-                        "name": "acc_num",
+                        "name": "account_number",
                         "in": "path",
                         "required": true
                     },
@@ -278,9 +278,6 @@ const docTemplate = `{
                 },
                 "full_name": {
                     "type": "string"
-                },
-                "has_card": {
-                    "type": "boolean"
                 },
                 "password": {
                     "type": "string"

@@ -1,74 +1,57 @@
 package middleware
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
+	"net/url"
+
+	"account-service/helpers"
+
+	"github.com/gin-gonic/gin"
 )
 
-type SupabaseUser struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
+// These middleware code can be reused for later
+
+func FetchUserUUID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		encodedEmail := c.Param("email")
+		email, err := url.QueryUnescape(encodedEmail)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+			c.Abort()
+			return
+		}
+
+		uuid, err := helpers.GetUserUUIDByEmail(email)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.Abort()
+			return
+		}
+
+		// Storing UUID in Gin context for later use
+		c.Set("email", email)
+		c.Set("uuid", uuid)
+
+		c.Next()
+	}
 }
 
-type SupabaseResponse struct {
-	Users []SupabaseUser `json:"users"`
-}
+func DeleteAuthUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Retrieving UUID from context
+		uuid, exists := c.Get("uuid")
+		if !exists {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "UUID not found in context"})
+			c.Abort()
+			return
+		}
 
-func GetUserUUIDByEmail(email string) (string, error) {
-	baseURL := os.Getenv("DB_URL")
-	url := fmt.Sprintf("%s/auth/v1/admin/users?email=%s", baseURL, email)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return "", err
+		err := helpers.DeleteUserByUUID(uuid.(string))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user from Auth: " + err.Error()})
+			c.Abort()
+			return
+		}
+		c.Next()
 	}
-
-	req.Header.Set("apikey", os.Getenv("SERVICE_ROLE_KEY"))
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("SERVICE_ROLE_KEY"))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var response SupabaseResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", err
-	}
-
-	if len(response.Users) == 0 {
-		return "", fmt.Errorf("user not found")
-	}
-
-	return response.Users[0].ID, nil
-}
-
-func DeleteUserByUUID(uuid string) error {
-	baseURL := os.Getenv("DB_URL")
-	url := fmt.Sprintf("%s/auth/v1/admin/users/%s", baseURL, uuid)
-
-	req, err := http.NewRequest("DELETE", url, nil)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("apikey", os.Getenv("SERVICE_ROLE_KEY"))
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("SERVICE_ROLE_KEY"))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("failed to delete user, status code: %d", resp.StatusCode)
-	}
-
-	return nil
 }
