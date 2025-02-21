@@ -1,12 +1,13 @@
 @echo off
 echo Starting all microservices...
 
-start /D account-service go run main.go
-start /D transaction-service go run main.go
-start /D bankcard-service go run main.go
-start /D statement-service go run main.go
-start /D graphql-db-service go run main.go
-start /D api-gateway go run main.go
+start /D "services\account" go run .
+start /D "services\transaction" go run .
+start /D "services\bankcard" go run .
+start /D "services\statement" go run .
+start /D "services\api-gateway" go run .
+start /D "services\graphql" go run .
+start /D "services\notification" go run .
 
 echo All microservices started.
 pause
