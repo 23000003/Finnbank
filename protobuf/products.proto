@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "finnbank/services/common/grpc/products";
+
+service ProductService {
+    rpc GetAllProducts(GetAllProductsRequest) returns (GetProductResponse) {}
+    rpc GetByIdProduct(ProductByIdRequest) returns (GetProductResponse) {}
+    rpc CreateProduct(CreateProductRequest) returns (GetProductResponse) {}
+    rpc UpdateProduct(ProductByIdRequest) returns (GetProductResponse) {}
+    rpc DeleteProduct(ProductByIdRequest) returns (GetProductResponse) {}
+}
+
+message Product {
+    int64 ID = 1;
+    string Name = 2;
+    string Info = 3;
+    float Price = 4;
+}
+
+message ProductByIdRequest {
+    int64 ID = 1;
+}
+
+message GetProductResponse {
+    repeated Product product = 1;
+}
+
+message CreateProductRequest {
+    string Name = 1;
+    string Info = 2;
+    float Price = 3;
+}
+
+message GetAllProductsRequest {
+    string message = 1;
+}
