@@ -6,7 +6,7 @@ package main
 **/
 
 import (
-	"finnbank/services/product/utils"
+	"finnbank/services/common/utils"
 	
 )
 
@@ -16,6 +16,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	RunHttpServer(logger)
+	go RunHttpServer(logger, ":9080")
 	RunGrpcServer(logger, ":9000")
 }

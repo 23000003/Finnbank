@@ -4,10 +4,10 @@ option go_package = "finnbank/services/common/grpc/products";
 
 service ProductService {
     rpc GetAllProducts(GetAllProductsRequest) returns (GetProductResponse) {}
-    rpc GetByIdProduct(ProductByIdRequest) returns (GetProductResponse) {}
-    rpc CreateProduct(CreateProductRequest) returns (GetProductResponse) {}
-    rpc UpdateProduct(ProductByIdRequest) returns (GetProductResponse) {}
-    rpc DeleteProduct(ProductByIdRequest) returns (GetProductResponse) {}
+    rpc GetByIdProduct(ProductByIdRequest) returns (GetSingleProductResponse) {}
+    rpc CreateProduct(CreateProductRequest) returns (GetSingleProductResponse) {}
+    rpc UpdateProduct(ProductByIdRequest) returns (GetSingleProductResponse) {}
+    rpc DeleteProduct(ProductByIdRequest) returns (GetSingleProductResponse) {}
 }
 
 message Product {
@@ -21,9 +21,6 @@ message ProductByIdRequest {
     int64 ID = 1;
 }
 
-message GetProductResponse {
-    repeated Product product = 1;
-}
 
 message CreateProductRequest {
     string Name = 1;
@@ -33,4 +30,12 @@ message CreateProductRequest {
 
 message GetAllProductsRequest {
     string message = 1;
+}
+
+message GetProductResponse {
+    repeated Product product = 1;
+}
+
+message GetSingleProductResponse {
+    Product product = 1;
 }
