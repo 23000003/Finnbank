@@ -19,11 +19,11 @@ func CorsMiddleware() *cors.Cors {
 	return c
 }
 
-func InitializeGraphQLServer(logger *utils.Logger) {
+func InitializeGraphQLService(logger *utils.Logger) {
 	graphql_resolvers := resolvers.NewGraphQLResolvers(logger)
 	graphql_handlers := handlers.NewGraphQLServicesHandler(logger, graphql_resolvers)
 	graphql := graphql_config.NewGraphQL(graphql_handlers)
-    graphql.ConfigureGraphQLHandlers(logger)
+    	graphql.ConfigureGraphQLHandlers(logger)
 }
 
 func main() {
