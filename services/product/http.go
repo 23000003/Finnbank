@@ -7,14 +7,14 @@ package main
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"finnbank/services/product/utils"
+	"finnbank/services/common/utils"
 )
 
 func GetRoot(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "Welcome to the Home Page!");
 }
 
-func RunHttpServer (logger *utils.Logger) {
+func RunHttpServer (logger *utils.Logger, addr string) {
 
 	router := gin.New();
 
@@ -26,9 +26,9 @@ func RunHttpServer (logger *utils.Logger) {
 		api.GET("/testprod", GetRoot)
 	}
 
-	logger.Info("Server running on http://localhost:9080")
+	logger.Info("Server running on http://localhost:" + addr)
 
-	if err := router.Run("localhost:9080"); err != nil {
+	if err := router.Run(addr); err != nil {
 		logger.Error("Failed to start server: %v", err)
 	}
 }
