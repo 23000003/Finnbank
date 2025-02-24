@@ -19,7 +19,7 @@ func CorsMiddleware() *cors.Cors {
 	return c
 }
 
-func InitializeGraphQLService(logger *utils.Logger) {
+func InitializeGraphQL(logger *utils.Logger) {
 	graphql_resolvers := resolvers.NewGraphQLResolvers(logger)
 	graphql_handlers := handlers.NewGraphQLServicesHandler(logger, graphql_resolvers)
 	graphql := graphql_config.NewGraphQL(graphql_handlers)
@@ -34,7 +34,7 @@ func main() {
 	}
 	logger.Info("Starting the application...")
 	
-	InitializeGraphQLServer(logger)
+	InitializeGraphQL(logger)
 
 	logger.Info("Server running on http://localhost:8083")
 
