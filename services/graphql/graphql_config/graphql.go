@@ -8,8 +8,9 @@ import (
 	"finnbank/services/common/utils"
 	"finnbank/services/graphql/types"
 	"net/http"
-)
 
+	"github.com/99designs/gqlgen/graphql/playground"
+)
 
 type StructGraphQL struct {
 	h types.IGraphQLHandlers
@@ -39,7 +40,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers(log *utils.Logger) {
 	bankCardHandler := gql.h.BankCardServicesHandler(gql.s.BankCardServer)
 	statementHandler := gql.h.StatementServicesHandler(gql.s.StatementServer)
 	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer)
-	notificationHandler := gql.h.NotificationServicesHandler(gql.s.TransactionServer)
+	notificationHandler := gql.h.NotificationServicesHandler(gql.s.NotificationServer)
 
 	http.Handle("/graphql/account", accountHandler)
 	http.Handle("/graphql/product", productHandler)
@@ -48,6 +49,14 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers(log *utils.Logger) {
 	http.Handle("/graphql/transaction", transactionHandler)
 	http.Handle("/graphql/notification", notificationHandler)
 
+	// For graphql query/mutation Testing
+	http.Handle("/playground/account", playground.Handler("Account GraphQL Playground", "/graphql/account"))
+	http.Handle("/playground/product", playground.Handler("Product GraphQL Playground", "/graphql/product"))
+	http.Handle("/playground/bankcard", playground.Handler("BankCard GraphQL Playground", "/graphql/bankcard"))
+	http.Handle("/playground/statement", playground.Handler("Statement GraphQL Playground", "/graphql/statement"))
+	http.Handle("/playground/transaction", playground.Handler("Transaction GraphQL Playground", "/graphql/transaction"))
+	http.Handle("/playground/notification", playground.Handler("Notification GraphQL Playground", "/graphql/notification"))
+
 	log.Info("Configured GraphQL Handlers")
-	
+
 }
