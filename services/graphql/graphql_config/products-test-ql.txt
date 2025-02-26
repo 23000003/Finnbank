@@ -1,0 +1,32 @@
+// get all
+{
+  list {
+    id,
+    name,
+    info,
+  	price
+  }
+}
+
+// get by id
+{
+  product (id:1) {
+    id,
+    name,
+    info,
+  	price
+  }
+}
+
+// create
+
+mutation {
+  create(name: "a Kaoala", info: "Inca on verbena (wiki)", price: 1.99) {
+    id
+    name
+    info
+    price
+  }
+}
+
+
