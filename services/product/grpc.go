@@ -6,8 +6,10 @@ package main
 
 import (
 	"net"
-	"finnbank/services/product/utils"
+	"finnbank/services/common/utils"
 	"google.golang.org/grpc"
+	handler "finnbank/services/product/handlers/products"
+	prodService "finnbank/services/product/services"
 )
 
 func RunGrpcServer(l *utils.Logger, address string) error {
@@ -18,7 +20,11 @@ func RunGrpcServer(l *utils.Logger, address string) error {
 
 	grpcServer := grpc.NewServer()
 
-	l.Info("gRPC server running on %s", address)
+	// Register services/handlers here
+	productService := prodService.ProductServiceInstance()
+	handler.ConfigureProductGrpcServices(grpcServer, productService, l)
+
+	l.Info("gRPC server running on port: %s", address)
 
 	return grpcServer.Serve(lis)
 }

@@ -31,10 +31,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProductServiceClient interface {
 	GetAllProducts(ctx context.Context, in *GetAllProductsRequest, opts ...grpc.CallOption) (*GetProductResponse, error)
-	GetByIdProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetProductResponse, error)
-	CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*GetProductResponse, error)
-	UpdateProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetProductResponse, error)
-	DeleteProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetProductResponse, error)
+	GetByIdProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error)
+	CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error)
+	UpdateProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error)
+	DeleteProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error)
 }
 
 type productServiceClient struct {
@@ -55,9 +55,9 @@ func (c *productServiceClient) GetAllProducts(ctx context.Context, in *GetAllPro
 	return out, nil
 }
 
-func (c *productServiceClient) GetByIdProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetProductResponse, error) {
+func (c *productServiceClient) GetByIdProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProductResponse)
+	out := new(GetSingleProductResponse)
 	err := c.cc.Invoke(ctx, ProductService_GetByIdProduct_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -65,9 +65,9 @@ func (c *productServiceClient) GetByIdProduct(ctx context.Context, in *ProductBy
 	return out, nil
 }
 
-func (c *productServiceClient) CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*GetProductResponse, error) {
+func (c *productServiceClient) CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProductResponse)
+	out := new(GetSingleProductResponse)
 	err := c.cc.Invoke(ctx, ProductService_CreateProduct_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -75,9 +75,9 @@ func (c *productServiceClient) CreateProduct(ctx context.Context, in *CreateProd
 	return out, nil
 }
 
-func (c *productServiceClient) UpdateProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetProductResponse, error) {
+func (c *productServiceClient) UpdateProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProductResponse)
+	out := new(GetSingleProductResponse)
 	err := c.cc.Invoke(ctx, ProductService_UpdateProduct_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -85,9 +85,9 @@ func (c *productServiceClient) UpdateProduct(ctx context.Context, in *ProductByI
 	return out, nil
 }
 
-func (c *productServiceClient) DeleteProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetProductResponse, error) {
+func (c *productServiceClient) DeleteProduct(ctx context.Context, in *ProductByIdRequest, opts ...grpc.CallOption) (*GetSingleProductResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProductResponse)
+	out := new(GetSingleProductResponse)
 	err := c.cc.Invoke(ctx, ProductService_DeleteProduct_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -100,10 +100,10 @@ func (c *productServiceClient) DeleteProduct(ctx context.Context, in *ProductByI
 // for forward compatibility.
 type ProductServiceServer interface {
 	GetAllProducts(context.Context, *GetAllProductsRequest) (*GetProductResponse, error)
-	GetByIdProduct(context.Context, *ProductByIdRequest) (*GetProductResponse, error)
-	CreateProduct(context.Context, *CreateProductRequest) (*GetProductResponse, error)
-	UpdateProduct(context.Context, *ProductByIdRequest) (*GetProductResponse, error)
-	DeleteProduct(context.Context, *ProductByIdRequest) (*GetProductResponse, error)
+	GetByIdProduct(context.Context, *ProductByIdRequest) (*GetSingleProductResponse, error)
+	CreateProduct(context.Context, *CreateProductRequest) (*GetSingleProductResponse, error)
+	UpdateProduct(context.Context, *ProductByIdRequest) (*GetSingleProductResponse, error)
+	DeleteProduct(context.Context, *ProductByIdRequest) (*GetSingleProductResponse, error)
 	mustEmbedUnimplementedProductServiceServer()
 }
 
@@ -117,16 +117,16 @@ type UnimplementedProductServiceServer struct{}
 func (UnimplementedProductServiceServer) GetAllProducts(context.Context, *GetAllProductsRequest) (*GetProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllProducts not implemented")
 }
-func (UnimplementedProductServiceServer) GetByIdProduct(context.Context, *ProductByIdRequest) (*GetProductResponse, error) {
+func (UnimplementedProductServiceServer) GetByIdProduct(context.Context, *ProductByIdRequest) (*GetSingleProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByIdProduct not implemented")
 }
-func (UnimplementedProductServiceServer) CreateProduct(context.Context, *CreateProductRequest) (*GetProductResponse, error) {
+func (UnimplementedProductServiceServer) CreateProduct(context.Context, *CreateProductRequest) (*GetSingleProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProduct not implemented")
 }
-func (UnimplementedProductServiceServer) UpdateProduct(context.Context, *ProductByIdRequest) (*GetProductResponse, error) {
+func (UnimplementedProductServiceServer) UpdateProduct(context.Context, *ProductByIdRequest) (*GetSingleProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProduct not implemented")
 }
-func (UnimplementedProductServiceServer) DeleteProduct(context.Context, *ProductByIdRequest) (*GetProductResponse, error) {
+func (UnimplementedProductServiceServer) DeleteProduct(context.Context, *ProductByIdRequest) (*GetSingleProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProduct not implemented")
 }
 func (UnimplementedProductServiceServer) mustEmbedUnimplementedProductServiceServer() {}
