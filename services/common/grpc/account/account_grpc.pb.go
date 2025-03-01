@@ -21,8 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AccountService_GetAccounts_FullMethodName    = "/AccountService/GetAccounts"
 	AccountService_GetAccountById_FullMethodName = "/AccountService/GetAccountById"
-	AccountService_UpdateHasCard_FullMethodName  = "/AccountService/UpdateHasCard"
-	AccountService_DeleteUser_FullMethodName     = "/AccountService/DeleteUser"
+	AccountService_UpdateAccount_FullMethodName  = "/AccountService/UpdateAccount"
+	AccountService_DeleteAccount_FullMethodName  = "/AccountService/DeleteAccount"
 	AccountService_AddAccount_FullMethodName     = "/AccountService/AddAccount"
 )
 
@@ -32,8 +32,8 @@ const (
 type AccountServiceClient interface {
 	GetAccounts(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AccountsResponse, error)
 	GetAccountById(ctx context.Context, in *AccountRequest, opts ...grpc.CallOption) (*AccountResponse, error)
-	UpdateHasCard(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*AccountResponse, error)
-	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
+	UpdateAccount(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*AccountResponse, error)
+	DeleteAccount(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	AddAccount(ctx context.Context, in *AddAccountRequest, opts ...grpc.CallOption) (*AddAccountResponse, error)
 }
 
@@ -65,20 +65,20 @@ func (c *accountServiceClient) GetAccountById(ctx context.Context, in *AccountRe
 	return out, nil
 }
 
-func (c *accountServiceClient) UpdateHasCard(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*AccountResponse, error) {
+func (c *accountServiceClient) UpdateAccount(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*AccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AccountResponse)
-	err := c.cc.Invoke(ctx, AccountService_UpdateHasCard_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AccountService_UpdateAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
+func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteUserResponse)
-	err := c.cc.Invoke(ctx, AccountService_DeleteUser_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AccountService_DeleteAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,8 +101,8 @@ func (c *accountServiceClient) AddAccount(ctx context.Context, in *AddAccountReq
 type AccountServiceServer interface {
 	GetAccounts(context.Context, *Empty) (*AccountsResponse, error)
 	GetAccountById(context.Context, *AccountRequest) (*AccountResponse, error)
-	UpdateHasCard(context.Context, *UpdateRequest) (*AccountResponse, error)
-	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	UpdateAccount(context.Context, *UpdateRequest) (*AccountResponse, error)
+	DeleteAccount(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	AddAccount(context.Context, *AddAccountRequest) (*AddAccountResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
@@ -120,11 +120,11 @@ func (UnimplementedAccountServiceServer) GetAccounts(context.Context, *Empty) (*
 func (UnimplementedAccountServiceServer) GetAccountById(context.Context, *AccountRequest) (*AccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountById not implemented")
 }
-func (UnimplementedAccountServiceServer) UpdateHasCard(context.Context, *UpdateRequest) (*AccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateHasCard not implemented")
+func (UnimplementedAccountServiceServer) UpdateAccount(context.Context, *UpdateRequest) (*AccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
 }
-func (UnimplementedAccountServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
 func (UnimplementedAccountServiceServer) AddAccount(context.Context, *AddAccountRequest) (*AddAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddAccount not implemented")
@@ -186,38 +186,38 @@ func _AccountService_GetAccountById_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_UpdateHasCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).UpdateHasCard(ctx, in)
+		return srv.(AccountServiceServer).UpdateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AccountService_UpdateHasCard_FullMethodName,
+		FullMethod: AccountService_UpdateAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).UpdateHasCard(ctx, req.(*UpdateRequest))
+		return srv.(AccountServiceServer).UpdateAccount(ctx, req.(*UpdateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).DeleteUser(ctx, in)
+		return srv.(AccountServiceServer).DeleteAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AccountService_DeleteUser_FullMethodName,
+		FullMethod: AccountService_DeleteAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+		return srv.(AccountServiceServer).DeleteAccount(ctx, req.(*DeleteUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -256,12 +256,12 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_GetAccountById_Handler,
 		},
 		{
-			MethodName: "UpdateHasCard",
-			Handler:    _AccountService_UpdateHasCard_Handler,
+			MethodName: "UpdateAccount",
+			Handler:    _AccountService_UpdateAccount_Handler,
 		},
 		{
-			MethodName: "DeleteUser",
-			Handler:    _AccountService_DeleteUser_Handler,
+			MethodName: "DeleteAccount",
+			Handler:    _AccountService_DeleteAccount_Handler,
 		},
 		{
 			MethodName: "AddAccount",
