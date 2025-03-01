@@ -5,10 +5,13 @@ import (
 	"finnbank/services/account/helpers"
 	"finnbank/services/common/grpc/account"
 	"finnbank/services/common/utils"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AccountService struct {
@@ -18,11 +21,8 @@ type AccountService struct {
 	account.UnimplementedAccountServiceServer
 }
 
-// func (s* AccountService) GetAccountbyId(ctx * context.Context, req* account.AccountRequest) (*account.AccountResponse, error) {
-
-// 	return
-// // }
-
+// Create New Account
+// PARAMS:  email, fullname, password, address, account type
 func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccountRequest) (*account.AddAccountResponse, error) {
 	tx, err := s.DB.Begin(ctx)
 	if err != nil {
@@ -33,29 +33,24 @@ func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccount
 
 	authQuery := `
 	INSERT INTO auth.users (id, email, encrypted_password, aud, instance_id)
-	VALUES (gen_random_uuid(),$1, crypt($2, gen_salt('bf')), 'authenticated', gen_random_uuid())`
-
-	_, err = tx.Exec(ctx, authQuery, req.Email, req.Password)
+	VALUES (gen_random_uuid(),$1, crypt($2, gen_salt('bf')), 'authenticated', gen_random_uuid())
+	RETURNING id;`
+	var authID uuid.UUID
+	err = tx.QueryRow(ctx, authQuery, req.Email, req.Password).Scan(&authID)
 	if err != nil {
 		s.Logger.Error("Failed to Create User in auth: %v", err)
-		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error creating user in auth DB: %v", err)
 	}
-	// email            VARCHAR(255) UNIQUE NOT NULL,
-	// full_name        VARCHAR(255) NOT NULL,
-	// phone_number     VARCHAR(11) UNIQUE NOT NULL,
-	// account_number   varchar(20) UNIQUE NOT NULL,
-	// address          TEXT,
-	// account_type     VARCHAR(20) CHECK (account_type IN ('Business', 'Personal')) NOT NULL,
-	userID, err := helpers.GenAccNum(req.FullName)
+	userID, err := helpers.GenAccNum()
 	if err != nil {
 		s.Logger.Error("Failed to Generate Account Number: %v", err)
 		return nil, status.Errorf(codes.Internal, "Error generating account number: %v", err)
 	}
 	accQuery := `
-	INSERT INTO account (email, full_name, phone_number, account_number, address, account_type)
-	VALUES ($1, $2, $3, $4, $5, $6)
+	INSERT INTO account (email, full_name, phone_number, account_number, address, account_type, auth_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
-	_, err = tx.Exec(ctx, accQuery, req.Email, req.FullName, req.PhoneNumber, userID, req.Address, req.AccountType)
+	_, err = tx.Exec(ctx, accQuery, req.Email, req.FullName, req.PhoneNumber, userID, req.Address, req.AccountType, authID)
 	if err != nil {
 		s.Logger.Error("Failed to Create User in table: %v", err)
 		return nil, status.Error(codes.Internal, "Error creating user")
@@ -67,16 +62,6 @@ func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccount
 		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
 	}
 
-	// message AddAccountResponse {
-	// 	string email = 1;
-	// 	string full_name = 2;
-	// 	string phone_number = 3;
-	// 	string password = 4;
-	// 	string address = 5;
-	// 	string account_type = 6;
-	// 	string account_number = 7;
-	//   }
-
 	return &account.AddAccountResponse{
 		Email:         req.Email,
 		FullName:      req.FullName,
@@ -85,4 +70,55 @@ func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccount
 		AccountType:   req.AccountType,
 		AccountNumber: userID,
 	}, nil
+}
+
+// Fetch Account
+// PARAMS:  account number
+func (s *AccountService) GetAccountById(ctx context.Context, req *account.AccountRequest) (*account.AccountResponse, error) {
+	var (
+		email, fullName, phoneNumber, address, accountType, accountNumber string
+		hasCard                                                           bool
+		dateCreated                                                       time.Time
+	)
+
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	accQuery := `
+	SELECT email, full_name, phone_number, address, account_type, account_number, has_card, date_created
+	FROM account WHERE account_number = $1;
+	`
+
+	err = tx.QueryRow(ctx, accQuery, req.AccountNumber).Scan(
+		&email, &fullName, &phoneNumber, &address, &accountType, &accountNumber, &hasCard, &dateCreated,
+	)
+	if err != nil {
+		s.Logger.Error("Failed to Fetch Account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error fetching account from DB: %v", err)
+	}
+
+	gotAcc := &account.Account{
+		Email:         email,
+		FullName:      fullName,
+		PhoneNumber:   phoneNumber,
+		Address:       address,
+		AccountType:   accountType,
+		AccountNumber: accountNumber,
+		HasCard:       hasCard,
+		DateCreated:   timestamppb.New(dateCreated),
+	}
+
+	return &account.AccountResponse{
+		Account: gotAcc,
+	}, nil
+}
+
+// Update Account
+// PARAMS: account number
+func (s * AccountService) UpdateAccount(ctx context.Context, req* account.UpdateRequest)(*account.AccountResponse, error) {
+	
 }

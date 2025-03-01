@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// DEPRECATED, DIDN'T KNOW I CAN USE POSTMAN
+
 func main() {
 	// Connect to the gRPC server
 	logger, _ := utils.NewLogger()
@@ -26,6 +28,7 @@ func main() {
 	res, err := TestAddAccount(client, logger)
 	if err != nil {
 		logger.Error("Test 1 not passed: %v", err)
+		return
 	}
 	logger.Debug("Test 1 Passed: %v", res)
 }
@@ -33,9 +36,9 @@ func main() {
 // Test function for AddAccount
 func TestAddAccount(c account.AccountServiceClient, logger *utils.Logger) (*account.AddAccountResponse, error) {
 	request := &account.AddAccountRequest{
-		Email:       "testuse5@example.com",
+		Email:       "testuse7@example.com",
 		FullName:    "Test User",
-		PhoneNumber: "09270217384",
+		PhoneNumber: "09399883951",
 		Password:    "SecurePassword123",
 		Address:     "123 Test Street, Test City",
 		AccountType: "Personal",
