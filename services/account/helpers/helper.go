@@ -1,11 +1,13 @@
 package helpers
 
-
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type SupabaseUser struct {
@@ -72,4 +74,24 @@ func DeleteUserByUUID(uuid string) error {
 	}
 
 	return nil
+}
+
+func GenAccNum(fullname string) (string, error) {
+	namePart := strings.ReplaceAll(fullname, " ", "")
+	if len(namePart) > 3 {
+		namePart = namePart[:3]
+	}
+
+	// Generate a 17-digit random number
+	numberPart := ""
+	for i := 0; i < 17; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(10)) 
+		if err != nil {
+			return "", err
+		}
+		numberPart += n.String()
+	}
+
+	accountNumber := strings.ToUpper(namePart) + numberPart
+	return accountNumber[:20], nil
 }

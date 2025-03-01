@@ -1,0 +1,65 @@
+syntax = "proto3";
+option go_package = "finnbank/services/common/grpc/account";
+
+service AccountService {
+  rpc GetAccounts (Empty) returns (AccountsResponse);
+  rpc GetAccountById (AccountRequest) returns (AccountResponse);
+  rpc UpdateHasCard (UpdateRequest) returns (AccountResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc AddAccount (AddAccountRequest) returns (AddAccountResponse);
+}
+
+message Empty {}
+
+message Account {
+  string email = 1;
+  string full_name = 2;
+  string phone_number = 3;
+  string address = 4;
+  string account_type = 5;
+  bool has_card = 6;
+}
+  
+message AccountsResponse {
+  repeated Account accounts = 1;
+}
+
+message AccountRequest {
+  string account_number = 1;
+}
+
+message AccountResponse {
+  Account account = 1;
+}
+
+message UpdateRequest {
+  string account_number = 1;
+  bool has_card = 2;
+}
+
+message DeleteUserRequest {
+  string email = 1;
+}
+
+message DeleteUserResponse {
+  string message = 1;
+}
+
+message AddAccountRequest {
+  string email = 1;
+  string full_name = 2;
+  string phone_number = 3;
+  string password = 4;
+  string address = 5;
+  string account_type = 6;
+}
+
+message AddAccountResponse {
+  string email = 1;
+  string full_name = 2;
+  string phone_number = 3;
+  string address = 4;
+  string account_type = 5;
+  string account_number = 6;
+}
+
