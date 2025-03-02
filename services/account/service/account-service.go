@@ -186,6 +186,8 @@ func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.Card
 	}
 	defer tx.Rollback(ctx)
 
+	// TODO: Account Validation if User already has a card
+
 	updateQuery := `
 		UPDATE account
 		SET has_card = 'TRUE'
@@ -211,3 +213,5 @@ func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.Card
 		Status: "Sucessfully Updated Card Status",
 	}, nil
 }
+
+// TODO: DELETE ROUTES
