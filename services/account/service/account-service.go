@@ -5,6 +5,7 @@ import (
 	"finnbank/services/account/helpers"
 	"finnbank/services/common/grpc/account"
 	"finnbank/services/common/utils"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -74,6 +75,7 @@ func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccount
 
 // Fetch Account
 // PARAMS:  account number
+// FUTURE: I think i'll have to make another version of this where i use the email instead of the account number
 func (s *AccountService) GetAccountById(ctx context.Context, req *account.AccountRequest) (*account.AccountResponse, error) {
 	var (
 		email, fullName, phoneNumber, address, accountType, accountNumber string
@@ -215,3 +217,90 @@ func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.Card
 }
 
 // TODO: DELETE ROUTES
+
+// FUTURE: Will have to move this somewhere else
+func (s *AccountService) DeleteFromAuth(ctx context.Context, req uuid.UUID) (string, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return "Could not Connect to Db", status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	deleteQuery := `
+		DELETE FROM auth.users
+		WHERE id = $1;
+	`
+	res, err := tx.Exec(ctx, deleteQuery, req)
+	if err != nil {
+		s.Logger.Error("Could not delete from auth : %v", err)
+		return "Error deleting row in auth", status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with uuid: %s", req)
+		return "No Account Found", status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return "Error Committing Db transaction", status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
+	return "Successfully Deleted account from Auth", nil
+
+}
+
+func (s *AccountService) DeleteAccount(ctx context.Context, req *account.DeleteUserRequest) (*account.DeleteUserResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+	var UUID uuid.UUID
+	uuidQuery := `SELECT auth_id FROM account WHERE account_number = $1;`
+	err = tx.QueryRow(ctx, uuidQuery, req.AccountNumber).Scan(&UUID)
+	if err != nil {
+		s.Logger.Error("Could not fetch UUID for account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+
+	deleteQuery := `
+		DELETE FROM account
+		WHERE account_number = $1;
+	`
+	res, err := tx.Exec(ctx, deleteQuery, req.AccountNumber)
+	if err != nil {
+		s.Logger.Error("Could not Delete account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error deleting account in DB: %v", err)
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+	var wg sync.WaitGroup
+	var authDeleteErr error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_, authDeleteErr = s.DeleteFromAuth(ctx, UUID)
+	}()
+
+	wg.Wait()
+
+	if authDeleteErr != nil {
+		s.Logger.Error("Could not delete from Auth: %v", authDeleteErr)
+		return nil, status.Errorf(codes.Internal, "Error deleting from Auth: %v", authDeleteErr)
+	}
+
+	return &account.DeleteUserResponse{
+		Message: "Successfully Deleted Account",
+	}, nil
+}
