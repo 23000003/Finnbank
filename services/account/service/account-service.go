@@ -101,6 +101,12 @@ func (s *AccountService) GetAccountById(ctx context.Context, req *account.Accoun
 		return nil, status.Errorf(codes.Internal, "Error fetching account from DB: %v", err)
 	}
 
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
 	gotAcc := &account.Account{
 		Email:         email,
 		FullName:      fullName,
@@ -118,7 +124,90 @@ func (s *AccountService) GetAccountById(ctx context.Context, req *account.Accoun
 }
 
 // Update Account
-// PARAMS: account number
-func (s * AccountService) UpdateAccount(ctx context.Context, req* account.UpdateRequest)(*account.AccountResponse, error) {
-	
+// PARAMS: account number, fullname, phone number, address
+func (s *AccountService) UpdateAccount(ctx context.Context, req *account.UpdateRequest) (*account.AccountResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	updateQuery := `
+		UPDATE account
+		SET full_name = $1, phone_number = $2, address = $3
+		WHERE account_number = $4;
+	`
+	result, err := tx.Exec(ctx, updateQuery, req.FullName, req.PhoneNumber, req.Address, req.AccountNumber)
+	if err != nil {
+		s.Logger.Error("Could not Update account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error updating account: %v", err)
+	}
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+	accReq := &account.AccountRequest{
+		AccountNumber: req.AccountNumber,
+	}
+
+	res, err := s.GetAccountById(ctx, accReq)
+	if err != nil {
+		s.Logger.Error("Could not Fetch newly updated account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error fetching updated account: %v", err)
+	}
+	acc := &account.Account{
+		Email:         res.Account.Email,
+		FullName:      res.Account.FullName,
+		PhoneNumber:   res.Account.PhoneNumber,
+		Address:       res.Account.Address,
+		AccountType:   res.Account.AccountType,
+		AccountNumber: res.Account.AccountNumber,
+		HasCard:       res.Account.HasCard,
+		Balance:       res.Account.Balance,
+		DateCreated:   res.Account.DateCreated,
+	}
+	return &account.AccountResponse{
+		Account: acc,
+	}, nil
+}
+
+func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.CardUpdateRequest) (*account.CardUpdateResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	updateQuery := `
+		UPDATE account
+		SET has_card = 'TRUE'
+		WHERE account_number = $1;
+	`
+	res, err := tx.Exec(ctx, updateQuery, req.AccountNumber)
+	if err != nil {
+		s.Logger.Error("Could not Update card status in DB: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error updating card status: %v", err)
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
+	return &account.CardUpdateResponse{
+		Status: "Sucessfully Updated Card Status",
+	}, nil
 }
