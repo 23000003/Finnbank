@@ -6,14 +6,30 @@ option go_package = "finnbank/services/common/grpc/account";
 service AccountService {
   rpc GetAccounts (Empty) returns (AccountsResponse);
   rpc GetAccountById (AccountRequest) returns (AccountResponse);
+  rpc GetAccountByEmail (EmailRequest) returns (AccountResponse);
   rpc UpdateAccount (UpdateRequest) returns (AccountResponse);
   rpc UpdateCardStatus(CardUpdateRequest) returns (CardUpdateResponse);
   rpc DeleteAccount (DeleteUserRequest) returns (DeleteUserResponse);
   rpc AddAccount (AddAccountRequest) returns (AddAccountResponse);
+  rpc LoginUser(LoginRequest) returns (LoginResponse);
 }
 
 message Empty {}
-
+message EmailRequest {
+  string email = 1;
+}
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+message LoginResponse {
+  string access_token = 1;
+  string token_type = 2;
+  int32 expires_in = 3;
+  string refresh_token = 4;
+  string user_id = 5;
+  string email = 6;
+}
 message Account {
   string email = 1;
   string full_name = 2;
