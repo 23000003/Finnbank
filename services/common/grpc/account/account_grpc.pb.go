@@ -19,12 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccountService_GetAccounts_FullMethodName      = "/AccountService/GetAccounts"
-	AccountService_GetAccountById_FullMethodName   = "/AccountService/GetAccountById"
-	AccountService_UpdateAccount_FullMethodName    = "/AccountService/UpdateAccount"
-	AccountService_UpdateCardStatus_FullMethodName = "/AccountService/UpdateCardStatus"
-	AccountService_DeleteAccount_FullMethodName    = "/AccountService/DeleteAccount"
-	AccountService_AddAccount_FullMethodName       = "/AccountService/AddAccount"
+	AccountService_GetAccounts_FullMethodName       = "/AccountService/GetAccounts"
+	AccountService_GetAccountById_FullMethodName    = "/AccountService/GetAccountById"
+	AccountService_GetAccountByEmail_FullMethodName = "/AccountService/GetAccountByEmail"
+	AccountService_UpdateAccount_FullMethodName     = "/AccountService/UpdateAccount"
+	AccountService_UpdateCardStatus_FullMethodName  = "/AccountService/UpdateCardStatus"
+	AccountService_DeleteAccount_FullMethodName     = "/AccountService/DeleteAccount"
+	AccountService_AddAccount_FullMethodName        = "/AccountService/AddAccount"
+	AccountService_LoginUser_FullMethodName         = "/AccountService/LoginUser"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -33,10 +35,12 @@ const (
 type AccountServiceClient interface {
 	GetAccounts(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AccountsResponse, error)
 	GetAccountById(ctx context.Context, in *AccountRequest, opts ...grpc.CallOption) (*AccountResponse, error)
+	GetAccountByEmail(ctx context.Context, in *EmailRequest, opts ...grpc.CallOption) (*AccountResponse, error)
 	UpdateAccount(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*AccountResponse, error)
 	UpdateCardStatus(ctx context.Context, in *CardUpdateRequest, opts ...grpc.CallOption) (*CardUpdateResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	AddAccount(ctx context.Context, in *AddAccountRequest, opts ...grpc.CallOption) (*AddAccountResponse, error)
+	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 }
 
 type accountServiceClient struct {
@@ -61,6 +65,16 @@ func (c *accountServiceClient) GetAccountById(ctx context.Context, in *AccountRe
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AccountResponse)
 	err := c.cc.Invoke(ctx, AccountService_GetAccountById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) GetAccountByEmail(ctx context.Context, in *EmailRequest, opts ...grpc.CallOption) (*AccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetAccountByEmail_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,16 +121,28 @@ func (c *accountServiceClient) AddAccount(ctx context.Context, in *AddAccountReq
 	return out, nil
 }
 
+func (c *accountServiceClient) LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, AccountService_LoginUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility.
 type AccountServiceServer interface {
 	GetAccounts(context.Context, *Empty) (*AccountsResponse, error)
 	GetAccountById(context.Context, *AccountRequest) (*AccountResponse, error)
+	GetAccountByEmail(context.Context, *EmailRequest) (*AccountResponse, error)
 	UpdateAccount(context.Context, *UpdateRequest) (*AccountResponse, error)
 	UpdateCardStatus(context.Context, *CardUpdateRequest) (*CardUpdateResponse, error)
 	DeleteAccount(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	AddAccount(context.Context, *AddAccountRequest) (*AddAccountResponse, error)
+	LoginUser(context.Context, *LoginRequest) (*LoginResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -133,6 +159,9 @@ func (UnimplementedAccountServiceServer) GetAccounts(context.Context, *Empty) (*
 func (UnimplementedAccountServiceServer) GetAccountById(context.Context, *AccountRequest) (*AccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountById not implemented")
 }
+func (UnimplementedAccountServiceServer) GetAccountByEmail(context.Context, *EmailRequest) (*AccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccountByEmail not implemented")
+}
 func (UnimplementedAccountServiceServer) UpdateAccount(context.Context, *UpdateRequest) (*AccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
 }
@@ -144,6 +173,9 @@ func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteU
 }
 func (UnimplementedAccountServiceServer) AddAccount(context.Context, *AddAccountRequest) (*AddAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) LoginUser(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LoginUser not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 func (UnimplementedAccountServiceServer) testEmbeddedByValue()                        {}
@@ -198,6 +230,24 @@ func _AccountService_GetAccountById_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).GetAccountById(ctx, req.(*AccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_GetAccountByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetAccountByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_GetAccountByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).GetAccountByEmail(ctx, req.(*EmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -274,6 +324,24 @@ func _AccountService_AddAccount_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).LoginUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_LoginUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).LoginUser(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +358,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_GetAccountById_Handler,
 		},
 		{
+			MethodName: "GetAccountByEmail",
+			Handler:    _AccountService_GetAccountByEmail_Handler,
+		},
+		{
 			MethodName: "UpdateAccount",
 			Handler:    _AccountService_UpdateAccount_Handler,
 		},
@@ -304,6 +376,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddAccount",
 			Handler:    _AccountService_AddAccount_Handler,
+		},
+		{
+			MethodName: "LoginUser",
+			Handler:    _AccountService_LoginUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

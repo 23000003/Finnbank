@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"finnbank/services/account/db"
+	"finnbank/services/account/middleware"
 	"finnbank/services/account/server"
 	"finnbank/services/account/service"
 	"finnbank/services/common/grpc/account"
@@ -34,9 +35,11 @@ func main() {
 		logger.Fatal("Error connecting to Db: %v", err)
 	}
 	defer database.Close(ctx)
+	auth := &middleware.AuthService{}
 	accountService := service.AccountService{
 		DB:                                database,
 		Logger:                            logger,
+		Auth:                              auth,
 		UnimplementedAccountServiceServer: account.UnimplementedAccountServiceServer{},
 	}
 	go func() {

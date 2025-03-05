@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"finnbank/services/account/helpers"
+	"finnbank/services/account/middleware"
 	"finnbank/services/common/grpc/account"
 	"finnbank/services/common/utils"
 	"sync"
@@ -18,12 +19,15 @@ import (
 type AccountService struct {
 	DB     *pgx.Conn
 	Logger *utils.Logger
+	Auth   *middleware.AuthService
 	Grpc   account.AccountServiceServer
 	account.UnimplementedAccountServiceServer
 }
 
 // Create New Account
 // PARAMS:  email, fullname, password, address, account type
+// This shit is getting out of hand so i will have to move some of this code somewhere else
+// FUTURE: add concurrency if some of these queries will be moved
 func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccountRequest) (*account.AddAccountResponse, error) {
 	tx, err := s.DB.Begin(ctx)
 	if err != nil {
@@ -31,17 +35,12 @@ func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccount
 		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
 	}
 	defer tx.Rollback(ctx)
-
-	authQuery := `
-	INSERT INTO auth.users (id, email, encrypted_password, aud, instance_id)
-	VALUES (gen_random_uuid(),$1, crypt($2, gen_salt('bf')), 'authenticated', gen_random_uuid())
-	RETURNING id;`
-	var authID uuid.UUID
-	err = tx.QueryRow(ctx, authQuery, req.Email, req.Password).Scan(&authID)
+	res, err := s.Auth.SignUpUserToDb(req.Email, req.Password)
 	if err != nil {
-		s.Logger.Error("Failed to Create User in auth: %v", err)
-		return nil, status.Errorf(codes.Internal, "Error creating user in auth DB: %v", err)
+		s.Logger.Error("Authentication failed: %v", err)
+		return nil, status.Errorf(codes.Canceled, "Invalid email or password")
 	}
+	var authID string = res.User.ID
 	userID, err := helpers.GenAccNum()
 	if err != nil {
 		s.Logger.Error("Failed to Generate Account Number: %v", err)
@@ -125,6 +124,54 @@ func (s *AccountService) GetAccountById(ctx context.Context, req *account.Accoun
 	}, nil
 }
 
+// Fetch Account
+// PARAMS: email
+func (s *AccountService) GetAccountByEmail(ctx context.Context, req *account.EmailRequest) (*account.AccountResponse, error) {
+	var (
+		email, fullName, phoneNumber, address, accountType, accountNumber string
+		hasCard                                                           bool
+		dateCreated                                                       time.Time
+	)
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	accQuery := `SELECT email, full_name, phone_number, address, account_type, account_number, has_card, date_created
+	FROM account WHERE email = $1;
+	`
+	err = tx.QueryRow(ctx, accQuery, req.Email).Scan(
+		&email, &fullName, &phoneNumber, &address, &accountType, &accountNumber, &hasCard, &dateCreated,
+	)
+	if err != nil {
+		s.Logger.Error("Could not Fetch account from Db: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error Fetching from DB: %v", err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+	gotAcc := &account.Account{
+		Email:         email,
+		FullName:      fullName,
+		PhoneNumber:   phoneNumber,
+		Address:       address,
+		AccountType:   accountType,
+		AccountNumber: accountNumber,
+		HasCard:       hasCard,
+		DateCreated:   timestamppb.New(dateCreated),
+	}
+
+	return &account.AccountResponse{
+		Account: gotAcc,
+	}, nil
+
+}
+
 // Update Account
 // PARAMS: account number, fullname, phone number, address
 func (s *AccountService) UpdateAccount(ctx context.Context, req *account.UpdateRequest) (*account.AccountResponse, error) {
@@ -187,7 +234,6 @@ func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.Card
 		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
 	}
 	defer tx.Rollback(ctx)
-
 	// TODO: Account Validation if User already has a card
 
 	updateQuery := `
@@ -302,5 +348,23 @@ func (s *AccountService) DeleteAccount(ctx context.Context, req *account.DeleteU
 
 	return &account.DeleteUserResponse{
 		Message: "Successfully Deleted Account",
+	}, nil
+}
+
+// AUTH SERVICES
+func (s *AccountService) LoginUser(ctx context.Context, req *account.LoginRequest) (*account.LoginResponse, error) {
+	tok, err := s.Auth.LoginUserToDb(req.Email, req.Password)
+	if err != nil {
+		s.Logger.Error("Authentication failed: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "Invalid email or password")
+	}
+	// TODO: Return all of the user data
+	return &account.LoginResponse{
+		AccessToken:  tok.AccessToken,
+		TokenType:    tok.TokenType,
+		RefreshToken: tok.RefreshToken,
+		ExpiresIn:    int32(tok.ExpiresIn),
+		UserId:       tok.User.ID,
+		Email:        tok.User.Email,
 	}, nil
 }
