@@ -29,6 +29,7 @@ message LoginResponse {
   string refresh_token = 4;
   string user_id = 5;
   string email = 6;
+  Account account = 7;
 }
 message Account {
   string email = 1;
