@@ -353,12 +353,54 @@ func (s *AccountService) DeleteAccount(ctx context.Context, req *account.DeleteU
 
 // AUTH SERVICES
 func (s *AccountService) LoginUser(ctx context.Context, req *account.LoginRequest) (*account.LoginResponse, error) {
-	tok, err := s.Auth.LoginUserToDb(req.Email, req.Password)
-	if err != nil {
-		s.Logger.Error("Authentication failed: %v", err)
+	var (
+		res *account.AccountResponse
+		err error
+		wg  sync.WaitGroup
+	)
+
+	errCh := make(chan error, 1)
+
+	tok, authErr := s.Auth.LoginUserToDb(req.Email, req.Password)
+	if authErr != nil {
+		s.Logger.Error("Authentication failed: %v", authErr)
 		return nil, status.Errorf(codes.Unauthenticated, "Invalid email or password")
 	}
-	// TODO: Return all of the user data
+	if tok == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Authentication failed: empty response")
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		emailReq := &account.EmailRequest{Email: req.Email}
+		res, err = s.GetAccountByEmail(ctx, emailReq)
+		if err != nil {
+			errCh <- status.Errorf(codes.Internal, "Failed to fetch Account: %v", err)
+		}
+	}()
+
+	wg.Wait()
+	close(errCh)
+
+	if err = <-errCh; err != nil {
+		return nil, err
+	}
+
+	// Construct account data
+	acc := &account.Account{
+		Email:         res.Account.Email,
+		FullName:      res.Account.FullName,
+		PhoneNumber:   res.Account.PhoneNumber,
+		Address:       res.Account.Address,
+		AccountType:   res.Account.AccountType,
+		AccountNumber: res.Account.AccountNumber,
+		HasCard:       res.Account.HasCard,
+		Balance:       res.Account.Balance,
+		DateCreated:   res.Account.DateCreated,
+	}
+
+	// Return the response
 	return &account.LoginResponse{
 		AccessToken:  tok.AccessToken,
 		TokenType:    tok.TokenType,
@@ -366,5 +408,6 @@ func (s *AccountService) LoginUser(ctx context.Context, req *account.LoginReques
 		ExpiresIn:    int32(tok.ExpiresIn),
 		UserId:       tok.User.ID,
 		Email:        tok.User.Email,
+		Account:      acc,
 	}, nil
 }

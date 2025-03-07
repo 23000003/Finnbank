@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -149,10 +150,17 @@ func (s *AuthService) LoginUserToDb(email, password string) (*AuthResponse, erro
 		return nil, fmt.Errorf("failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("authentication failed: %s", string(body))
+	}
 	// Decoding response into AuthResponse
 	var token AuthResponse
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+	if token.AccessToken == "" {
+		return nil, fmt.Errorf("authentication failed: empty access token")
 	}
 
 	return &token, nil
