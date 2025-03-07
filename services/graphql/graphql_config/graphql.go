@@ -15,10 +15,12 @@ import (
 type StructGraphQL struct {
 	h types.IGraphQLHandlers
 	s types.StructGrpcServiceConnections
+	log *utils.Logger
 }
 
-func NewGraphQL(h types.IGraphQLHandlers) *StructGraphQL {
+func NewGraphQL(log *utils.Logger, h types.IGraphQLHandlers) *StructGraphQL {
 	return &StructGraphQL{
+		log: log,
 		h: h,
 		s: types.StructGrpcServiceConnections{
 			ProductServer:      ":9000",
@@ -31,9 +33,9 @@ func NewGraphQL(h types.IGraphQLHandlers) *StructGraphQL {
 	}
 }
 
-func (gql *StructGraphQL) ConfigureGraphQLHandlers(log *utils.Logger) {
+func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 
-	log.Info("Configuring GraphQL Handlers...")
+	gql.log.Info("Configuring GraphQL Handlers...")
 
 	productHandler := gql.h.ProductServicesHandler(gql.s.ProductServer)
 	accountHandler := gql.h.AccountServicesHandler(gql.s.AccountServer)
@@ -57,6 +59,6 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers(log *utils.Logger) {
 	http.Handle("/playground/transaction", playground.Handler("Transaction GraphQL Playground", "/graphql/transaction"))
 	http.Handle("/playground/notification", playground.Handler("Notification GraphQL Playground", "/graphql/notification"))
 
-	log.Info("Configured GraphQL Handlers")
+	gql.log.Info("Configured GraphQL Handlers")
 
 }

@@ -1,10 +1,20 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin"
-    "finnbank/services/common/utils"
-    "finnbank/services/api-gateway/routers"
+	"finnbank/services/api-gateway/routers"
+	"finnbank/services/api-gateway/services"
+	"finnbank/services/common/utils"
+	"github.com/gin-gonic/gin"
+    "github.com/gin-contrib/cors"
 )
+
+func CorsMiddleware(r *gin.Engine) {
+	r.Use(cors.New(cors.Config{
+        AllowOrigins:     []string{"http://localhost:3000"},
+        AllowMethods:     []string{"*"},
+        AllowCredentials: true,
+    }))
+}
 
 func main() {
     router := gin.New()
@@ -14,11 +24,15 @@ func main() {
     }
     logger.Info("Starting the application...")
 
-    // router group with base path for each services (to identify the service)
+    
     serviceAPI := router.Group("/api")
     {
-        // Use the group for your routes
-        routers.GatewayRouter(serviceAPI)
+        serviceAPI.GET("/health", HealthCheck)
+        serviceAPI.GET("/graphql-health", GraphQLAPIHealthCheck)
+        
+        apiServices := services.NewApiGatewayServices(logger)
+        gatewayRouters := routers.NewGatewayRouter(logger, serviceAPI, apiServices)
+        gatewayRouters.ConfigureGatewayRouter()
     }
     
     logger.Info("Server running on http://localhost:8080")
