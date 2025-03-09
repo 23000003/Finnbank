@@ -22,8 +22,13 @@ func CorsMiddleware() *cors.Cors {
 func InitializeGraphQL(logger *utils.Logger) {
 	graphql_resolvers := resolvers.NewGraphQLResolvers(logger)
 	graphql_handlers := handlers.NewGraphQLServicesHandler(logger, graphql_resolvers)
-	graphql := graphql_config.NewGraphQL(graphql_handlers)
-    	graphql.ConfigureGraphQLHandlers(logger)
+	graphql := graphql_config.NewGraphQL(logger, graphql_handlers)
+	graphql.ConfigureGraphQLHandlers()
+}
+
+func ApiHealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Graphql API is OK."))
 }
 
 func main() {
@@ -38,7 +43,9 @@ func main() {
 
 	logger.Info("Server running on http://localhost:8083")
 
-    corsHandler := CorsMiddleware().Handler(http.DefaultServeMux)
+	corsHandler := CorsMiddleware().Handler(http.DefaultServeMux)
+
+	http.HandleFunc("/graphql/health", ApiHealthCheck)
 	err = http.ListenAndServe(":8083", corsHandler)
 
 	if err != nil {
