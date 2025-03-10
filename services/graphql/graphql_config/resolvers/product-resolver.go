@@ -85,11 +85,9 @@ func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.Prod
 						Info: info,
 						Price: price,
 					})
-					s.log.Info("Response: %v", res)
-					s.log.Info("Error: %v", err)
 
 					if err != nil {
-						return nil, err // returns: "message": "rpc error: code = Unknown desc = product with name 'a Kaoala' already exists",
+						return nil, err
 					}
 					return res.Product, nil
 				},
