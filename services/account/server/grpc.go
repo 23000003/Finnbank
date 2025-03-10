@@ -23,15 +23,12 @@ func GrpcServer(s service.AccountService, logger *utils.Logger) error {
 	logger.Info("Port 8082 listening success")
 	grpcServer := grpc.NewServer()
 	account.RegisterAccountServiceServer(grpcServer, &s)
-
-	// Graceful Shutdown Handling
-	// Definitely didnt copy this from stackoverflow :D
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-c
-		logger.Info("Shutting down gRPC server...")
+		logger.Warn("Shutting down gRPC server...")
 		grpcServer.GracefulStop()
 		lis.Close()
 		os.Exit(0)
