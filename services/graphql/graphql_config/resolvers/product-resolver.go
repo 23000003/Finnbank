@@ -2,9 +2,9 @@ package resolvers
 
 import (
 	"finnbank/services/common/grpc/products"
+
 	"github.com/graphql-go/graphql"
 )
-
 
 func (s *StructGraphQLResolvers) GetProductQueryType(prodServer products.ProductServiceClient) *graphql.Object {
 	return graphql.NewObject(
@@ -23,7 +23,7 @@ func (s *StructGraphQLResolvers) GetProductQueryType(prodServer products.Product
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						id, ok := p.Args["id"].(int)
 						if ok {
-						    // Call gRPC product service
+							// Call gRPC product service
 							res, err := prodServer.GetByIdProduct(p.Context, &products.ProductByIdRequest{
 								ID: int64(id),
 							})
@@ -37,7 +37,7 @@ func (s *StructGraphQLResolvers) GetProductQueryType(prodServer products.Product
 					Type:        graphql.NewList(productType),
 					Description: "Get product list",
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						
+
 						// Call gRPC product service
 						res, err := prodServer.GetAllProducts(p.Context, &products.GetAllProductsRequest{
 							Message: "HEY",
@@ -52,14 +52,13 @@ func (s *StructGraphQLResolvers) GetProductQueryType(prodServer products.Product
 		})
 }
 
-
 func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.ProductServiceClient) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
 			/* Create new product item
-				http://localhost:8083/graphql/product?query=mutation+_{create(name:"a Kaoala",info:"Inca on verbena (wiki)",price:1.99){id,name,info,price}}			
-				// */
+			http://localhost:8083/graphql/product?query=mutation+_{create(name:"a Kaoala",info:"Inca on verbena (wiki)",price:1.99){id,name,info,price}}
+			// */
 			"create": &graphql.Field{
 				Type:        productType,
 				Description: "Create new product",
@@ -81,8 +80,8 @@ func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.Prod
 
 					// Call gRPC product service
 					res, err := prodServer.CreateProduct(params.Context, &products.CreateProductRequest{
-						Name: name,
-						Info: info,
+						Name:  name,
+						Info:  info,
 						Price: price,
 					})
 
@@ -92,7 +91,7 @@ func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.Prod
 					return res.Product, nil
 				},
 			},
-	
+
 			/* Update product by id
 			   http://localhost:8083/graphql/product?query=mutation+_{update(id:1,price:3.95){id,name,info,price}}
 			*/
@@ -119,14 +118,11 @@ func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.Prod
 					// info, infoOk := params.Args["info"].(string)
 					// price, priceOk := params.Args["price"].(float64)
 					// product := Product{}
-					
-					
+
 					// Call gRPC product service
-	
+
 					// Too lazy to implement since this is just tests
 					//  but just the same concept if u understand it :)
-
-
 
 					// for i, p := range products {
 					// 	if int64(id) == p.ID {
@@ -146,7 +142,7 @@ func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.Prod
 					return nil, nil
 				},
 			},
-	
+
 			/* Delete product by id
 			   http://localhost:8083/graphql/product?query=mutation+_{delete(id:1){id,name,info,price}}
 			*/
@@ -169,11 +165,10 @@ func (s *StructGraphQLResolvers) GetProductMutationType(prodServer products.Prod
 					// 	}
 					// }
 
-
 					// Call gRPC product service
 					// Too lazy to implement since this is just tests
 					//  but just the same concept if u understand it :)
-	
+
 					return nil, nil
 				},
 			},

@@ -6,6 +6,7 @@ import (
 	"finnbank/services/graphql/graphql_config/handlers"
 	"finnbank/services/graphql/graphql_config/resolvers"
 	"net/http"
+
 	"github.com/rs/cors"
 )
 
@@ -38,7 +39,7 @@ func main() {
 		panic(err)
 	}
 	logger.Info("Starting the application...")
-	
+
 	InitializeGraphQL(logger)
 
 	logger.Info("Server running on http://localhost:8083")

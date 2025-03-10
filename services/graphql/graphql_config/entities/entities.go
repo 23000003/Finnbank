@@ -4,7 +4,6 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-
 func GetProductEntityType() *graphql.Object {
 	return graphql.NewObject(
 		graphql.ObjectConfig{
@@ -26,7 +25,6 @@ func GetProductEntityType() *graphql.Object {
 		},
 	)
 }
-
 
 func GetAccountEntityType() *graphql.Object {
 	return graphql.NewObject(
@@ -50,9 +48,6 @@ func GetAccountEntityType() *graphql.Object {
 				},
 				"date_created": &graphql.Field{
 					Type: graphql.DateTime,
-				},
-				"bank_card_id": &graphql.Field{
-					Type: graphql.Int,
 				},
 				"account_number": &graphql.Field{
 					Type: graphql.String,
@@ -129,7 +124,6 @@ func GetTransactionEntityType() *graphql.Object {
 		},
 	)
 }
-
 
 func GetNotificationEntityType() *graphql.Object {
 	return graphql.NewObject(
