@@ -19,7 +19,8 @@ func InitDb(ctx context.Context) (*pgx.Conn, error) {
 	if err != nil {
 		logger.Warn("Can't find Environment Variables")
 	}
-
+	// LOCAL_DB_URL <-- LOCAL Database
+	// ACC_DATABASE_URL <-- PROD Database
 	dbURL := os.Getenv("LOCAL_DB_URL")
 	if dbURL == "" {
 		logger.Fatal("ACC_DATABASE_URL is missing")

@@ -35,7 +35,9 @@ func main() {
 		logger.Fatal("Error connecting to Db: %v", err)
 	}
 	defer database.Close(ctx)
-	auth := &middleware.AuthService{}
+	auth := &middleware.AuthService{
+		DB: database,
+	}
 	accountService := service.AccountService{
 		DB:                                database,
 		Logger:                            logger,

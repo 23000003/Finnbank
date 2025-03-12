@@ -171,6 +171,48 @@ func (s *AccountService) GetAccountByEmail(ctx context.Context, req *account.Ema
 	}, nil
 
 }
+func (s *AccountService) UpdatePassword(ctx context.Context, req *account.UpdatePasswordRequest) (*account.UpdatePasswordResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	authUser, err := s.Auth.GetUserAuth(ctx, req.AuthId)
+	if err != nil {
+		s.Logger.Error("Failed to fetch user: %v", err)
+		return nil, status.Errorf(codes.NotFound, "User not found")
+	}
+	isValid, err := s.Auth.VerifyPassword(authUser.EnryptedPass, req.OldPassword)
+	if err != nil || !isValid {
+		s.Logger.Error("Invalid old password: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "Invalid old password")
+	}
+
+	newPasswordHash, err := s.Auth.HashPassword(req.NewPassword)
+	if err != nil {
+		s.Logger.Error("Failed to hash new password: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error hashing new password")
+	}
+
+	updateQuery := `UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2`
+	_, err = s.DB.Exec(ctx, updateQuery, newPasswordHash, req.AuthId)
+	if err != nil {
+		s.Logger.Error("Failed to update password: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error updating password")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing password update")
+	}
+	// Return Message here
+	return &account.UpdatePasswordResponse{
+		Success: true,
+		Message: "Password updated successfully",
+	}, nil
+}
 
 // Update Account
 // PARAMS: account number, fullname, phone number, address
@@ -406,7 +448,7 @@ func (s *AccountService) LoginUser(ctx context.Context, req *account.LoginReques
 		TokenType:    tok.TokenType,
 		RefreshToken: tok.RefreshToken,
 		ExpiresIn:    int32(tok.ExpiresIn),
-		UserId:       tok.User.ID,
+		AuthId:       tok.User.ID,
 		Email:        tok.User.Email,
 		Account:      acc,
 	}, nil
