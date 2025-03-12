@@ -9,6 +9,7 @@ service AccountService {
   rpc GetAccountByEmail (EmailRequest) returns (AccountResponse);
   rpc UpdateAccount (UpdateRequest) returns (AccountResponse);
   rpc UpdateCardStatus(CardUpdateRequest) returns (CardUpdateResponse);
+  rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse);
   rpc DeleteAccount (DeleteUserRequest) returns (DeleteUserResponse);
   rpc AddAccount (AddAccountRequest) returns (AddAccountResponse);
   rpc LoginUser(LoginRequest) returns (LoginResponse);
@@ -27,7 +28,7 @@ message LoginResponse {
   string token_type = 2;
   int32 expires_in = 3;
   string refresh_token = 4;
-  string user_id = 5;
+  string auth_id = 5;
   string email = 6;
   Account account = 7;
 }
@@ -66,6 +67,16 @@ message CardUpdateRequest {
 }
 message CardUpdateResponse {
   string status = 1;
+}
+message UpdatePasswordRequest {
+  string auth_id = 1; // Identifier for the account
+  string old_password = 2;   
+  string new_password = 3;  
+}
+
+message UpdatePasswordResponse {
+  bool success = 1;          // Indicates if the update was successful
+  string message = 2;        // Additional message (e.g., error details)
 }
 
 message DeleteUserRequest {
