@@ -24,6 +24,7 @@ const (
 	AccountService_GetAccountByEmail_FullMethodName = "/AccountService/GetAccountByEmail"
 	AccountService_UpdateAccount_FullMethodName     = "/AccountService/UpdateAccount"
 	AccountService_UpdateCardStatus_FullMethodName  = "/AccountService/UpdateCardStatus"
+	AccountService_UpdatePassword_FullMethodName    = "/AccountService/UpdatePassword"
 	AccountService_DeleteAccount_FullMethodName     = "/AccountService/DeleteAccount"
 	AccountService_AddAccount_FullMethodName        = "/AccountService/AddAccount"
 	AccountService_LoginUser_FullMethodName         = "/AccountService/LoginUser"
@@ -38,6 +39,7 @@ type AccountServiceClient interface {
 	GetAccountByEmail(ctx context.Context, in *EmailRequest, opts ...grpc.CallOption) (*AccountResponse, error)
 	UpdateAccount(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*AccountResponse, error)
 	UpdateCardStatus(ctx context.Context, in *CardUpdateRequest, opts ...grpc.CallOption) (*CardUpdateResponse, error)
+	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*UpdatePasswordResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	AddAccount(ctx context.Context, in *AddAccountRequest, opts ...grpc.CallOption) (*AddAccountResponse, error)
 	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
@@ -101,6 +103,16 @@ func (c *accountServiceClient) UpdateCardStatus(ctx context.Context, in *CardUpd
 	return out, nil
 }
 
+func (c *accountServiceClient) UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*UpdatePasswordResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdatePasswordResponse)
+	err := c.cc.Invoke(ctx, AccountService_UpdatePassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteUserResponse)
@@ -140,6 +152,7 @@ type AccountServiceServer interface {
 	GetAccountByEmail(context.Context, *EmailRequest) (*AccountResponse, error)
 	UpdateAccount(context.Context, *UpdateRequest) (*AccountResponse, error)
 	UpdateCardStatus(context.Context, *CardUpdateRequest) (*CardUpdateResponse, error)
+	UpdatePassword(context.Context, *UpdatePasswordRequest) (*UpdatePasswordResponse, error)
 	DeleteAccount(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	AddAccount(context.Context, *AddAccountRequest) (*AddAccountResponse, error)
 	LoginUser(context.Context, *LoginRequest) (*LoginResponse, error)
@@ -167,6 +180,9 @@ func (UnimplementedAccountServiceServer) UpdateAccount(context.Context, *UpdateR
 }
 func (UnimplementedAccountServiceServer) UpdateCardStatus(context.Context, *CardUpdateRequest) (*CardUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCardStatus not implemented")
+}
+func (UnimplementedAccountServiceServer) UpdatePassword(context.Context, *UpdatePasswordRequest) (*UpdatePasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePassword not implemented")
 }
 func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
@@ -288,6 +304,24 @@ func _AccountService_UpdateCardStatus_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_UpdatePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).UpdatePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_UpdatePassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).UpdatePassword(ctx, req.(*UpdatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteUserRequest)
 	if err := dec(in); err != nil {
@@ -368,6 +402,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateCardStatus",
 			Handler:    _AccountService_UpdateCardStatus_Handler,
+		},
+		{
+			MethodName: "UpdatePassword",
+			Handler:    _AccountService_UpdatePassword_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",
