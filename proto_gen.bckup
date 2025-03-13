@@ -2,8 +2,8 @@
 
 @echo off
 
-start protoc --proto_path=protobuf "protobuf/<fileName ex. product>.proto" ^
-    --go_out=services/common/grpc/<directoryName ex. product> ^
+start protoc --proto_path=.protobuf ".protobuf/<fileName ex. product>.proto" ^
+    --go_out=common/grpc/<directoryName ex. product> ^
     --go_opt=paths=source_relative ^
-    --go-grpc_out=services/common/grpc/<directoryName ex. product> ^
+    --go-grpc_out=common/grpc/<directoryName ex. product> ^
     --go-grpc_opt=paths=source_relative
