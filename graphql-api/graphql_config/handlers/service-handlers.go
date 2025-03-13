@@ -3,8 +3,8 @@ package handlers
 import (
 	"finnbank/common/grpc/products"
 	"finnbank/common/utils"
-	"finnbank/internal-services/graphql-api/graphql_config/resolvers"
-	"finnbank/internal-services/graphql-api/grpc_client"
+	"finnbank/graphql-api/graphql_config/resolvers"
+	"finnbank/graphql-api/grpc_client"
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"

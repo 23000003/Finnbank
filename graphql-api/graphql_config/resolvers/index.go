@@ -2,7 +2,7 @@ package resolvers
 
 import (
 	"finnbank/common/utils"
-	"finnbank/internal-services/graphql-api/graphql_config/entities"
+	"finnbank/graphql-api/graphql_config/entities"
 
 	"github.com/graphql-go/graphql"
 )

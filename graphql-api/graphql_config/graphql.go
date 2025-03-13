@@ -6,7 +6,7 @@ package graphql_config
 
 import (
 	"finnbank/common/utils"
-	"finnbank/internal-services/graphql-api/types"
+	"finnbank/graphql-api/types"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/playground"

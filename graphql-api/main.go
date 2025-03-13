@@ -2,9 +2,9 @@ package main
 
 import (
 	"finnbank/common/utils"
-	"finnbank/internal-services/graphql-api/graphql_config"
-	"finnbank/internal-services/graphql-api/graphql_config/handlers"
-	"finnbank/internal-services/graphql-api/graphql_config/resolvers"
+	"finnbank/graphql-api/graphql_config"
+	"finnbank/graphql-api/graphql_config/handlers"
+	"finnbank/graphql-api/graphql_config/resolvers"
 	"net/http"
 
 	"github.com/rs/cors"
