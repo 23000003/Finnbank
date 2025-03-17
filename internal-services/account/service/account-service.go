@@ -1,262 +1,459 @@
 package service
 
 import (
-	"crypto/rand"
-	"encoding/json"
+	"context"
+	"finnbank/common/grpc/account"
 	"finnbank/common/utils"
-	"math/big"
-	"net/http"
+	"finnbank/internal-services/account/helpers"
+	"finnbank/internal-services/account/middleware"
+	"sync"
+	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/supabase-community/auth-go"
-	"github.com/supabase-community/auth-go/types"
-	"github.com/supabase-community/supabase-go"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AccountService struct {
-	Client *supabase.Client
-	Auth   auth.Client
+	DB     *pgx.Conn
 	Logger *utils.Logger
+	Auth   *middleware.AuthService
+	Grpc   account.AccountServiceServer
+	account.UnimplementedAccountServiceServer
 }
 
-type Account struct {
-	Email       string `json:"email"`
-	Full_Name   string `json:"full_name"`
-	Phone       string `json:"phone_number"`
-	Password    string `json:"password"`
-	Address     string `json:"address"`
-	AccountType string `json:"account_type"`
+// Create New Account
+// PARAMS:  email, fullname, password, address, account type
+// This shit is getting out of hand so i will have to move some of this code somewhere else
+// FUTURE: add concurrency if some of these queries will be moved
+func (s *AccountService) AddAccount(ctx context.Context, req *account.AddAccountRequest) (*account.AddAccountResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+	res, err := s.Auth.SignUpUserToDb(req.Email, req.Password)
+	if err != nil {
+		s.Logger.Error("Authentication failed: %v", err)
+		return nil, status.Errorf(codes.Canceled, "Invalid email or password")
+	}
+	var authID string = res.User.ID
+	if authID == "" {
+		s.Logger.Error("Empty authID: %v", authID)
+		return nil, status.Errorf(codes.Internal, "Auth Error")
+	}
+	userID, err := helpers.GenAccNum()
+	if err != nil {
+		s.Logger.Error("Failed to Generate Account Number: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error generating account number: %v", err)
+	}
+	accQuery := `
+	INSERT INTO account (email, full_name, phone_number, account_number, address, account_type, auth_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`
+	_, err = tx.Exec(ctx, accQuery, req.Email, req.FullName, req.PhoneNumber, userID, req.Address, req.AccountType, authID)
+	if err != nil {
+		s.Logger.Error("Failed to Create User in table: %v", err)
+		return nil, status.Error(codes.Internal, "Error creating user")
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
+	return &account.AddAccountResponse{
+		Email:         req.Email,
+		FullName:      req.FullName,
+		PhoneNumber:   req.PhoneNumber,
+		Address:       req.Address,
+		AccountType:   req.AccountType,
+		AccountNumber: userID,
+	}, nil
 }
 
-// @Summary Get accounts
-// @Description Fetch all accounts
-// @Tags accounts
-// @Produce json
-// @Success 200 {array} Account
-// @Router /accounts [get]
-func (s *AccountService) GetAccounts(c *gin.Context) {
-	var accGot []Account
-	data, count, err := s.Client.From("account").Select("*", "exact", false).Execute()
-	s.Logger.Debug("%s", string(data))
-	if err != nil || count == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": data})
-		return
+// Fetch Account
+// PARAMS:  account number
+// FUTURE: I think i'll have to make another version of this where i use the email instead of the account number
+func (s *AccountService) GetAccountById(ctx context.Context, req *account.AccountRequest) (*account.AccountResponse, error) {
+	var (
+		email, fullName, phoneNumber, address, accountType, accountNumber string
+		hasCard                                                           bool
+		dateCreated                                                       time.Time
+	)
+
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
 	}
-	if err := json.Unmarshal(data, &accGot); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse data", "details": err.Error()})
+	defer tx.Rollback(ctx)
+
+	accQuery := `
+	SELECT email, full_name, phone_number, address, account_type, account_number, has_card, date_created
+	FROM account WHERE account_number = $1;
+	`
+
+	err = tx.QueryRow(ctx, accQuery, req.AccountNumber).Scan(
+		&email, &fullName, &phoneNumber, &address, &accountType, &accountNumber, &hasCard, &dateCreated,
+	)
+	if err != nil {
+		s.Logger.Error("Failed to Fetch Account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error fetching account from DB: %v", err)
 	}
-	c.IndentedJSON(http.StatusOK, accGot)
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
+	gotAcc := &account.Account{
+		Email:         email,
+		FullName:      fullName,
+		PhoneNumber:   phoneNumber,
+		Address:       address,
+		AccountType:   accountType,
+		AccountNumber: accountNumber,
+		HasCard:       hasCard,
+		DateCreated:   timestamppb.New(dateCreated),
+	}
+
+	return &account.AccountResponse{
+		Account: gotAcc,
+	}, nil
 }
 
-// @Summary Get an account by ID
-// @Description Fetch an account using the account number
-// @Tags accounts
-// @Produce json
-// @Param acc_num path string true "Account Number"
-// @Success 200 {object} Account
-// @Failure 400 {object} map[string]string "Invalid request"
-// @Failure 404 {object} map[string]string "Account not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /fetch-acc/{acc_num} [get]
-func (s *AccountService) GetAccoutById(c *gin.Context) {
-	accNum := c.Param("acc_num")
-	var accGot []Account
-	s.Logger.Debug("%s", accNum)
-	response, count, err := s.Client.From("account").
-		Select("*", "exact", false).
-		Eq("account_number", accNum).
-		Execute()
+// Fetch Account
+// PARAMS: email
+func (s *AccountService) GetAccountByEmail(ctx context.Context, req *account.EmailRequest) (*account.AccountResponse, error) {
+	var (
+		email, fullName, phoneNumber, address, accountType, accountNumber string
+		hasCard                                                           bool
+		dateCreated                                                       time.Time
+	)
+	tx, err := s.DB.Begin(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch account"})
-		return
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
 	}
-	if count == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Account does not exist"})
-		return
-	}
-	if err := json.Unmarshal(response, &accGot); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse data", "details": err.Error()})
-	}
-	c.IndentedJSON(http.StatusOK, accGot[0])
-}
+	defer tx.Rollback(ctx)
 
-// @Summary Update HasCard field
-// @Description Updates the has_card attribute of an account using account_number
-// @Tags accounts
-// @Accept json
-// @Produce json
-// @Param acc_num path string true "Account Number"
-// @Param request body map[string]bool true "Updated has_card value"
-// @Success 200 {object} map[string]interface{} "Account updated OK"
-// @Failure 400 {object} map[string]string "Invalid request"
-// @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /update_acc/{acc_num} [patch]
-func (s *AccountService) UpdateHasCard(c *gin.Context) {
-	accountNum := c.Param("acc_num")
-	var updateData map[string]interface{}
-	s.Logger.Debug("%s", accountNum)
-
-	if s.Client == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database client not initialized"})
-		return
-	}
-
-	if err := c.ShouldBindJSON(&updateData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid Server Request " + err.Error()})
-		return
-	}
-
-	response, count, err := s.Client.From("account").
-		Update(updateData, "", "exact").Eq("account_number", accountNum).
-		Execute()
+	accQuery := `SELECT email, full_name, phone_number, address, account_type, account_number, has_card, date_created
+	FROM account WHERE email = $1;
+	`
+	err = tx.QueryRow(ctx, accQuery, req.Email).Scan(
+		&email, &fullName, &phoneNumber, &address, &accountType, &accountNumber, &hasCard, &dateCreated,
+	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed updating account " + err.Error()})
-		return
+		s.Logger.Error("Could not Fetch account from Db: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error Fetching from DB: %v", err)
 	}
-	if count == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Could not find account "})
-		return
-	}
-	var updatedAcc []Account
-	err = json.Unmarshal(response, &updatedAcc)
+
+	err = tx.Commit(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse data", "details": err.Error()})
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Account Updated Succesfully", "response": updatedAcc})
+	gotAcc := &account.Account{
+		Email:         email,
+		FullName:      fullName,
+		PhoneNumber:   phoneNumber,
+		Address:       address,
+		AccountType:   accountType,
+		AccountNumber: accountNumber,
+		HasCard:       hasCard,
+		DateCreated:   timestamppb.New(dateCreated),
+	}
+
+	return &account.AccountResponse{
+		Account: gotAcc,
+	}, nil
 
 }
-
-// @Summary Delete a user
-// @Description Deletes a user from the "account" table and removes them from Supabase Auth.
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param email path string true "User Email"
-// @Success 200 {object} map[string]string "Successfully deleted user"
-// @Failure 400 {object} map[string]string "Invalid request"
-// @Failure 404 {object} map[string]string "User not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /delete-user/{email} [delete]
-func (s *AccountService) DeleteUser(c *gin.Context) {
-
-	email, exists := c.Get("email")
-
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "UUID not found in context"})
-		c.Abort()
-		return
-	}
-
-	res, _, err := s.Client.From("account").
-		Delete("", "exact").
-		Eq("email", email.(string)).
-		Execute()
+func (s *AccountService) UpdatePassword(ctx context.Context, req *account.UpdatePasswordRequest) (*account.UpdatePasswordResponse, error) {
+	tx, err := s.DB.Begin(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed Deleting Account: " + err.Error()})
-		return
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	authUser, err := s.Auth.GetUserAuth(ctx, req.AuthId)
+	if err != nil {
+		s.Logger.Error("Failed to fetch user: %v", err)
+		return nil, status.Errorf(codes.NotFound, "User not found")
+	}
+	isValid, err := s.Auth.VerifyPassword(authUser.EnryptedPass, req.OldPassword)
+	if err != nil || !isValid {
+		s.Logger.Error("Invalid old password: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "Invalid old password")
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Deleted User successfully: ", "response": string(res)})
+	newPasswordHash, err := s.Auth.HashPassword(req.NewPassword)
+	if err != nil {
+		s.Logger.Error("Failed to hash new password: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error hashing new password")
+	}
+
+	updateQuery := `UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2`
+	_, err = s.DB.Exec(ctx, updateQuery, newPasswordHash, req.AuthId)
+	if err != nil {
+		s.Logger.Error("Failed to update password: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error updating password")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing password update")
+	}
+	// Return Message here
+	return &account.UpdatePasswordResponse{
+		Success: true,
+		Message: "Password updated successfully",
+	}, nil
+}
+
+// Update Account
+// PARAMS: account number, fullname, phone number, address
+func (s *AccountService) UpdateAccount(ctx context.Context, req *account.UpdateRequest) (*account.AccountResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	updateQuery := `
+		UPDATE account
+		SET full_name = $1, phone_number = $2, address = $3
+		WHERE account_number = $4;
+	`
+	result, err := tx.Exec(ctx, updateQuery, req.FullName, req.PhoneNumber, req.Address, req.AccountNumber)
+	if err != nil {
+		s.Logger.Error("Could not Update account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error updating account: %v", err)
+	}
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+	accReq := &account.AccountRequest{
+		AccountNumber: req.AccountNumber,
+	}
+
+	res, err := s.GetAccountById(ctx, accReq)
+	if err != nil {
+		s.Logger.Error("Could not Fetch newly updated account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error fetching updated account: %v", err)
+	}
+	acc := &account.Account{
+		Email:         res.Account.Email,
+		FullName:      res.Account.FullName,
+		PhoneNumber:   res.Account.PhoneNumber,
+		Address:       res.Account.Address,
+		AccountType:   res.Account.AccountType,
+		AccountNumber: res.Account.AccountNumber,
+		HasCard:       res.Account.HasCard,
+		Balance:       res.Account.Balance,
+		DateCreated:   res.Account.DateCreated,
+	}
+	return &account.AccountResponse{
+		Account: acc,
+	}, nil
+}
+
+func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.CardUpdateRequest) (*account.CardUpdateResponse, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+	// TODO: Account Validation if User already has a card
+
+	updateQuery := `
+		UPDATE account
+		SET has_card = 'TRUE'
+		WHERE account_number = $1;
+	`
+	res, err := tx.Exec(ctx, updateQuery, req.AccountNumber)
+	if err != nil {
+		s.Logger.Error("Could not Update card status in DB: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error updating card status: %v", err)
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
+	return &account.CardUpdateResponse{
+		Status: "Sucessfully Updated Card Status",
+	}, nil
+}
+
+// TODO: DELETE ROUTES
+
+// FUTURE: Will have to move this somewhere else
+func (s *AccountService) DeleteFromAuth(ctx context.Context, req uuid.UUID) (string, error) {
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return "Could not Connect to Db", status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	deleteQuery := `
+		DELETE FROM auth.users
+		WHERE id = $1;
+	`
+	res, err := tx.Exec(ctx, deleteQuery, req)
+	if err != nil {
+		s.Logger.Error("Could not delete from auth : %v", err)
+		return "Error deleting row in auth", status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with uuid: %s", req)
+		return "No Account Found", status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return "Error Committing Db transaction", status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+
+	return "Successfully Deleted account from Auth", nil
 
 }
 
-// @Summary Register an account
-// @Description Create a new account
-// @Tags accounts
-// @Accept json
-// @Produce json
-// @Param request body Account true "Account data"
-// @Success 201 {object} Account
-// @Failure 400 {object} map[string]string
-// @Router /register [post]
-func (s *AccountService) AddAccount(c *gin.Context) {
-	var newAcc Account
-	if err := c.ShouldBindJSON(&newAcc); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON request", "details": err.Error()})
-		return
-	}
-	if !dataCheck(newAcc) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Missing data"})
-		return
-	}
-	accNum, err := generateAccountNumber(s.Client)
+func (s *AccountService) DeleteAccount(ctx context.Context, req *account.DeleteUserRequest) (*account.DeleteUserResponse, error) {
+	tx, err := s.DB.Begin(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate account number"})
+		s.Logger.Error("Could not start DB Transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
+	}
+	defer tx.Rollback(ctx)
+	var UUID uuid.UUID
+	uuidQuery := `SELECT auth_id FROM account WHERE account_number = $1;`
+	err = tx.QueryRow(ctx, uuidQuery, req.AccountNumber).Scan(&UUID)
+	if err != nil {
+		s.Logger.Error("Could not fetch UUID for account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
 	}
 
-	authRes, err := s.Auth.Signup(types.SignupRequest{
-		Email:    newAcc.Email,
-		Password: newAcc.Password,
-		Data: map[string]interface{}{
-			"account_number": accNum,
-			"phone":          newAcc.Phone,
-		},
-	})
+	deleteQuery := `
+		DELETE FROM account
+		WHERE account_number = $1;
+	`
+	res, err := tx.Exec(ctx, deleteQuery, req.AccountNumber)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user in Auth: " + err.Error()})
-		return
+		s.Logger.Error("Could not Delete account: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error deleting account in DB: %v", err)
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		s.Logger.Error("No account found with account_number: %s", req.AccountNumber)
+		return nil, status.Errorf(codes.NotFound, "No account found with the given account number")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.Logger.Error("Transaction commit failed: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error finalizing account creation")
+	}
+	var wg sync.WaitGroup
+	var authDeleteErr error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_, authDeleteErr = s.DeleteFromAuth(ctx, UUID)
+	}()
+
+	wg.Wait()
+
+	if authDeleteErr != nil {
+		s.Logger.Error("Could not delete from Auth: %v", authDeleteErr)
+		return nil, status.Errorf(codes.Internal, "Error deleting from Auth: %v", authDeleteErr)
 	}
 
-	accountData := map[string]interface{}{
-		"email":          newAcc.Email,
-		"full_name":      newAcc.Full_Name,
-		"phone_number":   newAcc.Phone,
-		"has_card":       false,
-		"account_number": accNum,
-		"address":        newAcc.Address,
-		"balance":        0.00,
-		"account_type":   newAcc.AccountType,
-	}
-	response, count, err := s.Client.From("account").
-		Insert(accountData, false, "", "", "exact").
-		Execute()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if count == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No account was inserted"})
-		return
-	}
-	var insertedAcc []Account
-	err = json.Unmarshal(response, &insertedAcc)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response " + err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Account created successfully", "account": insertedAcc, "user": authRes})
+	return &account.DeleteUserResponse{
+		Message: "Successfully Deleted Account",
+	}, nil
 }
 
-func generateAccountNumber(client *supabase.Client) (string, error) {
-	for {
-		num, err := rand.Int(rand.Reader, big.NewInt(9999999999999999))
+// AUTH SERVICES
+func (s *AccountService) LoginUser(ctx context.Context, req *account.LoginRequest) (*account.LoginResponse, error) {
+	var (
+		res *account.AccountResponse
+		err error
+		wg  sync.WaitGroup
+	)
+
+	errCh := make(chan error, 1)
+
+	tok, authErr := s.Auth.LoginUserToDb(req.Email, req.Password)
+	if authErr != nil {
+		s.Logger.Error("Authentication failed: %v", authErr)
+		return nil, status.Errorf(codes.Unauthenticated, "Invalid email or password")
+	}
+	if tok == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Authentication failed: empty response")
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		emailReq := &account.EmailRequest{Email: req.Email}
+		res, err = s.GetAccountByEmail(ctx, emailReq)
 		if err != nil {
-			return "", err
+			errCh <- status.Errorf(codes.Internal, "Failed to fetch Account: %v", err)
 		}
+	}()
 
-		accountNum := num.String()
+	wg.Wait()
+	close(errCh)
 
-		for len(accountNum) < 16 {
-			accountNum = "0" + accountNum
-		}
-
-		_, count, err := client.From("account").Select("account_number", "exact", false).Eq("account_number", accountNum).Execute()
-		if err != nil {
-			return "", err
-		}
-
-		if count == 0 {
-			return accountNum, nil
-		}
+	if err = <-errCh; err != nil {
+		return nil, err
 	}
-}
 
-func dataCheck(account Account) bool {
-	return account.Email != "" &&
-		account.Full_Name != "" &&
-		account.Phone != "" &&
-		account.Password != "" &&
-		account.AccountType != ""
+	// Construct account data
+	acc := &account.Account{
+		Email:         res.Account.Email,
+		FullName:      res.Account.FullName,
+		PhoneNumber:   res.Account.PhoneNumber,
+		Address:       res.Account.Address,
+		AccountType:   res.Account.AccountType,
+		AccountNumber: res.Account.AccountNumber,
+		HasCard:       res.Account.HasCard,
+		Balance:       res.Account.Balance,
+		DateCreated:   res.Account.DateCreated,
+	}
+
+	// Return the response
+	return &account.LoginResponse{
+		AccessToken:  tok.AccessToken,
+		TokenType:    tok.TokenType,
+		RefreshToken: tok.RefreshToken,
+		ExpiresIn:    int32(tok.ExpiresIn),
+		AuthId:       tok.User.ID,
+		Email:        tok.User.Email,
+		Account:      acc,
+	}, nil
 }
