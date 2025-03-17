@@ -52,14 +52,17 @@ func GetAccountEntityType() *graphql.Object {
 				"account_number": &graphql.Field{
 					Type: graphql.String,
 				},
+				"has_card": &graphql.Field{
+					Type: graphql.Boolean,
+				},
 				"address": &graphql.Field{
 					Type: graphql.String,
 				},
 				"balance": &graphql.Field{
-					Type: graphql.Int,
+					Type: graphql.Float,
 				},
 				"account_type": &graphql.Field{
-					Type: graphql.EnumValueType,
+					Type: graphql.String,
 				},
 			},
 		},
