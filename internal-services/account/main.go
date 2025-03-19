@@ -4,8 +4,8 @@ import (
 	"context"
 	"finnbank/common/grpc/account"
 	"finnbank/common/utils"
+	"finnbank/internal-services/account/auth"
 	"finnbank/internal-services/account/db"
-	"finnbank/internal-services/account/middleware"
 	"finnbank/internal-services/account/server"
 	"finnbank/internal-services/account/service"
 	"sync"
@@ -35,7 +35,7 @@ func main() {
 		logger.Fatal("Error connecting to Db: %v", err)
 	}
 	defer database.Close(ctx)
-	auth := &middleware.AuthService{
+	auth := &auth.AuthService{
 		DB: database,
 	}
 	accountService := service.AccountService{
