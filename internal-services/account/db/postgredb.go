@@ -1,44 +1,37 @@
 package db
 
 import (
+	"context"
 	"finnbank/common/utils"
 	"os"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
-	"github.com/supabase-community/auth-go"
-	"github.com/supabase-community/supabase-go"
 )
 
-/**
-	Supabase Connection string not client for postgre db
-	since sir wants us to use use pressly for migrations
-	dont use local postgredb since it will conflict our ports and stuffs
-**/
-
-func SupabaseInit() (*supabase.Client, auth.Client) {
-	// var local_url string = "LOCAL_DB_URL"
-	// var local_key string = "LOCAL_DB_KEY"
+func InitDb(ctx context.Context) (*pgx.Conn, error) {
 	logger, err1 := utils.NewLogger()
 	if err1 != nil {
 		panic(err1)
 	}
-	var super_key string = "SERVICE_ROLE_KEY"
+
 	err := godotenv.Load()
 	if err != nil {
-		logger.Fatal("Missing env files")
+		logger.Warn("Can't find Environment Variables")
 	}
-	url := os.Getenv("DB_URL")
-	key := os.Getenv(super_key)
-	auth_url := os.Getenv("AUTH_DB_URL")
-	if url == "" || key == "" || auth_url == "" {
-		logger.Fatal("Supabase URL and Keys missing")
+	// LOCAL_DB_URL <-- LOCAL Database
+	// ACC_DATABASE_URL <-- PROD Database
+	dbURL := os.Getenv("LOCAL_DB_URL")
+	if dbURL == "" {
+		logger.Fatal("ACC_DATABASE_URL is missing")
 	}
-	client, err := supabase.NewClient(url, key, &supabase.ClientOptions{})
-	authClient := auth.New(auth_url, key)
+	logger.Info(dbURL)
 
+	conn, err := pgx.Connect(ctx, dbURL)
 	if err != nil {
-		logger.Fatal("Failed to initialize Supabase client: %v", err)
+		logger.Fatal("Failed to connect to PostgreSQL: %v", err)
+		return nil, err
 	}
-
-	return client, authClient
+	logger.Info("Successfully connected to PostgreSQL")
+	return conn, nil
 }
