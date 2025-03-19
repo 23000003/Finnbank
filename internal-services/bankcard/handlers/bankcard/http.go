@@ -24,7 +24,7 @@ func CreateCardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bankservice := services.bankcard{}
+	bankservice := bankcard.CreateCardHandler{}
 	newCard := bankservice.CreateCard(Request.Account_holder, Request.Account_number, Request.birthdate, Request.uuid)
 
 	if err := db.SaveCard(newCard); err != nil {
