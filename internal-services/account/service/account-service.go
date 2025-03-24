@@ -4,6 +4,7 @@ import (
 	"context"
 	"finnbank/common/grpc/account"
 	"finnbank/common/utils"
+	"finnbank/internal-services/account/auth"
 	"finnbank/internal-services/account/helpers"
 	middleware "finnbank/internal-services/account/account_service"
 	"sync"
@@ -19,7 +20,7 @@ import (
 type AccountService struct {
 	DB     *pgx.Conn
 	Logger *utils.Logger
-	Auth   *middleware.AuthService
+	Auth   *auth.AuthService
 	Grpc   account.AccountServiceServer
 	account.UnimplementedAccountServiceServer
 }
