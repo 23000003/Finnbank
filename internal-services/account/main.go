@@ -6,7 +6,6 @@ import (
 	"finnbank/common/utils"
 	"finnbank/internal-services/account/auth"
 	"finnbank/internal-services/account/db"
-	middleware "finnbank/internal-services/account/auth_service"
 	"finnbank/internal-services/account/server"
 	"finnbank/internal-services/account/service"
 	"sync"
