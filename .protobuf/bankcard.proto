@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "finnbank/common/grpc/bankcard";
+
+service BankcardService {
+  rpc ReqestingBankcard (ClientRequest) returns (ClientResponse) {}
+}
+
+message ClientRequest {
+    int64 uuid = 1;
+    string fullname = 2;
+}
+
+message ClientResponse {
+    string response_message = 1;
+}
