@@ -5,7 +5,7 @@ import (
 	"finnbank/common/grpc/account"
 	"finnbank/common/utils"
 	"finnbank/internal-services/account/helpers"
-	"finnbank/internal-services/account/middleware"
+	middleware "finnbank/internal-services/account/account_service"
 	"sync"
 	"time"
 

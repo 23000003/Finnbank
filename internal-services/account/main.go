@@ -5,7 +5,7 @@ import (
 	"finnbank/common/grpc/account"
 	"finnbank/common/utils"
 	"finnbank/internal-services/account/db"
-	"finnbank/internal-services/account/middleware"
+	middleware "finnbank/internal-services/account/auth_service"
 	"finnbank/internal-services/account/server"
 	"finnbank/internal-services/account/service"
 	"sync"
