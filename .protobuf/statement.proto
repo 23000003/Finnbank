@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option go_package = "finnbank/common/grpc/statement";
+
+service StatementService {
+    rpc AddStatement (AddStatementRequest) returns (AddStatementResponse);
+}
+
+message Transaction {
+    int32 ref_no = 1;
+    string sender = 2;
+    string receiver = 3;
+    string transaction_type = 4; // Withdraw, Deposit
+    double amount = 5;
+    string date_of_transaction = 6;
+}
+
+message Statement {
+    string account_number = 1;
+    string name = 2;
+    string statement_date = 3;
+    double current_balance = 4;
+    double balance = 5;
+    repeated Transaction transactions = 6;
+}
+
+message AddStatementRequest {
+    string account_number = 1;
+    string statement_date = 2;
+    string start_date = 3;
+    string end_date = 4;
+}
+
+message AddStatementResponse {
+    bool success = 1;
+    Statement statement = 2;
+}
+
+  
