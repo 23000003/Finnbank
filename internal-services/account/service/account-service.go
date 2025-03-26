@@ -280,7 +280,14 @@ func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.Card
 		return nil, status.Errorf(codes.Internal, "Error starting DB: %v", err)
 	}
 	defer tx.Rollback(ctx)
-	// TODO: Account Validation if User already has a card
+	var cardStatus bool
+	// Account Validation if User already has a card
+	validationQuery := `SELECT has_card FROM account WHERE account_number = $1`
+	err = tx.QueryRow(ctx, validationQuery, req.AccountNumber).Scan(&cardStatus)
+	if err != nil {
+		s.Logger.Error("User already has card: %v", err)
+		return nil, status.Errorf(codes.Internal, "Error, user already has card: %v", err)
+	}
 
 	updateQuery := `
 		UPDATE account
@@ -307,6 +314,7 @@ func (s *AccountService) UpdateCardStatus(ctx context.Context, req *account.Card
 		Status: "Sucessfully Updated Card Status",
 	}, nil
 }
+// TODO: UpdateBalance
 
 // TODO: DELETE ROUTES
 

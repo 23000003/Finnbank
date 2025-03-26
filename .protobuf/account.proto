@@ -10,6 +10,7 @@ service AccountService {
   rpc UpdateAccount (UpdateRequest) returns (AccountResponse);
   rpc UpdateCardStatus(CardUpdateRequest) returns (CardUpdateResponse);
   rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse);
+  rpc UpdateBalance (UpdateBalanceRequest) returns (UpdateBalanceResponse);
   rpc DeleteAccount (DeleteUserRequest) returns (DeleteUserResponse);
   rpc AddAccount (AddAccountRequest) returns (AddAccountResponse);
   rpc LoginUser(LoginRequest) returns (LoginResponse);
@@ -78,7 +79,16 @@ message UpdatePasswordResponse {
   bool success = 1;          // Indicates if the update was successful
   string message = 2;        // Additional message (e.g., error details)
 }
-
+message UpdateBalanceRequest{
+  string auth_id = 1;
+  string account_number = 2;
+  double old_balance = 3;
+  double new_balance = 4;
+}
+message UpdateBalanceResponse{
+  double updated_balance = 1;
+  string message = 2;
+}
 message DeleteUserRequest {
   string account_number = 1;
 }
