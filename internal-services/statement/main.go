@@ -1,7 +1,10 @@
 package main
 
 import (
+	"finnbank/common/grpc/statement"
 	"finnbank/common/utils"
+	"finnbank/internal-services/statement/server"
+	"finnbank/internal-services/statement/service"
 )
 
 func main() {
@@ -11,5 +14,15 @@ func main() {
 	}
 	logger.Info("Starting the application...")
 
-	RunHttpServer(logger)
+	statementService := service.StatementService{
+		Logger:                              logger,
+		UnimplementedStatementServiceServer: statement.UnimplementedStatementServiceServer{},
+	}
+
+	logger.Info("Starting the server...")
+	logger.Info("Server running on localhost:8084")
+	err = server.StartGrpcServer(statementService, logger)
+	if err != nil {
+		logger.Fatal("Failed to start gRPC server")
+	}
 }

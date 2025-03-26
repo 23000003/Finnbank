@@ -4,6 +4,7 @@ option go_package = "finnbank/common/grpc/statement";
 
 service StatementService {
     rpc AddStatement (AddStatementRequest) returns (AddStatementResponse);
+    rpc GetStatement (GetStatementRequest) returns (GetStatementResponse);
 }
 
 message Transaction {
@@ -36,4 +37,12 @@ message AddStatementResponse {
     Statement statement = 2;
 }
 
-  
+message GetStatementRequest {
+    string account_number = 1;
+    string statement_date = 2;
+    string format = 3; // for file types like --> pdf, csv
+}
+
+message GetStatementResponse {
+    Statement statement = 1;
+}
