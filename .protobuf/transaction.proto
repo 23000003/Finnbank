@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "finnbank/common/grpc/transaction";
+
+service TransactionService {
+    rpc CreateTransaction(TransactionRequest) returns (TransactionResponse){}
+    rpc GetTransaction(TransactionByRefRequest) returns (TransactionDetails){}
+  }
+
+  message Transaction {
+    string ref_no = 1;
+    string sender_id = 2;
+    string reciever = 3;
+    string transaction_type = 4;
+    google.protobuf.Timestamp date_created = 5;
+  }
+
+message TransactionRequest {
+    string sender_id = 1;
+    string reciever_id = 2;
+    string transaction_type = 3;
+    float amount = 4;
+    google.protobuf.Timestamp dateRequested = 5;
+}
+
+message TransactionResponse {
+    string ref_no = 1;
+    string status = 2;
+}
+
+message TransactionByRefRequest {
+    string ref_no = 1;
+    string acc_number = 2;
+}
+
+message TransactionDetails{
+    Transaction transaction = 1;
+    float amount = 2;
+}
