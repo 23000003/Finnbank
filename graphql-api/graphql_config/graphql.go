@@ -38,7 +38,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 	gql.log.Info("Configuring GraphQL Handlers...")
 
 	productHandler := gql.h.ProductServicesHandler(gql.s.ProductServer)
-	accountHandler := gql.h.AccountServicesHandler(gql.s.AccountServer)
+	accountHandler := gql.h.AccountServicesHandler()
 	bankCardHandler := gql.h.BankCardServicesHandler(gql.s.BankCardServer)
 	statementHandler := gql.h.StatementServicesHandler(gql.s.StatementServer)
 	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer)

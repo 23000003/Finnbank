@@ -1,14 +1,14 @@
 package resolvers
 
 import (
-	"finnbank/common/grpc/account"
 	"fmt"
 
 	"github.com/graphql-go/graphql"
+	"github.com/jackc/pgx/v5"
 )
 
-// FUTURE: GET THIS DONE
-func (s *StructGraphQLResolvers) GetAccountQueryType(accServer account.AccountServiceClient) *graphql.Object {
+// THEN REPLACE RESOLVER LOGIC WITH THE HELPERS
+func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Object {
 	return graphql.NewObject(
 		graphql.ObjectConfig{
 			Name: "Query",
@@ -22,18 +22,18 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(accServer account.AccountSe
 						},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						acc_num, ok := p.Args["account_number"].(string)
-						if ok {
-							res, err := accServer.GetAccountById(p.Context, &account.AccountRequest{
-								AccountNumber: acc_num,
-							})
+						// acc_num, ok := p.Args["account_number"].(string)
+						// if ok {
+						// 	res, err := accServer.GetAccountById(p.Context, &account.AccountRequest{
+						// 		AccountNumber: acc_num,
+						// 	})
 
-							if err != nil {
-								s.log.Error("gRPC server error: %v", err)
-								return nil, fmt.Errorf("gRPC error occured: %v", err)
-							}
-							return res.Account, err
-						}
+						// 	if err != nil {
+						// 		s.log.Error("gRPC server error: %v", err)
+						// 		return nil, fmt.Errorf("gRPC error occured: %v", err)
+						// 	}
+						// 	return res.Account, err
+						// }
 						return nil, fmt.Errorf("account_number argument is required and must be a string")
 					},
 				},
@@ -46,26 +46,24 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(accServer account.AccountSe
 						},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						email, ok := p.Args["email"].(string)
-						if ok {
-							res, err := accServer.GetAccountByEmail(p.Context, &account.EmailRequest{
-								Email: email,
-							})
-							if err != nil {
-								s.log.Error("gRPC server error: %v", err)
-								return nil, fmt.Errorf("gRPC error occured: %v", err)
-							}
-							return res.Account, err
-						}
+						// email, ok := p.Args["email"].(string)
+						// if ok {
+						// 	res, err := accServer.GetAccountByEmail(p.Context, &account.EmailRequest{
+						// 		Email: email,
+						// 	})
+						// 	if err != nil {
+						// 		s.log.Error("gRPC server error: %v", err)
+						// 		return nil, fmt.Errorf("gRPC error occured: %v", err)
+						// 	}
+						// 	return res.Account, err
+						// }
 						return nil, fmt.Errorf("email argument is required and must be a string")
 					},
 				},
-				// FUTRURE: ADD MORE RESOLVERS
 			},
 		})
 }
 
-// FUTURE: ADD THIS SHIT
-func (s *StructGraphQLResolvers) GetAccountMutationType(accServer account.AccountServiceClient) *graphql.Object {
+func (s *StructGraphQLResolvers) GetAccountMutationType(DB *pgx.Conn) *graphql.Object {
 	return nil
 }
