@@ -1,4 +1,4 @@
-package handlers
+package db
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func NewDbHandler(ctx context.Context) (*pgx.Conn, error) {
+func NewAccountDB(ctx context.Context) (*pgx.Conn, error) {
 	logger, err1 := utils.NewLogger()
 	if err1 != nil {
 		panic(err1)

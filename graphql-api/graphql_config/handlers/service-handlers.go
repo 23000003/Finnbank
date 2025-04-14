@@ -6,7 +6,7 @@ import (
 	"finnbank/common/utils"
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"finnbank/graphql-api/grpc_client"
-
+	"finnbank/graphql-api/db"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 )
@@ -53,7 +53,7 @@ func (g *StructGraphQLHandler) ProductServicesHandler(connAddress string) *handl
 
 func (g *StructGraphQLHandler) AccountServicesHandler() *handler.Handler {
 	ctx := context.Background()
-	db, _ := NewDbHandler(ctx)
+	db, _ := db.NewAccountDB(ctx)
 	accountSchema, err := graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query:    g.r.GetAccountQueryType(db),
