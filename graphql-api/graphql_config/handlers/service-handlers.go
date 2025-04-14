@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	"finnbank/common/grpc/account"
+	"context"
 	"finnbank/common/grpc/products"
 	"finnbank/common/utils"
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"finnbank/graphql-api/grpc_client"
-
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
@@ -23,8 +22,6 @@ func NewGraphQLServicesHandler(l *utils.Logger, r *resolvers.StructGraphQLResolv
 		r: r,
 	}
 }
-
-
 
 func (g *StructGraphQLHandler) ProductServicesHandler(connAddress string) *handler.Handler {
 
@@ -51,18 +48,16 @@ func (g *StructGraphQLHandler) ProductServicesHandler(connAddress string) *handl
 	return productHandler
 }
 
-// ================== Below have no Protobuf yet (will wait for u if ur assigned to it)==================
-// UPDATE: ADDED MINE, WILL HAVE THE REST LEFT BLANK FOR THEM - SEP
+// HIGHLIGHT
+// Instead of adding gRPC here, initialize DB connector add pass it to the Query and Mutations
 
-func (g *StructGraphQLHandler) AccountServicesHandler(connAddress string) *handler.Handler {
-
-	grpcConnection := grpc_client.NewGRPCClient(connAddress)
-	accServer := account.NewAccountServiceClient(grpcConnection)
-
+func (g *StructGraphQLHandler) AccountServicesHandler() *handler.Handler {
+	ctx := context.Background()
+	db, _ := NewDbHandler(ctx)
 	accountSchema, err := graphql.NewSchema(
 		graphql.SchemaConfig{
-			Query:    g.r.GetAccountQueryType(accServer),
-			Mutation: g.r.GetAccountMutationType(accServer),
+			Query:    g.r.GetAccountQueryType(db),
+			Mutation: g.r.GetAccountMutationType(db),
 		},
 	)
 	if err != nil {
