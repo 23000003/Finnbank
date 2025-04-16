@@ -2,47 +2,34 @@ package main
 
 import (
 	"context"
-	"finnbank/common/grpc/account"
+	"finnbank/Dont-Touch-Anymore/account/auth"
+	"finnbank/Dont-Touch-Anymore/account/db"
+	"finnbank/Dont-Touch-Anymore/account/server"
+	"finnbank/Dont-Touch-Anymore/account/service"
+	pb "finnbank/common/grpc/auth"
 	"finnbank/common/utils"
-	"finnbank/internal-services/account/auth"
-	"finnbank/internal-services/account/db"
-	"finnbank/internal-services/account/server"
-	"finnbank/internal-services/account/service"
 	"sync"
 )
 
-/*Transfer http configuration to http.go*/
-// 	router := gin.New()
-// serviceAPI := router.Group("/api/account") // base path
-// handlers.AccountRouter(serviceAPI, accountService)
-
-//	if err := router.Run("localhost:8082"); err != nil {
-//		logger.Fatal("Failed to start server: %v", err)
-//	}
-
-// I'll transfer allat later, too lazy for it atm
 func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	ctx := context.Background()
 	logger, err := utils.NewLogger()
 	if err != nil {
 		panic(err)
 	}
-
-	database, err := db.InitDb(ctx)
+	db, err := db.ConnectToDb(context.Background())
+	accountService := service.AuthService{
+		Logger: logger,
+		DB:     db,
+		Helper: &auth.AuthHelpers{
+			DB: db,
+		},
+		UnimplementedAuthServiceServer: pb.UnimplementedAuthServiceServer{},
+	}
 	if err != nil {
-		logger.Fatal("Error connecting to Db: %v", err)
-	}
-	defer database.Close(ctx)
-	auth := &auth.AuthService{
-		DB: database,
-	}
-	accountService := service.AccountService{
-		DB:                                database,
-		Logger:                            logger,
-		Auth:                              auth,
-		UnimplementedAccountServiceServer: account.UnimplementedAccountServiceServer{},
+		logger.Fatal("Failed to connect to database")
+		return
 	}
 	go func() {
 		if err := server.GrpcServer(accountService, logger); err != nil {
