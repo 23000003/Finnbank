@@ -127,28 +127,25 @@ func GetBankCardEntityType() *graphql.Object {
 //			},
 //		)
 //	}
+var transactionType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "Transaction",
+	Fields: graphql.Fields{
+		"transaction_id":     &graphql.Field{Type: graphql.String},
+		"ref_no":             &graphql.Field{Type: graphql.String},
+		"sender_id":          &graphql.Field{Type: graphql.String},
+		"receiver_id":        &graphql.Field{Type: graphql.String},
+		"transaction_type":   &graphql.Field{Type: graphql.String},
+		"amount":             &graphql.Field{Type: graphql.Int},
+		"transaction_status": &graphql.Field{Type: graphql.String},
+		"date_transaction":   &graphql.Field{Type: graphql.DateTime},
+		"transaction_fee":    &graphql.Field{Type: graphql.Int},
+		"notes":              &graphql.Field{Type: graphql.String},
+	},
+})
+
+// 2️⃣ Getter just returns the shared var
 func GetTransactionEntityType() *graphql.Object {
-	return graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "Transaction",
-			Fields: graphql.Fields{
-				"transaction_id": &graphql.Field{Type: graphql.String},
-				"ref_no":         &graphql.Field{Type: graphql.String},
-				"sender_id":      &graphql.Field{Type: graphql.String},
-				"receiver_id":    &graphql.Field{Type: graphql.String},
-				"transaction_type": &graphql.Field{
-					Type: graphql.String,
-				},
-				"amount": &graphql.Field{Type: graphql.Int},
-				"transaction_status": &graphql.Field{
-					Type: graphql.String,
-				},
-				"date_transaction": &graphql.Field{Type: graphql.DateTime},
-				"transaction_fee":  &graphql.Field{Type: graphql.Int},
-				"notes":            &graphql.Field{Type: graphql.String},
-			},
-		},
-	)
+	return transactionType
 }
 func GetNotificationEntityType() *graphql.Object {
 	return graphql.NewObject(
