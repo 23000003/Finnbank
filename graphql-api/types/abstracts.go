@@ -11,4 +11,5 @@ type IGraphQLHandlers interface {
 	NotificationServicesHandler(connAddress string) *handler.Handler
 	StatementServicesHandler(connAddress string) *handler.Handler
 	TransactionServicesHandler(connAddress string) *handler.Handler
+	OpenedAccountServicesHandler(connAddress string) *handler.Handler
 }
