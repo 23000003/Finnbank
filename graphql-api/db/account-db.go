@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 )
 
 func NewAccountDB(ctx context.Context) (*pgx.Conn, error) {
@@ -15,13 +14,14 @@ func NewAccountDB(ctx context.Context) (*pgx.Conn, error) {
 		panic(err1)
 	}
 
-	err := godotenv.Load()
-	if err != nil {
-		logger.Warn("Can't find Environment Variables")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	logger.Warn("Can't find Environment Variables")
+	// }
 	// LOCAL_DB_URL <-- LOCAL Database
 	// ACC_DATABASE_URL <-- PROD Database
-	dbURL := os.Getenv("LOCAL_DB_URL")
+
+	dbURL := os.Getenv("ACC_DATABASE_URL")
 	if dbURL == "" {
 		logger.Fatal("ACC_DATABASE_URL is missing")
 	}

@@ -7,6 +7,7 @@ import (
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"net/http"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
@@ -39,6 +40,11 @@ func main() {
 		panic(err)
 	}
 	logger.Info("Starting the application...")
+
+	err = godotenv.Load()
+	if err != nil {
+		logger.Warn("Can't find Environment Variables")
+	}
 
 	InitializeGraphQL(logger)
 
