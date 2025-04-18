@@ -171,3 +171,34 @@ func GetNotificationEntityType() *graphql.Object {
 		},
 	)
 }
+
+func GetOpenedAccountEntityType() *graphql.Object {
+	return graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "OpenedAccount",
+			Fields: graphql.Fields{
+				"openedaccount_id": &graphql.Field{
+					Type: graphql.Int,
+				},
+				"account_id": &graphql.Field{
+					Type: graphql.Int,
+				},
+				"bankcard_id": &graphql.Field{
+					Type: graphql.Int,
+				},
+				"account_type": &graphql.Field{
+					Type: graphql.String,
+				},
+				"balance": &graphql.Field{
+					Type: graphql.Float,
+				},
+				"openedaccount_status": &graphql.Field{
+					Type: graphql.String,
+				},
+				"date_created": &graphql.Field{
+					Type: graphql.DateTime,
+				},
+			},
+		},
+	)
+}

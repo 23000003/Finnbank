@@ -2,13 +2,12 @@ package resolvers
 
 import (
 	"fmt"
-
+	sv "finnbank/graphql-api/services"
 	"github.com/graphql-go/graphql"
-	"github.com/jackc/pgx/v5"
 )
 
 // THEN REPLACE RESOLVER LOGIC WITH THE HELPERS
-func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Object {
+func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountService) *graphql.Object {
 	return graphql.NewObject(
 		graphql.ObjectConfig{
 			Name: "Query",
@@ -64,6 +63,6 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Obje
 		})
 }
 
-func (s *StructGraphQLResolvers) GetAccountMutationType(DB *pgx.Conn) *graphql.Object {
+func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountService) *graphql.Object {
 	return nil
 }
