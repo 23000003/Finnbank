@@ -1,9 +1,10 @@
 package routers
 
 import (
-	"finnbank/common/utils"
 	"finnbank/api-gateway/middleware"
 	"finnbank/api-gateway/types"
+	"finnbank/common/utils"
+
 	"github.com/gin-gonic/gin"
 )
 

@@ -4,10 +4,14 @@ import (
 	"finnbank/common/grpc/account"
 	"finnbank/common/grpc/products"
 	"finnbank/common/utils"
+	"finnbank/graphql-api/db"
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"finnbank/graphql-api/grpc_client"
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 )
@@ -80,12 +84,26 @@ func (g *StructGraphQLHandler) AccountServicesHandler(connAddress string) *handl
 
 // >>>>>>>>>>>>>============= ADD HERE ========== <<<<<<<<<<<<<<
 
-func (g *StructGraphQLHandler) BankCardServicesHandler(connAddress string) *handler.Handler {
+func (g *StructGraphQLHandler) BankCardServicesHandler() *handler.Handler {
+	ctx := context.Background()
+	db, _ := db.NewBankCardDB(ctx)
 
-	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
-	// proto server
+	bankCardSchema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query:    g.r.GetBankCardQueryType(db),
+			Mutation: g.r.GetBankCardMutationType(db),
+		},
+	)
 
-	return nil
+	if err != nil {
+		g.l.Fatal("Failed to configure BankCard Handler Schema: %v", err)
+	}
+
+	return handler.New(&handler.Config{
+		Schema:   &bankCardSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
 }
 
 func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *handler.Handler {
