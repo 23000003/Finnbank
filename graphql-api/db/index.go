@@ -18,8 +18,8 @@ func InitializeServiceDatabases(logger *utils.Logger) *types.StructServiceDataba
 	NOTIFDBPool, err3 := newNotificationDB(ctx)
 	TRANSACDBPool, err4 := newTransactionDB(ctx)
 
-	if err != nil || err1 != nil || err2 != nil || err3 != err4 {
-		logger.Fatal("Failed to initialize database pools: %v, %v, %v, %v, %v", err, err1, err2, err3, err4)
+	if err != nil || err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		logger.Error("Failed to initialize database pools: %v, %v, %v, %v, %v", err, err1, err2, err3, err4)
 		return nil
 	}
 
