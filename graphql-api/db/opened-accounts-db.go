@@ -11,7 +11,7 @@ import (
 	"fmt"
 )
 
-func newBankcardDB(ctx context.Context) (*pgxpool.Pool, error) {
+func newOpenedAccountsDB(ctx context.Context) (*pgxpool.Pool, error) {
 	logger, err := utils.NewLogger()
 	if err != nil {
 		return nil, err
@@ -22,10 +22,10 @@ func newBankcardDB(ctx context.Context) (*pgxpool.Pool, error) {
 		logger.Warn("Can't find Environment Variables")
 	}
 
-	dbURL := os.Getenv("BANKCARD_DB_URL")
+	dbURL := os.Getenv("OPENED_ACC_DB_URL")
 	if dbURL == "" {
-		logger.Fatal("BANKCARD_DB_URL is missing")
-		return nil, fmt.Errorf("BANKCARD_DB_URL is missing")
+		logger.Fatal("OPENED_ACC_DB_URL is missing")
+		return nil, fmt.Errorf("OPENED_ACC_DB_URL is missing")
 	}
 
 	// Configure with forced simple protocol
@@ -57,6 +57,6 @@ func newBankcardDB(ctx context.Context) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	logger.Info("Bankcard Database Pool Initialized")
+	logger.Info("OA Database pool initialized with prepared statement protection.")
 	return pool, nil
 }

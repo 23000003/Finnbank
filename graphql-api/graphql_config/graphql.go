@@ -18,17 +18,19 @@ type StructGraphQL struct {
 	log *utils.Logger
 }
 
+// Keeping Grpc future purposes
 func NewGraphQL(log *utils.Logger, h types.IGraphQLHandlers) *StructGraphQL {
 	return &StructGraphQL{
 		log: log,
 		h:   h,
 		s: types.StructGrpcServiceConnections{
-			ProductServer:      ":9000",
-			BankCardServer:     ":9001",
-			AuthServer:         ":9002",
-			StatementServer:    ":9004",
-			TransactionServer:  ":9005",
-			NotificationServer: ":9006",
+			ProductServer:       ":9000",
+			BankCardServer:      ":9001",
+			AccountServer:       ":9002",
+			StatementServer:     ":9004",
+			TransactionServer:   ":9005",
+			NotificationServer:  ":9006",
+			OpenedAccountServer: ":9007",
 		},
 	}
 }
@@ -43,6 +45,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 	statementHandler := gql.h.StatementServicesHandler(gql.s.StatementServer)
 	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer)
 	notificationHandler := gql.h.NotificationServicesHandler(gql.s.NotificationServer)
+	openedAccountHandler := gql.h.OpenedAccountServicesHandler(gql.s.OpenedAccountServer)
 
 	http.Handle("/graphql/account", accountHandler)
 	http.Handle("/graphql/product", productHandler)
@@ -50,6 +53,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 	http.Handle("/graphql/statement", statementHandler)
 	http.Handle("/graphql/transaction", transactionHandler)
 	http.Handle("/graphql/notification", notificationHandler)
+	http.Handle("/graphql/opened-account", openedAccountHandler)
 
 	// For graphql query/mutation Testing
 	http.Handle("/playground/account", playground.Handler("Account GraphQL Playground", "/graphql/account"))
@@ -58,6 +62,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 	http.Handle("/playground/statement", playground.Handler("Statement GraphQL Playground", "/graphql/statement"))
 	http.Handle("/playground/transaction", playground.Handler("Transaction GraphQL Playground", "/graphql/transaction"))
 	http.Handle("/playground/notification", playground.Handler("Notification GraphQL Playground", "/graphql/notification"))
+	http.Handle("/playground/opened-account", playground.Handler("OpenedAccount GraphQL Playground", "/graphql/openedaccount"))
 
 	gql.log.Info("Configured GraphQL Handlers")
 

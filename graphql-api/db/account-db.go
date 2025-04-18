@@ -4,34 +4,59 @@ import (
 	"context"
 	"finnbank/common/utils"
 	"os"
-
+	"time"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"fmt"
 )
 
-func NewAccountDB(ctx context.Context) (*pgx.Conn, error) {
-	logger, err1 := utils.NewLogger()
-	if err1 != nil {
-		panic(err1)
+func newAccountDB(ctx context.Context) (*pgxpool.Pool, error) {
+	logger, err := utils.NewLogger()
+	if err != nil {
+		return nil, err
 	}
 
-	err := godotenv.Load()
+	err = godotenv.Load()
 	if err != nil {
 		logger.Warn("Can't find Environment Variables")
 	}
-	// LOCAL_DB_URL <-- LOCAL Database
-	// ACC_DATABASE_URL <-- PROD Database
-	dbURL := os.Getenv("ACC_DATABASE_URL")
-	if dbURL == "" {
-		logger.Fatal("ACC_DATABASE_URL is missing")
-	}
-	logger.Info(dbURL)
 
-	conn, err := pgx.Connect(ctx, dbURL)
+	dbURL := os.Getenv("ACCOUNT_DB_URL")
+	if dbURL == "" {
+		logger.Fatal("ACCOUNT_DB_URL is missing")
+		return nil, fmt.Errorf("ACCOUNT_DB_URL is missing")
+	}
+
+	// Configure with forced simple protocol
+	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
-		logger.Fatal("Failed to connect to PostgreSQL: %v", err)
 		return nil, err
 	}
-	logger.Info("Successfully connected to PostgreSQL")
-	return conn, nil
+
+	// Critical settings to prevent prepared statement conflicts
+	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	config.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		_, err := conn.Exec(ctx, "DISCARD ALL")
+		return err
+	}
+
+	// Pool settings
+	config.MaxConns = 10
+	config.MinConns = 2
+	config.MaxConnLifetime = 1 * time.Hour
+	config.MaxConnIdleTime = 30 * time.Minute
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify connection
+	if err := pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+
+	logger.Info("Account Database Pool Initialized")
+	return pool, nil
 }

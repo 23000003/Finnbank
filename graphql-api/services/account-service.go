@@ -1,5 +1,8 @@
 package services
 
+// Use this for resolvers business logic
+// Planning on putting helper functions here that can basically do CRUD to the DB
+
 import (
 	"context"
 	pb "finnbank/common/grpc/auth"
@@ -8,8 +11,23 @@ import (
 	"math/rand"
 	"time"
 
+	"finnbank/common/utils"
+
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type AccountService struct {
+	db *pgxpool.Pool
+	l  *utils.Logger
+}
+
+func NewAccountService(db *pgxpool.Pool, logger *utils.Logger) *AccountService {
+	return &AccountService{
+		db: db,
+		l:  logger,
+	}
+}
 
 // This just generates a random 16 digit account number
 // this works for now until i come up with a better solution
