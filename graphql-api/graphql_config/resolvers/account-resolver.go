@@ -1,8 +1,12 @@
 package resolvers
 
 import (
+	"finnbank/common/grpc/auth"
+	"finnbank/graphql-api/services"
+	"finnbank/graphql-api/types"
 	"fmt"
 
+	// "finnbank/graphql-api/db"
 	"github.com/graphql-go/graphql"
 	"github.com/jackc/pgx/v5"
 )
@@ -64,6 +68,52 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Obje
 		})
 }
 
-func (s *StructGraphQLResolvers) GetAccountMutationType(DB *pgx.Conn) *graphql.Object {
-	return nil
+func (s *StructGraphQLResolvers) GetAccountMutationType(DB *pgx.Conn, authServer auth.AuthServiceClient) *graphql.Object {
+	return graphql.NewObject(graphql.ObjectConfig{
+		Name: "Mutation",
+		Fields: graphql.Fields{
+			"create_account": &graphql.Field{
+				Type:        accountType,
+				Description: "Create a new account",
+				Args: graphql.FieldConfigArgument{
+					"account": &graphql.ArgumentConfig{
+						Type: types.AccountInputType,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (any, error) {
+					accountInput, ok := p.Args["account"].(map[string]any)
+					if !ok {
+						return nil, fmt.Errorf("invalid account input")
+					}
+					email, _ := accountInput["email"].(string)
+					password, _ := accountInput["password"].(string)
+					firstName, _ := accountInput["first_name"].(string)
+					lastName, _ := accountInput["last_name"].(string)
+					phoneNumber, _ := accountInput["phone_number"].(string)
+					address, _ := accountInput["address"].(string)
+					accountType, _ := accountInput["account_type"].(string)
+					nationality, _ := accountInput["nationality"].(string)
+					req := &types.AddAccountRequest{
+						Email:       email,
+						Password:    password,
+						FullName:    firstName + " " + lastName,
+						PhoneNumber: phoneNumber,
+						Address:     address,
+						AccountType: accountType,
+						Nationality: nationality,
+					}
+					account, err := services.CreateUser(&p.Context, req, DB, authServer)
+					if err != nil {
+						s.log.Error("Error creating account: %v", err)
+						return nil, fmt.Errorf("error creating account: %v", err)
+					}
+					s.log.Info("Account created successfully: %v", account.ID)
+
+					return account, nil
+				},
+			},
+			// can define a new Field here
+		},
+	})
+
 }

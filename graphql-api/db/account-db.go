@@ -21,7 +21,7 @@ func NewAccountDB(ctx context.Context) (*pgx.Conn, error) {
 	}
 	// LOCAL_DB_URL <-- LOCAL Database
 	// ACC_DATABASE_URL <-- PROD Database
-	dbURL := os.Getenv("LOCAL_DB_URL")
+	dbURL := os.Getenv("ACC_DATABASE_URL")
 	if dbURL == "" {
 		logger.Fatal("ACC_DATABASE_URL is missing")
 	}

@@ -3,7 +3,7 @@ package types
 type StructGrpcServiceConnections struct {
 	ProductServer      string
 	BankCardServer     string
-	AccountServer      string
+	AuthServer         string
 	StatementServer    string
 	TransactionServer  string
 	NotificationServer string

@@ -38,6 +38,6 @@ func main() {
 		}
 	}()
 	logger.Info("Starting the server...")
-	logger.Info("Server running on localhost:8082")
+	logger.Info("Server running on localhost:9002")
 	wg.Wait()
 }

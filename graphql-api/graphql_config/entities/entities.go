@@ -64,6 +64,9 @@ func GetAccountEntityType() *graphql.Object {
 				"account_type": &graphql.Field{
 					Type: graphql.String,
 				},
+				"auth_id": &graphql.Field{
+					Type: graphql.String,
+				},
 			},
 		},
 	)

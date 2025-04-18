@@ -25,7 +25,7 @@ func NewGraphQL(log *utils.Logger, h types.IGraphQLHandlers) *StructGraphQL {
 		s: types.StructGrpcServiceConnections{
 			ProductServer:      ":9000",
 			BankCardServer:     ":9001",
-			AccountServer:      ":9002",
+			AuthServer:         ":9002",
 			StatementServer:    ":9004",
 			TransactionServer:  ":9005",
 			NotificationServer: ":9006",
@@ -38,7 +38,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 	gql.log.Info("Configuring GraphQL Handlers...")
 
 	productHandler := gql.h.ProductServicesHandler(gql.s.ProductServer)
-	accountHandler := gql.h.AccountServicesHandler()
+	accountHandler := gql.h.AccountServicesHandler(gql.s.AuthServer)
 	bankCardHandler := gql.h.BankCardServicesHandler(gql.s.BankCardServer)
 	statementHandler := gql.h.StatementServicesHandler(gql.s.StatementServer)
 	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer)

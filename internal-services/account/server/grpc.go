@@ -15,12 +15,12 @@ import (
 // Set up grpc connection
 
 func GrpcServer(s service.AuthService, logger *utils.Logger) error {
-	lis, err := net.Listen("tcp", "localhost:8082")
+	lis, err := net.Listen("tcp", "localhost:9002")
 	if err != nil {
-		logger.Fatal("Could not start gRPC server on port 9000: %s", err)
+		logger.Fatal("Could not start gRPC server on port 9002: %s", err)
 		return err
 	}
-	logger.Info("Port 8082 listening success")
+	logger.Info("Port 9002 listening success")
 	grpcServer := grpc.NewServer()
 	auth.RegisterAuthServiceServer(grpcServer, &s)
 	c := make(chan os.Signal, 1)
