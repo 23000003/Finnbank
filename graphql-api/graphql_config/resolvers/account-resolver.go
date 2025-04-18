@@ -17,7 +17,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Obje
 		graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
-				"account_by_id": &graphql.Field{
+				"account_by_account_num": &graphql.Field{
 					Type:        accountType,
 					Description: "Get account by account number",
 					Args: graphql.FieldConfigArgument{
@@ -25,20 +25,19 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Obje
 							Type: graphql.String,
 						},
 					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						// acc_num, ok := p.Args["account_number"].(string)
-						// if ok {
-						// 	res, err := accServer.GetAccountById(p.Context, &account.AccountRequest{
-						// 		AccountNumber: acc_num,
-						// 	})
+					Resolve: func(p graphql.ResolveParams) (any, error) {
+						req, ok := p.Args["account_number"].(string)
+						if !ok {
+							return nil, fmt.Errorf("account_number argument is required and must be a string")
+						}
 
-						// 	if err != nil {
-						// 		s.log.Error("gRPC server error: %v", err)
-						// 		return nil, fmt.Errorf("gRPC error occured: %v", err)
-						// 	}
-						// 	return res.Account, err
-						// }
-						return nil, fmt.Errorf("account_number argument is required and must be a string")
+						res, err := services.FetchUserByAccountNumber(&p.Context, req, DB)
+						if err != nil {
+							s.log.Error("Error fetching account: %v", err)
+							return nil, fmt.Errorf("error fetching account: %v", err)
+						}
+						s.log.Info("Account fetched successfully: %v", res.Account.ID)
+						return res.Account, nil
 					},
 				},
 				"account_by_email": &graphql.Field{
@@ -49,19 +48,63 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(DB *pgx.Conn) *graphql.Obje
 							Type: graphql.String,
 						},
 					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						// email, ok := p.Args["email"].(string)
-						// if ok {
-						// 	res, err := accServer.GetAccountByEmail(p.Context, &account.EmailRequest{
-						// 		Email: email,
-						// 	})
-						// 	if err != nil {
-						// 		s.log.Error("gRPC server error: %v", err)
-						// 		return nil, fmt.Errorf("gRPC error occured: %v", err)
-						// 	}
-						// 	return res.Account, err
-						// }
-						return nil, fmt.Errorf("email argument is required and must be a string")
+					Resolve: func(p graphql.ResolveParams) (any, error) {
+						req, ok := p.Args["email"].(string)
+						if !ok {
+							return nil, fmt.Errorf("email argument is required and must be a string")
+						}
+
+						res, err := services.FetchUserByEmail(&p.Context, req, DB)
+						if err != nil {
+							s.log.Error("Error fetching account: %v", err)
+							return nil, fmt.Errorf("error fetching account: %v", err)
+						}
+						s.log.Info("Account fetched successfully: %v", res.Account.ID)
+						return res.Account, nil
+					},
+				},
+				"account_by_phone": &graphql.Field{
+					Type:        accountType,
+					Description: "Get account by phone number",
+					Args: graphql.FieldConfigArgument{
+						"phone_number": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (any, error) {
+						req, ok := p.Args["phone_number"].(string)
+						if !ok {
+							return nil, fmt.Errorf("phone_number argument is required and must be a string")
+						}
+						res, err := services.FetchUserByPhone(&p.Context, req, DB)
+						if err != nil {
+							s.log.Error("Error fetching account: %v", err)
+							return nil, fmt.Errorf("error fetching account: %v", err)
+						}
+						s.log.Info("Account fetched successfully: %v", res.Account.ID)
+						return res.Account, nil
+					},
+				},
+				"account_by_auth_id": &graphql.Field{
+					Type:        accountType,
+					Description: "Get account by phone number",
+					Args: graphql.FieldConfigArgument{
+						"auth_id": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (any, error) {
+						req, ok := p.Args["auth_id"].(string)
+						if !ok {
+							return nil, fmt.Errorf("auth_id argument is required and must be a string")
+						}
+						res, err := services.FetchUserByAuthID(&p.Context, req, DB)
+						if err != nil {
+							s.log.Error("Error fetching account: %v", err)
+							return nil, fmt.Errorf("error fetching account: %v", err)
+						}
+						s.log.Info("Account fetched successfully: %v", res.Account.ID)
+						return res.Account, nil
 					},
 				},
 			},
@@ -112,7 +155,34 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(DB *pgx.Conn, authServer
 					return account, nil
 				},
 			},
-			// can define a new Field here
+			"login": &graphql.Field{
+				Type:        types.AuthResponseType,
+				Description: "Login to an account",
+				Args: graphql.FieldConfigArgument{
+					"account": &graphql.ArgumentConfig{
+						Type: types.LoginInputType,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (any, error) {
+					loginInput, ok := p.Args["account"].(map[string]any)
+					if !ok {
+						return nil, fmt.Errorf("invalid account input")
+					}
+					email, _ := loginInput["email"].(string)
+					password, _ := loginInput["password"].(string)
+					req := &types.LoginRequest{
+						Email:    email,
+						Password: password,
+					}
+					res, err := services.Login(&p.Context, req, authServer)
+					if err != nil {
+						s.log.Error("Error logging in: %v", err)
+						return nil, fmt.Errorf("error logging in: %v", err)
+					}
+					s.log.Info("Login successful: %v", res.AuthID)
+					return res, nil
+				},
+			},
 		},
 	})
 

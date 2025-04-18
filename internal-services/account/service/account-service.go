@@ -8,6 +8,7 @@ import (
 	"finnbank/common/utils"
 	"finnbank/internal-services/account/auth"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -111,6 +112,11 @@ func (s *AuthService) LoginUser(c context.Context, in *pb.LoginRequest) (*pb.Aut
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		s.Logger.Error("login failed, status: %d, response: %s", resp.StatusCode, bodyBytes)
+		return nil, fmt.Errorf("login failed: %s", bodyBytes)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %v", err)
 	}

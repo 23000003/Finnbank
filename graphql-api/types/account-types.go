@@ -13,36 +13,33 @@ type LoginRequest struct {
 
 // LoginResponse represents a login response.
 type LoginResponse struct {
-	AccessToken  string  `json:"access_token"`
-	TokenType    string  `json:"token_type"`
-	ExpiresIn    int32   `json:"expires_in"`
-	RefreshToken string  `json:"refresh_token"`
-	AuthID       string  `json:"auth_id"`
-	Email        string  `json:"email"`
-	Account      Account `json:"account"`
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int32  `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	AuthID       string `json:"auth_id"`
+	Email        string `json:"email"`
 }
 
 // Account represents an account.
 type Account struct {
+	ID            string    `json:"account_id"`
 	Email         string    `json:"email"`
 	FullName      string    `json:"full_name"`
 	PhoneNumber   string    `json:"phone_number"`
 	Address       string    `json:"address"`
 	AccountType   string    `json:"account_type"`
 	AccountNumber string    `json:"account_number"`
+	AuthID        string    `json:"auth_id"`
 	HasCard       bool      `json:"has_card"`
 	Balance       float64   `json:"balance"`
 	DateCreated   time.Time `json:"date_created"`
+	DateUpdated   time.Time `json:"date_updated"`
+	Nationality   string    `json:"nationality"`
 }
 
-// AccountsResponse represents a response containing multiple accounts.
 type AccountsResponse struct {
 	Accounts []Account `json:"accounts"`
-}
-
-// AccountRequest represents a request for a specific account.
-type AccountRequest struct {
-	AccountNumber string `json:"account_number"`
 }
 
 // AccountResponse represents a response containing a single account.
@@ -147,6 +144,35 @@ var AccountInputType = graphql.NewInputObject(
 			"nationality": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
+		},
+	},
+)
+
+// using this for Login
+var LoginInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "LoginInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"email": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"password": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+
+var AuthResponseType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "AuthResponse",
+		Fields: graphql.Fields{
+			"access_token":  &graphql.Field{Type: graphql.String},
+			"token_type":    &graphql.Field{Type: graphql.String},
+			"expires_in":    &graphql.Field{Type: graphql.Int},
+			"refresh_token": &graphql.Field{Type: graphql.String},
+			"auth_id":       &graphql.Field{Type: graphql.String},
+			"email":         &graphql.Field{Type: graphql.String},
 		},
 	},
 )

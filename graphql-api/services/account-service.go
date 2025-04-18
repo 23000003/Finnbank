@@ -78,3 +78,127 @@ func CreateUser(ctx *context.Context, in *types.AddAccountRequest, DB *pgx.Conn,
 
 	return &res, nil
 }
+
+func FetchUserByAccountNumber(ctx *context.Context, req string, DB *pgx.Conn) (*types.AccountResponse, error) {
+	var acc types.Account
+	query := `
+		SELECT * FROM account WHERE account_number = $1
+	`
+	err := DB.QueryRow(*ctx, query, req).Scan(
+		&acc.ID,
+		&acc.AuthID,
+		&acc.Email,
+		&acc.FullName,
+		&acc.PhoneNumber,
+		&acc.HasCard,
+		&acc.AccountNumber,
+		&acc.Address,
+		&acc.Balance,
+		&acc.AccountType,
+		&acc.DateCreated,
+		&acc.DateUpdated,
+		&acc.Nationality,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &types.AccountResponse{Account: acc}, nil
+}
+
+func FetchUserByEmail(ctx *context.Context, req string, DB *pgx.Conn) (*types.AccountResponse, error) {
+	var acc types.Account
+	query := `
+		SELECT * FROM account WHERE email = $1
+	`
+	err := DB.QueryRow(*ctx, query, req).Scan(
+		&acc.ID,
+		&acc.AuthID,
+		&acc.Email,
+		&acc.FullName,
+		&acc.PhoneNumber,
+		&acc.HasCard,
+		&acc.AccountNumber,
+		&acc.Address,
+		&acc.Balance,
+		&acc.AccountType,
+		&acc.DateCreated,
+		&acc.DateUpdated,
+		&acc.Nationality,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &types.AccountResponse{Account: acc}, nil
+}
+
+func FetchUserByPhone(ctx *context.Context, req string, DB *pgx.Conn) (*types.AccountResponse, error) {
+	var acc types.Account
+	query := `
+		SELECT * FROM account WHERE phone_number = $1
+	`
+	err := DB.QueryRow(*ctx, query, req).Scan(
+		&acc.ID,
+		&acc.AuthID,
+		&acc.Email,
+		&acc.FullName,
+		&acc.PhoneNumber,
+		&acc.HasCard,
+		&acc.AccountNumber,
+		&acc.Address,
+		&acc.Balance,
+		&acc.AccountType,
+		&acc.DateCreated,
+		&acc.DateUpdated,
+		&acc.Nationality,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &types.AccountResponse{Account: acc}, nil
+}
+
+// Potentially build the user dashboard with this, since auth_id is passed during login
+func FetchUserByAuthID(ctx *context.Context, req string, DB *pgx.Conn) (*types.AccountResponse, error) {
+	var acc types.Account
+	query := `
+		SELECT * FROM account WHERE auth_id = $1
+	`
+	err := DB.QueryRow(*ctx, query, req).Scan(
+		&acc.ID,
+		&acc.AuthID,
+		&acc.Email,
+		&acc.FullName,
+		&acc.PhoneNumber,
+		&acc.HasCard,
+		&acc.AccountNumber,
+		&acc.Address,
+		&acc.Balance,
+		&acc.AccountType,
+		&acc.DateCreated,
+		&acc.DateUpdated,
+		&acc.Nationality,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &types.AccountResponse{Account: acc}, nil
+}
+func Login(ctx *context.Context, in *types.LoginRequest, authServer pb.AuthServiceClient) (*types.LoginResponse, error) {
+	req := &pb.LoginRequest{
+		Email:    in.Email,
+		Password: in.Password,
+	}
+	authRes, err := authServer.LoginUser(*ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	var res types.LoginResponse
+	res.AccessToken = authRes.AccessToken
+	res.TokenType = authRes.TokenType
+	res.ExpiresIn = authRes.ExpiresIn
+	res.RefreshToken = authRes.RefreshToken
+	res.AuthID = authRes.User.Id
+	res.Email = authRes.User.Email
+
+	return &res, nil
+}
