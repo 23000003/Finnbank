@@ -1,11 +1,9 @@
 package resolvers
 
 import (
-	"finnbank/common/grpc/auth"
-	"finnbank/graphql-api/services"
+	sv "finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
 	"fmt"
-	sv "finnbank/graphql-api/services"
 
 	// "finnbank/graphql-api/db"
 	"github.com/graphql-go/graphql"
@@ -31,7 +29,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 							return nil, fmt.Errorf("account_number argument is required and must be a string")
 						}
 
-						res, err := services.FetchUserByAccountNumber(&p.Context, req, DB)
+						res, err := ACCService.FetchUserByAccountNumber(&p.Context, req)
 						if err != nil {
 							s.log.Error("Error fetching account: %v", err)
 							return nil, fmt.Errorf("error fetching account: %v", err)
@@ -54,7 +52,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 							return nil, fmt.Errorf("email argument is required and must be a string")
 						}
 
-						res, err := services.FetchUserByEmail(&p.Context, req, DB)
+						res, err := ACCService.FetchUserByEmail(&p.Context, req)
 						if err != nil {
 							s.log.Error("Error fetching account: %v", err)
 							return nil, fmt.Errorf("error fetching account: %v", err)
@@ -76,7 +74,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 						if !ok {
 							return nil, fmt.Errorf("phone_number argument is required and must be a string")
 						}
-						res, err := services.FetchUserByPhone(&p.Context, req, DB)
+						res, err := ACCService.FetchUserByPhone(&p.Context, req)
 						if err != nil {
 							s.log.Error("Error fetching account: %v", err)
 							return nil, fmt.Errorf("error fetching account: %v", err)
@@ -98,7 +96,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 						if !ok {
 							return nil, fmt.Errorf("auth_id argument is required and must be a string")
 						}
-						res, err := services.FetchUserByAuthID(&p.Context, req, DB)
+						res, err := ACCService.FetchUserByAuthID(&p.Context, req)
 						if err != nil {
 							s.log.Error("Error fetching account: %v", err)
 							return nil, fmt.Errorf("error fetching account: %v", err)
@@ -111,7 +109,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 		})
 }
 
-func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountService, authServer auth.AuthServiceClient) *graphql.Object {
+func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
@@ -145,7 +143,7 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 						AccountType: accountType,
 						Nationality: nationality,
 					}
-					account, err := services.CreateUser(&p.Context, req, DB, authServer)
+					account, err := ACCService.CreateUser(&p.Context, req)
 					if err != nil {
 						s.log.Error("Error creating account: %v", err)
 						return nil, fmt.Errorf("error creating account: %v", err)
@@ -174,7 +172,7 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 						Email:    email,
 						Password: password,
 					}
-					res, err := services.Login(&p.Context, req, authServer)
+					res, err := ACCService.Login(&p.Context, req)
 					if err != nil {
 						s.log.Error("Error logging in: %v", err)
 						return nil, fmt.Errorf("error logging in: %v", err)

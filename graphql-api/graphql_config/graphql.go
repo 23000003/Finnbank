@@ -26,7 +26,7 @@ func NewGraphQL(log *utils.Logger, h types.IGraphQLHandlers) *StructGraphQL {
 		s: types.StructGrpcServiceConnections{
 			ProductServer:       ":9000",
 			BankCardServer:      ":9001",
-			AccountServer:       ":9002",
+			AuthServer:          ":9002",
 			StatementServer:     ":9004",
 			TransactionServer:   ":9005",
 			NotificationServer:  ":9006",
