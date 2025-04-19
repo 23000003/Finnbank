@@ -1,9 +1,9 @@
 package server
 
 import (
-	"finnbank/common/grpc/account"
-	"finnbank/common/utils"
 	"finnbank/internal-services/account/service"
+	"finnbank/common/grpc/auth"
+	"finnbank/common/utils"
 	"net"
 	"os"
 	"os/signal"
@@ -14,15 +14,15 @@ import (
 
 // Set up grpc connection
 
-func GrpcServer(s service.AccountService, logger *utils.Logger) error {
-	lis, err := net.Listen("tcp", "localhost:8082")
+func GrpcServer(s service.AuthService, logger *utils.Logger) error {
+	lis, err := net.Listen("tcp", "localhost:9002")
 	if err != nil {
-		logger.Fatal("Could not start gRPC server on port 9000: %s", err)
+		logger.Fatal("Could not start gRPC server on port 9002: %s", err)
 		return err
 	}
-	logger.Info("Port 8082 listening success")
+	logger.Info("Port 9002 listening success")
 	grpcServer := grpc.NewServer()
-	account.RegisterAccountServiceServer(grpcServer, &s)
+	auth.RegisterAuthServiceServer(grpcServer, &s)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 

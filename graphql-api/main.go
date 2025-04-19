@@ -1,19 +1,20 @@
 package main
 
 import (
-	"finnbank/common/utils"
-	"github.com/rs/cors"
-	"net/http"
-	"finnbank/graphql-api/db"
 	"context"
+	"finnbank/common/utils"
+	"finnbank/graphql-api/db"
 	"finnbank/graphql-api/graphql_config"
 	"finnbank/graphql-api/graphql_config/handlers"
 	"finnbank/graphql-api/graphql_config/resolvers"
+	"finnbank/graphql-api/types"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"finnbank/graphql-api/types"
+
+	"github.com/rs/cors"
 )
 
 func CorsMiddleware() *cors.Cors {
@@ -30,12 +31,12 @@ func main() {
 		panic(err)
 	}
 	logger.Info("Starting the application...")
-	
+
 	dbServicesPool := db.InitializeServiceDatabases(logger)
-	defer db.CleanupDatabase(dbServicesPool, logger) 
+	defer db.CleanupDatabase(dbServicesPool, logger)
 
 	server := initializeGraphQL(logger, dbServicesPool)
-	
+
 	startAndShutdownServer(server, logger)
 }
 
@@ -67,7 +68,7 @@ func startAndShutdownServer(server *http.Server, logger *utils.Logger) {
 		}
 	}()
 
-	// Triggers Below When CTRL + C or Shutdown 
+	// Triggers Below When CTRL + C or Shutdown
 	<-done
 	logger.Info("Server is shutting down...")
 
@@ -79,4 +80,3 @@ func startAndShutdownServer(server *http.Server, logger *utils.Logger) {
 	}
 	logger.Info("Server exited properly")
 }
-
