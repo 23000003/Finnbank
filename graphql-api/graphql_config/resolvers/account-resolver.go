@@ -181,7 +181,36 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					return res, nil
 				},
 			},
+			"update_password": &graphql.Field{
+				Type:        accountType,
+				Description: "Update user password",
+				Args: graphql.FieldConfigArgument{
+					"UpdatePasswordInput": &graphql.ArgumentConfig{
+						Type: types.UpdatePasswordInputType,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (any, error) {
+					updateInput, ok := p.Args["UpdatePasswordInput"].(map[string]any)
+					if !ok {
+						return nil, fmt.Errorf("invalid account input")
+					}
+					auth_id, _ := updateInput["auth_id"].(string)
+					oldPassword, _ := updateInput["old_password"].(string)
+					newPassword, _ := updateInput["new_password"].(string)
+					req := &types.UpdatePasswordRequest{
+						AuthID:      auth_id,
+						OldPassword: oldPassword,
+						NewPassword: newPassword,
+					}
+					res, err := ACCService.UpdatePassword(&p.Context, req)
+					if err != nil {
+						s.log.Error("Error updating password: %v", err)
+						return nil, fmt.Errorf("error updating password: %v", err)
+					}
+					s.log.Info("Password updated successfully: %v", res.Account.ID)
+					return res.Account, nil
+				},
+			},
 		},
 	})
-
 }

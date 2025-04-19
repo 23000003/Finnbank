@@ -1,8 +1,5 @@
 package services
 
-// Use this for resolvers business logic
-// Planning on putting helper functions here that can basically do CRUD to the DB
-
 import (
 	"context"
 	pb "finnbank/common/grpc/auth"
@@ -221,4 +218,27 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	res.Email = authRes.User.Email
 
 	return &res, nil
+}
+
+func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePasswordRequest) (*types.AccountResponse, error) {
+	req := &pb.UpdatePasswordRequest{
+		AuthID:      in.AuthID,
+		NewPassword: in.NewPassword,
+		OldPassword: in.OldPassword,
+	}
+	authRes, err := s.authService.HashAndEncryptPassowrd(*ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	updateQuery := `
+		UPDATE auth.users SET encrypted_password = $1 WHERE id = $2
+	`
+	_, err = s.db.Exec(*ctx, updateQuery, authRes.EncryptedPassword, in.AuthID)
+	if err != nil {
+		return nil, err
+	}
+	// Just calling this to fetch the account again, we can remove this later, but for now im using this
+	// in testing
+	res, _ := s.FetchUserByAuthID(ctx, in.AuthID)
+	return res, nil
 }

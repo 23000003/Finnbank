@@ -149,30 +149,10 @@ func (s *AuthService) LoginUser(c context.Context, in *pb.LoginRequest) (*pb.Aut
 	}
 	return authResponse, nil
 }
-func (s *AuthService) GetEncryptedPassword(c context.Context, in *pb.AuthIDRequest) (*pb.AuthUserResponse, error) {
-	var encryptedPassword string
-	err := s.DB.QueryRow(c, "SELECT encrypted_password FROM auth.users WHERE id = $1", in.AuthId).Scan(&encryptedPassword)
-	if err != nil {
-		s.Logger.Error("Failed to get encrypted password: %v", err)
-		return nil, err
-	}
-	authResponse := &pb.AuthUserResponse{
-		EncryptedPassword: encryptedPassword,
-	}
-	return authResponse, nil
-}
 
-func (s *AuthService) UpdatePassword(c context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	// LOCAL_DB_URL <-- LOCAL Database
-	// ACC_DATABASE_URL <-- PROD Database
-	dbURL := os.Getenv("ACC_DATABASE_URL")
-	if dbURL == "" {
-		s.Logger.Error("ACC_DATABASE_URL is missing")
-		return nil, fmt.Errorf("ACC_DATABASE_URL is missing")
-	}
-	s.Logger.Info(dbURL)
-
-	oldEncryptedPassword, err := s.Helper.GetUserAuth(c, in.AuthId, s.DB)
+// TODO: change this
+func (s *AuthService) HashAndEncryptPassowrd(c context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
+	oldEncryptedPassword, err := s.Helper.GetUserAuth(c, in.AuthID, s.DB)
 	if err != nil {
 		s.Logger.Error("Failed to get user auth: %v", err)
 		return nil, err
@@ -187,14 +167,9 @@ func (s *AuthService) UpdatePassword(c context.Context, in *pb.UpdatePasswordReq
 		s.Logger.Error("Failed to hash new password: %v", err)
 		return nil, err
 	}
-	_, err = s.DB.Exec(c, "UPDATE auth.users SET encrypted_password = $1 WHERE id = $2", newEncryptedPassword, in.AuthId)
-	if err != nil {
-		s.Logger.Error("Failed to update password: %v", err)
-		return nil, err
-	}
+
 	authResponse := &pb.UpdatePasswordResponse{
-		Message: "Password updated successfully",
-		Success: true,
+		EncryptedPassword: newEncryptedPassword,
 	}
 	return authResponse, nil
 

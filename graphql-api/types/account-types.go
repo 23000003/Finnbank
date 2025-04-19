@@ -163,6 +163,24 @@ var LoginInputType = graphql.NewInputObject(
 	},
 )
 
+// using this for Update Account
+var UpdatePasswordInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdatePasswordInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"auth_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"old_password": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"new_password": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+
 var AuthResponseType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "AuthResponse",
