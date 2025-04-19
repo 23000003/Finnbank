@@ -8,6 +8,8 @@ package services
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"finnbank/common/utils"
 	"fmt"
 
@@ -37,6 +39,18 @@ func NewBankcardService(db *pgxpool.Pool, logger *utils.Logger) *BankcardService
 		db: db,
 		l:  logger,
 	}
+}
+
+func GenrateBankCardNumber(req Requester) string {
+	// Step 1: Combine key strings
+	combined := req.FirstName + req.LastName + req.CardType + req.BirthDate
+
+	// Step 2: Hash the combined string using SHA-1 (or any other hashing algo)
+	hasher := sha256.Sum256([]byte(combined))
+
+	num := binary.BigEndian.Uint64(hasher[:8]) // Get the first 8 bytes of the hash
+
+	return fmt.Sprintf("%012d", num%100000000000000000+9000000000000000) // Ensure it starts with 4 (Visa) and is 16 digits long
 }
 
 func (b *BankcardService) CreateCardRequest(ctx context.Context, req Requester) error {
@@ -74,15 +88,15 @@ func (b *BankcardService) GetAllBankCardRequestsById(ctx context.Context, id int
 
 	var results []AllBankCardRequests
 	for rows.Next() {
-		var acc AllBankCardRequests
+		var bcn AllBankCardRequests
 		if err := rows.Scan(
-			&acc.FirstName,
-			&acc.LastName,
-			&acc.CardType,
+			&bcn.FirstName,
+			&bcn.LastName,
+			&bcn.CardType,
 		); err != nil {
 			return nil, err
 		}
-		results = append(results, acc)
+		results = append(results, bcn)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -90,4 +104,25 @@ func (b *BankcardService) GetAllBankCardRequestsById(ctx context.Context, id int
 	}
 
 	return results, nil
+}
+
+func (b *BankcardService) CreateBankCardForUser(ctx context.Context, req Requester) (string, error) {
+	conn, err := b.db.Acquire(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	cardNumber := GenrateBankCardNumber(req)
+
+	_, err = conn.Exec(ctx, `
+		INSERT INTO bank_card (card_number, expiry_date)
+		VALUES ($1, $2)
+	`, cardNumber, req.BirthDate)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to insert bank card: %w", err)
+	}
+
+	return cardNumber, nil
 }
