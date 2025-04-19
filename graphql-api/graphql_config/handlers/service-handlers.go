@@ -5,22 +5,23 @@ import (
 	"finnbank/common/utils"
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"finnbank/graphql-api/grpc_client"
+	sv "finnbank/graphql-api/services"
+	"finnbank/graphql-api/types"
+
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
-	"finnbank/graphql-api/types"
-	sv "finnbank/graphql-api/services"
 )
 
 type StructGraphQLHandler struct {
-	l *utils.Logger
-	r *resolvers.StructGraphQLResolvers
+	l  *utils.Logger
+	r  *resolvers.StructGraphQLResolvers
 	db *types.StructServiceDatabasePools
 }
 
 func NewGraphQLServicesHandler(l *utils.Logger, r *resolvers.StructGraphQLResolvers, db *types.StructServiceDatabasePools) *StructGraphQLHandler {
 	return &StructGraphQLHandler{
-		l: l,
-		r: r,
+		l:  l,
+		r:  r,
 		db: db,
 	}
 }
@@ -85,7 +86,25 @@ func (g *StructGraphQLHandler) BankCardServicesHandler(connAddress string) *hand
 	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
 	// proto server
 
-	return nil
+	BCService := sv.NewBankcardService(g.db.BankCardDBPool, g.l)
+
+	bankcardSchema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query:    g.r.GetBankCardQueryType(BCService),
+			Mutation: g.r.GetBankCardMutationType(BCService),
+		},
+	)
+	if err != nil {
+		g.l.Fatal("Failed to configure Bank Card Handler Schema: %v", err)
+	}
+
+	bankcardHandler := handler.New(&handler.Config{
+		Schema:   &bankcardSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	return bankcardHandler
 }
 
 func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *handler.Handler {
@@ -119,7 +138,7 @@ func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *h
 }
 
 func (g *StructGraphQLHandler) OpenedAccountServicesHandler(connAddress string) *handler.Handler {
-	
+
 	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
 	// proto server
 

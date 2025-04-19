@@ -83,11 +83,8 @@ func GetBankCardEntityType() *graphql.Object {
 				"account_id": &graphql.Field{
 					Type: graphql.Int,
 				},
-				"cvv": &graphql.Field{
-					Type: graphql.Int,
-				},
 				"pin_number": &graphql.Field{
-					Type: graphql.String, // encrypted
+					Type: graphql.String,
 				},
 				"date_created": &graphql.Field{
 					Type: graphql.DateTime,
