@@ -119,7 +119,7 @@ func (r *StructGraphQLResolvers) GetTransactionMutationType(transactionService *
 						return nil, fmt.Errorf("amount must be greater than zero")
 					}
 
-					transaction := types.Transaction{
+					transaction := en.Transaction{
 						RefNo:           input["ref_no"].(string),
 						SenderID:        input["sender_id"].(string),
 						ReceiverID:      input["receiver_id"].(string),
