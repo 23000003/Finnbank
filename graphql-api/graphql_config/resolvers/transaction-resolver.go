@@ -10,6 +10,7 @@
 package resolvers
 
 import (
+	en "finnbank/graphql-api/graphql_config/entities"
 	"finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
 	"fmt"
@@ -34,7 +35,7 @@ func (r *StructGraphQLResolvers) GetTransactionQueryType(transactionService *ser
 		Name: "TransactionQuery",
 		Fields: graphql.Fields{
 			"getTransactionsByUserId": &graphql.Field{
-				Type:        graphql.NewList(types.GetTransactionEntityType()),
+				Type:        graphql.NewList(en.GetTransactionEntityType()),
 				Description: "Fetch all transactions for a specific user by their user ID.",
 				Args: graphql.FieldConfigArgument{
 					"userId": &graphql.ArgumentConfig{
@@ -68,7 +69,7 @@ func (r *StructGraphQLResolvers) GetTransactionMutationType(transactionService *
 		Name: "TransactionMutation",
 		Fields: graphql.Fields{
 			"createTransaction": &graphql.Field{
-				Type:        types.GetTransactionEntityType(),
+				Type:        en.GetTransactionEntityType(),
 				Description: "Create a new transaction.",
 				Args: graphql.FieldConfigArgument{
 					"transaction": &graphql.ArgumentConfig{Type: graphql.NewInputObject(graphql.InputObjectConfig{
