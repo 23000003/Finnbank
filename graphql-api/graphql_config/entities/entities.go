@@ -1,6 +1,9 @@
 package entities
 
 import (
+	ty "finnbank/graphql-api/types"
+	"time"
+
 	"github.com/graphql-go/graphql"
 )
 
@@ -136,26 +139,60 @@ func GetBankCardEntityType() *graphql.Object {
 //			},
 //		)
 //	}
-var transactionType = graphql.NewObject(graphql.ObjectConfig{
+//
+// ① Declare it once at package‐init time:
+var TransactionEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Transaction",
 	Fields: graphql.Fields{
 		"transaction_id":     &graphql.Field{Type: graphql.String},
 		"ref_no":             &graphql.Field{Type: graphql.String},
 		"sender_id":          &graphql.Field{Type: graphql.String},
 		"receiver_id":        &graphql.Field{Type: graphql.String},
-		"transaction_type":   &graphql.Field{Type: graphql.String},
+		"transaction_type":   &graphql.Field{Type: ty.TransactionTypeEnum},
 		"amount":             &graphql.Field{Type: graphql.Float},
-		"transaction_status": &graphql.Field{Type: graphql.String},
+		"transaction_status": &graphql.Field{Type: ty.TransactionStatusEnum},
 		"date_transaction":   &graphql.Field{Type: graphql.DateTime},
 		"transaction_fee":    &graphql.Field{Type: graphql.Float},
 		"notes":              &graphql.Field{Type: graphql.String},
 	},
 })
 
-// 2️⃣ Getter just returns the shared var
+// ② And similarly create your InputObject only once:
+var TransactionInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "TransactionInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"ref_no":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		"sender_id":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		"receiver_id":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		"transaction_type": &graphql.InputObjectFieldConfig{Type: ty.TransactionTypeEnum},
+		"amount":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Float)},
+		"transaction_fee":  &graphql.InputObjectFieldConfig{Type: graphql.Float},
+		"notes":            &graphql.InputObjectFieldConfig{Type: graphql.String},
+	},
+})
+
+// ③ If you still want getters:
 func GetTransactionEntityType() *graphql.Object {
-	return transactionType
+	return TransactionEntityType
 }
+
+func GetTransactionInputType() *graphql.InputObject {
+	return TransactionInputType
+}
+
+type Transaction struct {
+	TransactionID     string    `json:"transaction_id"`
+	RefNo             string    `json:"ref_no"`
+	SenderID          string    `json:"sender_id"`
+	ReceiverID        string    `json:"receiver_id"`
+	TransactionType   string    `json:"transaction_type"`
+	Amount            float64   `json:"amount"`
+	TransactionStatus string    `json:"transaction_status"`
+	DateTransaction   time.Time `json:"date_transaction"`
+	TransactionFee    float64   `json:"transaction_fee"`
+	Notes             string    `json:"notes"`
+}
+
 func GetNotificationEntityType() *graphql.Object {
 	return graphql.NewObject(
 		graphql.ObjectConfig{
