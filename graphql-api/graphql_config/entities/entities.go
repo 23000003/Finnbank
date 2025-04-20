@@ -49,6 +49,9 @@ func GetAccountEntityType() *graphql.Object {
 				"date_created": &graphql.Field{
 					Type: graphql.DateTime,
 				},
+				"date_updated": &graphql.Field{
+					Type: graphql.DateTime,
+				},
 				"account_number": &graphql.Field{
 					Type: graphql.String,
 				},
@@ -62,6 +65,12 @@ func GetAccountEntityType() *graphql.Object {
 					Type: graphql.Float,
 				},
 				"account_type": &graphql.Field{
+					Type: graphql.String,
+				},
+				"nationality": &graphql.Field{
+					Type: graphql.String,
+				},
+				"auth_id": &graphql.Field{
 					Type: graphql.String,
 				},
 			},
@@ -165,6 +174,37 @@ func GetNotificationEntityType() *graphql.Object {
 					Type: graphql.String,
 				},
 				"date_notified": &graphql.Field{
+					Type: graphql.DateTime,
+				},
+			},
+		},
+	)
+}
+
+func GetOpenedAccountEntityType() *graphql.Object {
+	return graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "OpenedAccount",
+			Fields: graphql.Fields{
+				"openedaccount_id": &graphql.Field{
+					Type: graphql.Int,
+				},
+				"account_id": &graphql.Field{
+					Type: graphql.Int,
+				},
+				"bankcard_id": &graphql.Field{
+					Type: graphql.Int,
+				},
+				"account_type": &graphql.Field{
+					Type: graphql.String,
+				},
+				"balance": &graphql.Field{
+					Type: graphql.Float,
+				},
+				"openedaccount_status": &graphql.Field{
+					Type: graphql.String,
+				},
+				"date_created": &graphql.Field{
 					Type: graphql.DateTime,
 				},
 			},

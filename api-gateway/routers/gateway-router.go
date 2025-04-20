@@ -71,4 +71,13 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 		notification.PATCH("/mark-as-read/:id", gr.s.NotificationService.MarkAsReadNotification)
 		notification.DELETE("/clear-notif/:id", gr.s.NotificationService.DeleteNotification)
 	}
+
+	openedAccount := gr.r.Group("/opened-account")
+	openedAccount.Use(middleware.AuthMiddleware())
+	{
+		openedAccount.GET("/get-all/:id", gr.s.OpenedAccountService.GetAllOpenedAccountsByUserId)
+		openedAccount.GET("/:id", gr.s.OpenedAccountService.GetOpenedAccountOfUserById)
+		openedAccount.POST("/create-account", gr.s.OpenedAccountService.OpenAnAccountByAccountType)
+		openedAccount.PATCH("/update-status/:id/:status", gr.s.OpenedAccountService.UpdateOpenedAccountStatus)
+	}
 }

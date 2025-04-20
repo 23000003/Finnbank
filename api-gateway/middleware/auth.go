@@ -1,8 +1,10 @@
 package middleware
 
 import (
-    "net/http"
-    "github.com/gin-gonic/gin"
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -10,10 +12,14 @@ func AuthMiddleware() gin.HandlerFunc {
         token := ctx.GetHeader("Authorization")
         
 		// get supabase jwt secret key and use jwt verify token
+        fmt.Println("Token: ", token)
 
 		if token == "" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "No authentication token"})
-		}
+            fmt.Println("No authentication token")
+            ctx.Abort()
+            return 
+        }
 
         ctx.Next()
     }

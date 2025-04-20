@@ -11,7 +11,7 @@ type TransactionService struct {
 	url string
 }
 
-func NewTransactionService(log *utils.Logger) *TransactionService {
+func newTransactionService(log *utils.Logger) *TransactionService {
 	return &TransactionService{
 		log: log,
 		url: "http://localhost:8083/graphql/transaction",
