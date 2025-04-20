@@ -15,6 +15,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 		graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
+				// http://localhost:8083/graphql/account?query={account_by_account_num(account_number:1){<entities>}}
 				"account_by_account_num": &graphql.Field{
 					Type:        accountType,
 					Description: "Get account by account number",
@@ -83,6 +84,7 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 						return res.Account, nil
 					},
 				},
+				// http://localhost:8083/graphql/account?query={account_by_auth_id(auth_id:1){<entities>}}
 				"account_by_auth_id": &graphql.Field{
 					Type:        accountType,
 					Description: "Get account by phone number",
@@ -113,6 +115,11 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
+			/* login
+			http://localhost:8083/graphql/account?query=mutation+_{create_account(
+			// account: { email: "", password: "", first_name: "", last_name: "", phone_number: "", address: "", account_type: "", nationality: ""})
+			// {access_token, email, auth_id}}
+			// */
 			"create_account": &graphql.Field{
 				Type:        accountType,
 				Description: "Create a new account",
@@ -153,6 +160,9 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					return account, nil
 				},
 			},
+			/* login
+			http://localhost:8083/graphql/account?query=mutation+_{login(account: { email: "", password: "" }){access_token, email, auth_id}}
+			// */
 			"login": &graphql.Field{
 				Type:        types.AuthResponseType,
 				Description: "Login to an account",
@@ -163,6 +173,9 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 				},
 				Resolve: func(p graphql.ResolveParams) (any, error) {
 					loginInput, ok := p.Args["account"].(map[string]any)
+
+					s.log.Info("Login input: %v", loginInput)
+
 					if !ok {
 						return nil, fmt.Errorf("invalid account input")
 					}
@@ -177,6 +190,7 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 						s.log.Error("Error logging in: %v", err)
 						return nil, fmt.Errorf("error logging in: %v", err)
 					}
+
 					s.log.Info("Login successful: %v", res.AuthID)
 					return res, nil
 				},

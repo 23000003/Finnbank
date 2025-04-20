@@ -11,6 +11,7 @@ type ApiGatewayServices struct {
 	TransactionService ITransactionService
 	BankcardService	IBankcardService
 	NotificationService INotificationService
+	OpenedAccountService IOpenedAccountService
 }
 
 type IProductService interface {
@@ -49,3 +50,9 @@ type INotificationService interface {
 	DeleteNotification(*gin.Context) 
 }
 
+type IOpenedAccountService interface {
+	GetAllOpenedAccountsByUserId(*gin.Context)
+	GetOpenedAccountOfUserById(*gin.Context)
+	OpenAnAccountByAccountType(*gin.Context)
+	UpdateOpenedAccountStatus(*gin.Context)
+}

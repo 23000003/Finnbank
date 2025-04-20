@@ -18,7 +18,9 @@ type LoginResponse struct {
 	ExpiresIn    int32  `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
 	AuthID       string `json:"auth_id"`
-	Email        string `json:"email"`
+	// below are values for auth context in FE
+	FullName		string `json:"full_name"`
+	AccountId		string `json:"account_id"`
 }
 
 // Account represents an account.
@@ -190,7 +192,8 @@ var AuthResponseType = graphql.NewObject(
 			"expires_in":    &graphql.Field{Type: graphql.Int},
 			"refresh_token": &graphql.Field{Type: graphql.String},
 			"auth_id":       &graphql.Field{Type: graphql.String},
-			"email":         &graphql.Field{Type: graphql.String},
+			"full_name":     &graphql.Field{Type: graphql.String},
+			"account_id":    &graphql.Field{Type: graphql.String},
 		},
 	},
 )

@@ -35,6 +35,9 @@ func (s *AuthService) SignUpUser(ctx context.Context, in *pb.SignUpRequest) (*pb
 		"email":    in.Email,
 		"password": in.Password,
 	})
+
+	s.Logger.Info("Request body: %s", reqBody)
+
 	if err != nil {
 		s.Logger.Error("failed to create request body: %v", err)
 		return nil, fmt.Errorf("failed to create request body: %v", err)
@@ -56,6 +59,15 @@ func (s *AuthService) SignUpUser(ctx context.Context, in *pb.SignUpRequest) (*pb
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %v", err)
 	}
+
+	// Verify the response status since d ta kahibaw if success ang request
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		s.Logger.Error("Signup failed with status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("signup failed: %s", string(body))
+	}
+	
+
 	defer resp.Body.Close()
 	var token struct {
 		AccessToken string `json:"access_token"`
@@ -70,6 +82,9 @@ func (s *AuthService) SignUpUser(ctx context.Context, in *pb.SignUpRequest) (*pb
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %v", err)
 	}
+
+	s.Logger.Info("User signed up successfully: %s", token.User.ID)
+	s.Logger.Info("User email: %v", token)
 
 	userInfo := &pb.UserInfo{
 		Id:    token.User.ID,
