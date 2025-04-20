@@ -114,15 +114,44 @@ func (g *StructGraphQLHandler) StatementServicesHandler(connAddress string) *han
 }
 
 func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *handler.Handler {
+	// Validate dependencies
+	if g.db.TransactionDBPool == nil {
+		g.l.Fatal("TransactionDBPool is not initialized")
+	}
 
-	// Follow AccountServiceHandler | OpenedAccountServicesHandler
+	// Log the initialization of the service
+	g.l.Info("Initializing TransactionServicesHandler...")
+	// Initialize the TransactionService with the TransactionDBPool
+	transactionService := sv.NewTransactionService(g.db.TransactionDBPool, g.l)
 
-	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
-	// proto server
+	// Create the GraphQL schema for transactions
+	g.l.Info("Creating GraphQL schema for transactions...")
+	transactionSchema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query:    g.r.GetTransactionQueryType(transactionService),
+			Mutation: g.r.GetTransactionMutationType(transactionService),
+		},
+	)
+	if err != nil {
+		g.l.Fatal("Failed to configure Transaction Handler Schema: %v. Ensure that the resolvers and schema are properly defined.", err)
+	}
 
-	return nil
+	// Log the successful creation of the schema
+	g.l.Info("Transaction GraphQL schema created successfully")
+
+	// Create the GraphQL handler
+	g.l.Info("Creating GraphQL handler for transactions...")
+	transactionHandler := handler.New(&handler.Config{
+		Schema:   &transactionSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	// Log the successful initialization of the handler
+	g.l.Info("TransactionServicesHandler initialized successfully")
+
+	return transactionHandler
 }
-
 func (g *StructGraphQLHandler) OpenedAccountServicesHandler(connAddress string) *handler.Handler {
 
 	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
