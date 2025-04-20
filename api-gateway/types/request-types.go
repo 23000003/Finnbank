@@ -28,9 +28,7 @@ type CreateOpenAccountRequest struct {
 
 type UpdateOpenAccountRequest struct {
 	OpenedAccountId     	int       `json:"openedaccount_id"`
-	OpenedAccountStatus   string    `json:"openedaccount_type"`
-}
-
+	OpenedAccountStatus   string    `json:"openedaccount_status"`
 
 // ===================== Account Types ====================
 
