@@ -11,7 +11,7 @@ type NotificationService struct {
 	url string
 }
 
-func NewNotificationService(log *utils.Logger) *NotificationService {
+func newNotificationService(log *utils.Logger) *NotificationService {
 	return &NotificationService{
 		log: log,
 		url: "http://localhost:8083/graphql/notification",

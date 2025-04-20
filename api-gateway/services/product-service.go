@@ -21,7 +21,7 @@ type ProductService struct {
 // See graphql resolvers for each query and mutation call
 // ***********************************************
 
-func NewProductService(log *utils.Logger) *ProductService {
+func newProductService(log *utils.Logger) *ProductService {
 	return &ProductService{
 		log: log,
 		url: "http://localhost:8083/graphql/product",

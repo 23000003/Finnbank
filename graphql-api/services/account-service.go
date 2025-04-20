@@ -46,6 +46,22 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		Email:    in.Email,
 		Password: in.Password,
 	}
+
+	// i created this validation to avoid conflict if grpc is success and insert is not
+	// no email validation since it is done in the auth service
+	// no account_number validation since its too impossible for it to be the same
+	// Check phone number
+	phoneQuery := `SELECT EXISTS (SELECT 1 FROM account WHERE phone_number = $1)`
+	var phoneExists bool
+	if err := s.db.QueryRow(*ctx, phoneQuery, in.PhoneNumber).Scan(&phoneExists); err != nil {
+		return nil, err
+	}
+	if phoneExists {
+		return nil, fmt.Errorf("account with phone number already exists")
+	}
+	
+	accNum := GenAccNum()
+
 	// TODO: This seems really bad, will have to find a better way for this somehow
 	authRes, err := s.authService.SignUpUser(*ctx, req)
 	if err != nil {
@@ -54,7 +70,6 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	if in.AccountType != "Personal" && in.AccountType != "Business" {
 		return nil, fmt.Errorf("account type must be either Personal or Business")
 	}
-	accNum := GenAccNum()
 	var res types.AddAccountResponse
 	createQuery := `
 	INSERT INTO account (
@@ -66,6 +81,9 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		id, email, full_name, phone_number, address, nationality,
 		account_type, account_number, has_card, balance, date_created, auth_id
 	`
+
+	s.l.Info("Creating account for user: %s", authRes)
+	s.l.Info("Account number: %s", accNum)
 
 	err = s.db.QueryRow(*ctx,
 		createQuery,
@@ -203,6 +221,8 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 	}
 	return &types.AccountResponse{Account: acc}, nil
 }
+
+
 func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*types.LoginResponse, error) {
 	req := &pb.LoginRequest{
 		Email:    in.Email,
@@ -218,7 +238,15 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	res.ExpiresIn = authRes.ExpiresIn
 	res.RefreshToken = authRes.RefreshToken
 	res.AuthID = authRes.User.Id
-	res.Email = authRes.User.Email
+
+	acc , err := s.FetchUserByAuthID(ctx, authRes.User.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	// for auth context
+	res.FullName = acc.Account.FullName
+	res.AccountId = acc.Account.ID
 
 	return &res, nil
 }
