@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"finnbank/common/utils"
-	"finnbank/graphql-api/types"
+	en "finnbank/graphql-api/graphql_config/entities"
 	"fmt"
 	"time"
 
@@ -30,7 +30,7 @@ func GenerateUUID() string {
 }
 
 // GetTransactionByUserId retrieves all transactions for a specific user.
-func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]types.Transaction, error) {
+func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]en.Transaction, error) {
 	s.l.Info("Fetching transactions for user ID: %s", userId)
 
 	query := `
@@ -46,9 +46,9 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 	}
 	defer rows.Close()
 
-	var transactions []types.Transaction
+	var transactions []en.Transaction
 	for rows.Next() {
-		var txn types.Transaction
+		var txn en.Transaction
 		err := rows.Scan(
 			&txn.TransactionID,
 			&txn.RefNo,
@@ -81,18 +81,18 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 }
 
 // CreateTransaction creates a new transaction.
-func (s *TransactionService) CreateTransaction(ctx context.Context, req types.Transaction) (types.Transaction, error) {
+func (s *TransactionService) CreateTransaction(ctx context.Context, req en.Transaction) (en.Transaction, error) {
 	s.l.Info("Creating transaction for user ID: %s", req.SenderID)
 
 	// Input validation
 	if req.SenderID == "" || req.ReceiverID == "" {
-		return types.Transaction{}, fmt.Errorf("sender_id and receiver_id cannot be empty")
+		return en.Transaction{}, fmt.Errorf("sender_id and receiver_id cannot be empty")
 	}
 	if req.Amount < 0 {
-		return types.Transaction{}, fmt.Errorf("amount cannot be negative")
+		return en.Transaction{}, fmt.Errorf("amount cannot be negative")
 	}
 	if req.TransactionFee < 0 {
-		return types.Transaction{}, fmt.Errorf("transaction_fee cannot be negative")
+		return en.Transaction{}, fmt.Errorf("transaction_fee cannot be negative")
 	}
 
 	query := `
@@ -133,7 +133,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req types.Tr
 	)
 	if err != nil {
 		s.l.Error("Error creating transaction with RefNo %s for user ID %s: %v", req.RefNo, req.SenderID, err)
-		return types.Transaction{}, fmt.Errorf("failed to create transaction for user ID %s: %w", req.SenderID, err)
+		return en.Transaction{}, fmt.Errorf("failed to create transaction for user ID %s: %w", req.SenderID, err)
 	}
 
 	s.l.Info("Transaction created successfully: %+v", newTransaction)
