@@ -144,10 +144,10 @@ var transactionType = graphql.NewObject(graphql.ObjectConfig{
 		"sender_id":          &graphql.Field{Type: graphql.String},
 		"receiver_id":        &graphql.Field{Type: graphql.String},
 		"transaction_type":   &graphql.Field{Type: graphql.String},
-		"amount":             &graphql.Field{Type: graphql.Int},
+		"amount":             &graphql.Field{Type: graphql.Float},
 		"transaction_status": &graphql.Field{Type: graphql.String},
 		"date_transaction":   &graphql.Field{Type: graphql.DateTime},
-		"transaction_fee":    &graphql.Field{Type: graphql.Int},
+		"transaction_fee":    &graphql.Field{Type: graphql.Float},
 		"notes":              &graphql.Field{Type: graphql.String},
 	},
 })
