@@ -9,6 +9,10 @@ import (
 	sv "finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
 
+	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 )
@@ -113,44 +117,41 @@ func (g *StructGraphQLHandler) StatementServicesHandler(connAddress string) *han
 	return nil
 }
 
-func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *handler.Handler {
-	// Validate dependencies
+func (g *StructGraphQLHandler) transactionServicesHandler() (http.Handler, error) {
 	if g.db.TransactionDBPool == nil {
-		g.l.Fatal("TransactionDBPool is not initialized")
+		return nil, fmt.Errorf("transaction DB pool is not initialized")
 	}
 
-	// Log the initialization of the service
-	g.l.Info("Initializing TransactionServicesHandler...")
-	// Initialize the TransactionService with the TransactionDBPool
-	transactionService := sv.NewTransactionService(g.db.TransactionDBPool, g.l)
+	g.l.Info("🛠 Initializing TransactionServicesHandler…")
+	txSvc := sv.NewTransactionService(g.db.TransactionDBPool, g.l)
 
-	// Create the GraphQL schema for transactions
-	g.l.Info("Creating GraphQL schema for transactions...")
-	transactionSchema, err := graphql.NewSchema(
-		graphql.SchemaConfig{
-			Query:    g.r.GetTransactionQueryType(transactionService),
-			Mutation: g.r.GetTransactionMutationType(transactionService),
-		},
-	)
+	schema, err := graphql.NewSchema(graphql.SchemaConfig{
+		Query:    g.r.GetTransactionQueryType(txSvc),
+		Mutation: g.r.GetTransactionMutationType(txSvc),
+	})
 	if err != nil {
-		g.l.Fatal("Failed to configure Transaction Handler Schema: %v. Ensure that the resolvers and schema are properly defined.", err)
+		g.l.Error("❌ Failed to configure Transaction schema: %v", err)
+		return nil, fmt.Errorf("failed to configure transaction schema: %w", err)
 	}
+	g.l.Info("✅ Transaction GraphQL schema created")
 
-	// Log the successful creation of the schema
-	g.l.Info("Transaction GraphQL schema created successfully")
-
-	// Create the GraphQL handler
-	g.l.Info("Creating GraphQL handler for transactions...")
-	transactionHandler := handler.New(&handler.Config{
-		Schema:   &transactionSchema,
+	graphiql := os.Getenv("ENABLE_GRAPHIQL") == "true"
+	gqlHandler := handler.New(&handler.Config{
+		Schema:   &schema,
 		Pretty:   true,
-		GraphiQL: true,
+		GraphiQL: graphiql,
 	})
 
-	// Log the successful initialization of the handler
-	g.l.Info("TransactionServicesHandler initialized successfully")
-
-	return transactionHandler
+	g.l.Info("🚀 TransactionServicesHandler ready")
+	return gqlHandler, nil
+}
+func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *handler.Handler {
+	h, err := g.transactionServicesHandler()
+	if err != nil {
+		g.l.Fatal("Could not initialize TransactionServicesHandler: %v", err)
+	}
+	// at this point h is the *gqlhandler.Handler you created above
+	return h.(*handler.Handler)
 }
 func (g *StructGraphQLHandler) OpenedAccountServicesHandler(connAddress string) *handler.Handler {
 
