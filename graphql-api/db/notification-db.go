@@ -3,12 +3,13 @@ package db
 import (
 	"context"
 	"finnbank/common/utils"
+	"fmt"
 	"os"
 	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
-	"fmt"
 )
 
 func newNotificationDB(ctx context.Context) (*pgxpool.Pool, error) {

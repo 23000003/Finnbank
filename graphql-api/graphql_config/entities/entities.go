@@ -156,30 +156,61 @@ var transactionType = graphql.NewObject(graphql.ObjectConfig{
 func GetTransactionEntityType() *graphql.Object {
 	return transactionType
 }
+
+// Experimenting
+var notifTypeEnum = graphql.NewEnum(graphql.EnumConfig{
+	Name: "NotificationType",
+	Values: graphql.EnumValueConfigMap{
+		"Transaction": &graphql.EnumValueConfig{Value: "Transaction"},
+		"System":      &graphql.EnumValueConfig{Value: "System"},
+	},
+})
+
+var notificationEntityType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "Notification",
+	Fields: graphql.Fields{
+		"notif_id":        &graphql.Field{Type: graphql.String},
+		"notif_type":      &graphql.Field{Type: notifTypeEnum},
+		"auth_id":         &graphql.Field{Type: graphql.String},
+		"notif_to_id":     &graphql.Field{Type: graphql.String},
+		"notif_from_name": &graphql.Field{Type: graphql.String},
+		"content":         &graphql.Field{Type: graphql.String},
+		"is_read":         &graphql.Field{Type: graphql.Boolean},
+		"redirect_url":    &graphql.Field{Type: graphql.String},
+		"date_notified":   &graphql.Field{Type: graphql.DateTime},
+		"date_read":       &graphql.Field{Type: graphql.DateTime},
+	},
+})
+
 func GetNotificationEntityType() *graphql.Object {
-	return graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "Notification",
-			Fields: graphql.Fields{
-				"notif_id": &graphql.Field{
-					Type: graphql.Int,
-				},
-				"notif_type": &graphql.Field{
-					Type: graphql.EnumValueType,
-				},
-				"account_id": &graphql.Field{
-					Type: graphql.Int,
-				},
-				"redirect_url": &graphql.Field{
-					Type: graphql.String,
-				},
-				"date_notified": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-			},
-		},
-	)
+	return notificationEntityType
 }
+
+// ======== OLD ======== //
+// func GetNotificationEntityType() *graphql.Object {
+// 	return graphql.NewObject(
+// 		graphql.ObjectConfig{
+// 			Name: "Notification",
+// 			Fields: graphql.Fields{
+// 				"notif_id": &graphql.Field{
+// 					Type: graphql.Int,
+// 				},
+// 				"notif_type": &graphql.Field{
+// 					Type: graphql.EnumValueType,
+// 				},
+// 				"account_id": &graphql.Field{
+// 					Type: graphql.Int,
+// 				},
+// 				"redirect_url": &graphql.Field{
+// 					Type: graphql.String,
+// 				},
+// 				"date_notified": &graphql.Field{
+// 					Type: graphql.DateTime,
+// 				},
+// 			},
+// 		},
+// 	)
+// }
 
 func GetOpenedAccountEntityType() *graphql.Object {
 	return graphql.NewObject(
