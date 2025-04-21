@@ -12,8 +12,6 @@ package resolvers
 import (
 	en "finnbank/graphql-api/graphql_config/entities"
 	"finnbank/graphql-api/services"
-	"finnbank/graphql-api/types"
-	"fmt"
 
 	"github.com/graphql-go/graphql"
 )
@@ -30,25 +28,22 @@ type TransactionResolver struct {
 // returns the transactions or an error if any occurs
 
 // GetTransactionQueryType defines the query for fetching transactions.
-func (r *StructGraphQLResolvers) GetTransactionQueryType(transactionService *services.TransactionService) *graphql.Object {
+func (r *StructGraphQLResolvers) GetTransactionQueryType(txSvc *services.TransactionService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "TransactionQuery",
+		Name: "TransactionQuery", // or "TransactionQuery"
 		Fields: graphql.Fields{
 			"getTransactionsByUserId": &graphql.Field{
 				Type:        graphql.NewList(en.GetTransactionEntityType()),
 				Description: "Fetch all transactions for a specific user by their user ID.",
 				Args: graphql.FieldConfigArgument{
 					"userId": &graphql.ArgumentConfig{
-						Type:        graphql.String,
+						Type:        graphql.NewNonNull(graphql.String),
 						Description: "The ID of the user whose transactions are to be fetched.",
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					userId, ok := p.Args["userId"].(string)
-					if !ok || userId == "" {
-						return nil, fmt.Errorf("userId argument is required and must be a non-empty string")
-					}
-					return transactionService.GetTransactionByUserId(p.Context, userId)
+					userId := p.Args["userId"].(string)
+					return txSvc.GetTransactionByUserId(p.Context, userId)
 				},
 			},
 		},
@@ -64,77 +59,35 @@ func (r *StructGraphQLResolvers) GetTransactionQueryType(transactionService *ser
 // creates a transaction object from the input
 // calls the CreateTransaction method of the TrsanctionService to create the transaction
 // GetTransactionMutationType defines the mutation for creating a transaction.
-func (r *StructGraphQLResolvers) GetTransactionMutationType(transactionService *services.TransactionService) *graphql.Object {
+func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.TransactionService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "TransactionMutation",
+		Name: "TransactionMutation", // or "TransactionMutation"
 		Fields: graphql.Fields{
 			"createTransaction": &graphql.Field{
 				Type:        en.GetTransactionEntityType(),
-				Description: "Create a new transaction.",
+				Description: "Create a new transaction (ref_no auto‑generated).",
 				Args: graphql.FieldConfigArgument{
-					"transaction": &graphql.ArgumentConfig{Type: graphql.NewInputObject(graphql.InputObjectConfig{
-						Name: "TransactionInput",
-						Fields: graphql.InputObjectConfigFieldMap{
-							"ref_no": &graphql.InputObjectFieldConfig{
-								Type:        graphql.String,
-								Description: "The reference number of the transaction.",
-							},
-							"sender_id": &graphql.InputObjectFieldConfig{
-								Type:        graphql.String,
-								Description: "The ID of the sender.",
-							},
-							"receiver_id": &graphql.InputObjectFieldConfig{
-								Type:        graphql.String,
-								Description: "The ID of the receiver.",
-							},
-							"transaction_type": &graphql.InputObjectFieldConfig{
-								Type:        types.TransactionTypeEnum,
-								Description: "The type of the transaction (e.g., Transfer, Payment, Deposit, etc.).",
-							},
-							"amount": &graphql.InputObjectFieldConfig{
-								Type:        graphql.Float,
-								Description: "The amount of the transaction.",
-							},
-							"transaction_fee": &graphql.InputObjectFieldConfig{
-								Type:        graphql.Float,
-								Description: "The transaction fee.",
-							},
-							"notes": &graphql.InputObjectFieldConfig{
-								Type:        graphql.String,
-								Description: "Additional notes for the transaction.",
-							},
-						},
-					})},
+					"transaction": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(en.GetTransactionInputType()),
+					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					input, ok := p.Args["transaction"].(map[string]interface{})
-					if !ok {
-						return nil, fmt.Errorf("invalid input: transaction argument is required and must be an object")
+					in := p.Args["transaction"].(map[string]interface{})
+					txn := en.Transaction{
+						SenderID:        in["sender_id"].(string),
+						ReceiverID:      in["receiver_id"].(string),
+						TransactionType: in["transaction_type"].(string),
+						Amount:          in["amount"].(float64),
+						TransactionFee:  in["transaction_fee"].(float64),
+						Notes:           in["notes"].(string),
 					}
-					if input["sender_id"] == "" || input["receiver_id"] == "" {
-						return nil, fmt.Errorf("sender_id and receiver_id are required")
-					}
-
-					if input["amount"].(float64) <= 0 {
-						return nil, fmt.Errorf("amount must be greater than zero")
-					}
-
-					transaction := en.Transaction{
-						RefNo:           input["ref_no"].(string),
-						SenderID:        input["sender_id"].(string),
-						ReceiverID:      input["receiver_id"].(string),
-						TransactionType: input["transaction_type"].(string),
-						Amount:          input["amount"].(float64),
-						TransactionFee:  input["transaction_fee"].(float64),
-						Notes:           input["notes"].(string),
-					}
-
-					return transactionService.CreateTransaction(p.Context, transaction)
+					return txSvc.CreateTransaction(p.Context, txn)
 				},
 			},
 		},
 	})
 }
 
+// for cmmit: change because to define one only. No duplicate names. easier maintenance. cleaner.
 //GetTransactionQueryType: Defines a query to fetch all transactions for a specific user by their userId.
 //GetTransactionMutationType: Defines a mutation to create a new transaction with detailed input fields.
