@@ -1,10 +1,8 @@
 package resolvers
 
 import (
-	"finnbank/graphql-api/graphql_config/entities"
 	sv "finnbank/graphql-api/services"
 	"time"
-
 	"github.com/graphql-go/graphql"
 )
 
@@ -12,10 +10,10 @@ import (
 
 func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.NotificationService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "NotificationQuery",
+		Name: "Query",
 		Fields: graphql.Fields{
 			"getAllNotificationByUserId": &graphql.Field{
-				Type: graphql.NewList(entities.GetNotificationEntityType()),
+				Type: graphql.NewList(notificationType),
 				Args: graphql.FieldConfigArgument{
 					"notif_to_id": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -56,10 +54,10 @@ func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.Notif
 
 func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.NotificationService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "NotificationMutation",
+		Name: "Mutation",
 		Fields: graphql.Fields{
 			"generateNotification": &graphql.Field{
-				Type: entities.GetNotificationEntityType(),
+				Type: notificationType,
 				Args: graphql.FieldConfigArgument{
 					"notif_type":      &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
 					"auth_id":         &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},

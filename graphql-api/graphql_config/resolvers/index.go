@@ -20,8 +20,10 @@ func NewGraphQLResolvers(log *utils.Logger) *StructGraphQLResolvers {
 var productType *graphql.Object = entities.GetProductEntityType()
 var accountType *graphql.Object = entities.GetAccountEntityType()
 var openedAccountType *graphql.Object = entities.GetOpenedAccountEntityType()
+var notificationType *graphql.Object = entities.GetNotificationEntityType()
+var transactionType *graphql.Object = entities.GetTransactionEntityType()
+var transactionInputType *graphql.InputObject = entities.GetTransactionInputType()
 
 // === Unused Warning ==
 // var bankCardType *graphql.Object = entities.GetBankCardEntityType()
 // var transaction_type *graphql.Object = entities.GetTransactionEntityType()
-// var notificationType *graphql.Object = entities.GetNotificationEntityType()
