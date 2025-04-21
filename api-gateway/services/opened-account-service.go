@@ -25,16 +25,11 @@ func newOpenedAccountService(log *utils.Logger) *OpenedAccountService {
 
 func (a *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx *gin.Context) {
 	
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid account id"})
-		return
-	}
-
-	a.log.Info("GetAllOpenedAccountsByUserId: %v", id)
+	id := ctx.Param("id");
+	a.log.Info("GetAllOpenedAccountsByUserId: %s", id)
 
 	query := fmt.Sprintf(`{
-		get_all(account_id: %d) {
+		get_all(account_id: "%s") {
 			openedaccount_id
 			bankcard_id
 			balance
@@ -140,11 +135,11 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 		return
 	}
 
-	a.log.Info("OpenAnAccountByAccountType: %d %s %f", req.AccountId, req.AccountType, req.Balance)
+	a.log.Info("OpenAnAccountByAccountType: %s %s %f", req.AccountId, req.AccountType, req.Balance)
 
 	// http://localhost:8083/graphql/opened-account?query=mutation+_{create_account(account_id:1,account_type:"string",balance:1.99){<entities>}}
 	query := fmt.Sprintf(`mutation {
-		create_account(account_id: %d, account_type: "%s", balance: %f) {
+		create_account(account_id: "%s", account_type: "%s", balance: %f) {
 			openedaccount_id
 			bankcard_id
 			balance

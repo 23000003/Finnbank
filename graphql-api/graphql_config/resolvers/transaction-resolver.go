@@ -10,9 +10,8 @@
 package resolvers
 
 import (
-	en "finnbank/graphql-api/graphql_config/entities"
 	"finnbank/graphql-api/services"
-
+	t "finnbank/graphql-api/types"
 	"github.com/graphql-go/graphql"
 )
 
@@ -30,10 +29,10 @@ type TransactionResolver struct {
 // GetTransactionQueryType defines the query for fetching transactions.
 func (r *StructGraphQLResolvers) GetTransactionQueryType(txSvc *services.TransactionService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "TransactionQuery", // or "TransactionQuery"
+		Name: "Query", // or "TransactionQuery"
 		Fields: graphql.Fields{
 			"getTransactionsByUserId": &graphql.Field{
-				Type:        graphql.NewList(en.GetTransactionEntityType()),
+				Type:        graphql.NewList(transactionType),
 				Description: "Fetch all transactions for a specific user by their user ID.",
 				Args: graphql.FieldConfigArgument{
 					"userId": &graphql.ArgumentConfig{
@@ -61,19 +60,19 @@ func (r *StructGraphQLResolvers) GetTransactionQueryType(txSvc *services.Transac
 // GetTransactionMutationType defines the mutation for creating a transaction.
 func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.TransactionService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "TransactionMutation", // or "TransactionMutation"
+		Name: "Mutation", // or "TransactionMutation"
 		Fields: graphql.Fields{
 			"createTransaction": &graphql.Field{
-				Type:        en.GetTransactionEntityType(),
+				Type:        transactionType,
 				Description: "Create a new transaction (ref_no auto‑generated).",
 				Args: graphql.FieldConfigArgument{
 					"transaction": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(en.GetTransactionInputType()),
+						Type: graphql.NewNonNull(transactionInputType),
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					in := p.Args["transaction"].(map[string]interface{})
-					txn := en.Transaction{
+					txn := t.Transaction{
 						SenderID:        in["sender_id"].(string),
 						ReceiverID:      in["receiver_id"].(string),
 						TransactionType: in["transaction_type"].(string),

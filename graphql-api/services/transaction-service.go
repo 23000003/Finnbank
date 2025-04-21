@@ -5,10 +5,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
-
 	"finnbank/common/utils"
-	en "finnbank/graphql-api/graphql_config/entities"
-
+	t "finnbank/graphql-api/types"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,7 +37,7 @@ func generateRefNo() (string, error) {
 	}
 	return string(ref), nil
 }
-func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]en.Transaction, error) {
+func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]t.Transaction, error) {
 	s.l.Info("Fetching transactions for user ID: %s", userId)
 
 	query := `
@@ -55,9 +53,9 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 	}
 	defer rows.Close()
 
-	var transactions []en.Transaction
+	var transactions []t.Transaction
 	for rows.Next() {
-		var txn en.Transaction
+		var txn t.Transaction
 		err := rows.Scan(
 			&txn.TransactionID,
 			&txn.RefNo,
@@ -90,25 +88,25 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 }
 
 // CreateTransaction creates a new transaction, auto‑generating a numeric ref_no.
-func (s *TransactionService) CreateTransaction(ctx context.Context, req en.Transaction) (en.Transaction, error) {
+func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transaction) (t.Transaction, error) {
 	s.l.Info("Creating transaction for user ID: %s", req.SenderID)
 
 	// 1) Validation
 	if req.SenderID == "" || req.ReceiverID == "" {
-		return en.Transaction{}, fmt.Errorf("sender_id and receiver_id cannot be empty")
+		return t.Transaction{}, fmt.Errorf("sender_id and receiver_id cannot be empty")
 	}
 	if req.Amount < 0 {
-		return en.Transaction{}, fmt.Errorf("amount cannot be negative")
+		return t.Transaction{}, fmt.Errorf("amount cannot be negative")
 	}
 	if req.TransactionFee < 0 {
-		return en.Transaction{}, fmt.Errorf("transaction_fee cannot be negative")
+		return t.Transaction{}, fmt.Errorf("transaction_fee cannot be negative")
 	}
 
 	// 2) Generate numeric-only ref_no
 	refNo, err := generateRefNo()
 	if err != nil {
 		s.l.Error("Error generating ref_no: %v", err)
-		return en.Transaction{}, fmt.Errorf("failed to generate ref_no: %w", err)
+		return t.Transaction{}, fmt.Errorf("failed to generate ref_no: %w", err)
 	}
 
 	// 3) Insert, letting the DB fill transaction_id and timestamp
@@ -134,7 +132,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req en.Trans
 		req.Notes,
 	)
 
-	var created en.Transaction
+	var created t.Transaction
 	if err := row.Scan(
 		&created.TransactionID,
 		&created.RefNo,
@@ -148,7 +146,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req en.Trans
 		&created.Notes,
 	); err != nil {
 		s.l.Error("Error creating transaction: %v", err)
-		return en.Transaction{}, fmt.Errorf("failed to create transaction: %w", err)
+		return t.Transaction{}, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
 	s.l.Info("Transaction created: %+v", created)

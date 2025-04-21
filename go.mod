@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.66
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0
+	github.com/google/uuid v1.6.0
 	github.com/graphql-go/graphql v0.8.1
 	github.com/graphql-go/handler v0.2.4
 	github.com/joho/godotenv v1.5.1
