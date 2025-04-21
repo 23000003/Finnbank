@@ -169,10 +169,10 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 	return &types.AccountResponse{Account: acc}, nil
 }
 
-func (s *AccountService) FetchUserByPhone(ctx *context.Context, req string) (*types.AccountResponse, error) {
+func (s *AccountService) FetchUserById(ctx *context.Context, req string) (*types.AccountResponse, error) {
 	var acc types.Account
 	query := `
-		SELECT * FROM account WHERE phone_number = $1
+		SELECT * FROM account WHERE id = $1
 	`
 	err := s.db.QueryRow(*ctx, query, req).Scan(
 		&acc.ID,

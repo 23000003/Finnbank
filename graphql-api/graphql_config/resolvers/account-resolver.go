@@ -62,20 +62,20 @@ func (s *StructGraphQLResolvers) GetAccountQueryType(ACCService *sv.AccountServi
 						return res.Account, nil
 					},
 				},
-				"account_by_phone": &graphql.Field{
+				"account_by_id": &graphql.Field{
 					Type:        accountType,
-					Description: "Get account by phone number",
+					Description: "Get account by id",
 					Args: graphql.FieldConfigArgument{
-						"phone_number": &graphql.ArgumentConfig{
+						"id": &graphql.ArgumentConfig{
 							Type: graphql.String,
 						},
 					},
 					Resolve: func(p graphql.ResolveParams) (any, error) {
-						req, ok := p.Args["phone_number"].(string)
+						req, ok := p.Args["id"].(string)
 						if !ok {
-							return nil, fmt.Errorf("phone_number argument is required and must be a string")
+							return nil, fmt.Errorf("id argument is required and must be a string")
 						}
-						res, err := ACCService.FetchUserByPhone(&p.Context, req)
+						res, err := ACCService.FetchUserById(&p.Context, req)
 						if err != nil {
 							s.log.Error("Error fetching account: %v", err)
 							return nil, fmt.Errorf("error fetching account: %v", err)
