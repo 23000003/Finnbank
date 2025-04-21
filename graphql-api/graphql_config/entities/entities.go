@@ -2,7 +2,6 @@ package entities
 
 import (
 	ty "finnbank/graphql-api/types"
-	"time"
 
 	"github.com/graphql-go/graphql"
 )
@@ -148,19 +147,6 @@ var notificationEntityType = graphql.NewObject(graphql.ObjectConfig{
 		"date_read":       &graphql.Field{Type: graphql.DateTime},
 	},
 })
-
-type Transaction struct {
-	TransactionID     string    `json:"transaction_id"`
-	RefNo             string    `json:"ref_no"`
-	SenderID          string    `json:"sender_id"`
-	ReceiverID        string    `json:"receiver_id"`
-	TransactionType   string    `json:"transaction_type"`
-	Amount            float64   `json:"amount"`
-	TransactionStatus string    `json:"transaction_status"`
-	DateTransaction   time.Time `json:"date_transaction"`
-	TransactionFee    float64   `json:"transaction_fee"`
-	Notes             string    `json:"notes"`
-}
 
 func GetNotificationEntityType() *graphql.Object {
 	return notificationEntityType
