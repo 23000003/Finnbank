@@ -16,17 +16,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type AllBankCardRequests struct {
+type BankCardResponse struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	CardType  string `json:"card_type"`
+	Status    string `json: "status"`
+}
+
+type BankCardRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	CardType  string `json:"card_type"`
 }
 
-type Requester struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	CardType  string `json:"card_type"`
-	BirthDate string `json:"birth_date"`
+type BankCardNumberGenerated struct {
 }
 
 type BankcardService struct {
@@ -41,9 +44,9 @@ func NewBankcardService(db *pgxpool.Pool, logger *utils.Logger) *BankcardService
 	}
 }
 
-func GenrateBankCardNumber(req Requester) string {
+func GenrateBankCardNumber(first_name string, last_name string, card_type int) string {
 	// Step 1: Combine key strings
-	combined := req.FirstName + req.LastName + req.CardType + req.BirthDate
+	combined := first_name + last_name + fmt.Sprintf("%d", card_type)
 
 	// Step 2: Hash the combined string using SHA-1 (or any other hashing algo)
 	hasher := sha256.Sum256([]byte(combined))
@@ -53,76 +56,40 @@ func GenrateBankCardNumber(req Requester) string {
 	return fmt.Sprintf("%012d", num%100000000000000000+9000000000000000) // Ensure it starts with 4 (Visa) and is 16 digits long
 }
 
-func (b *BankcardService) CreateCardRequest(ctx context.Context, req Requester) error {
-	conn, err := b.db.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to acquire connection: %w", err)
-	}
-	defer conn.Release()
-
-	_, err = conn.Exec(ctx, `
-        INSERT INTO card_request (first_name, last_name, card_type)
-        VALUES ($1, $2, $3)
-    `, req.FirstName, req.LastName, req.CardType)
-
-	if err != nil {
-		return fmt.Errorf("failed to insert card request: %w", err)
-	}
-
-	return nil
-}
-
-func (b *BankcardService) GetAllBankCardRequestsById(ctx context.Context, id int) ([]AllBankCardRequests, error) {
-
-	conn, err := b.db.Acquire(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to acquire connection: %w", err)
-	}
-	defer conn.Release()
-
-	rows, err := conn.Query(ctx,
-		`select first_name, last_name, card_type from card_request where request_id = $1`,
-		id,
+func (b *BankcardService) GetBankCardRequestsById(ctx context.Context, id int) (*BankCardResponse, error) {
+	var res BankCardResponse
+	_, err := b.db, b.db.QueryRow(ctx, `
+		select crl.first_name, crl.last_name, ct.name as card_type, crl.status from card_request_list crl
+	join card_types ct on crl.card_type = ct.card_type_id
+	where crl.request_id = $1;
+	`, id).Scan(
+		&res.FirstName,
+		&res.LastName,
+		&res.CardType,
+		&res.Status,
 	)
-	defer rows.Close()
-
-	var results []AllBankCardRequests
-	for rows.Next() {
-		var bcn AllBankCardRequests
-		if err := rows.Scan(
-			&bcn.FirstName,
-			&bcn.LastName,
-			&bcn.CardType,
-		); err != nil {
-			return nil, err
-		}
-		results = append(results, bcn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bank card request: %w", err)
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return &res, nil
 }
 
-func (b *BankcardService) CreateBankCardForUser(ctx context.Context, req Requester) (string, error) {
-	conn, err := b.db.Acquire(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to acquire connection: %w", err)
-	}
-	defer conn.Release()
+func (b *BankcardService) CreateCardRequest(ctx context.Context, first_name string, last_name string, card_type int) (*BankCardRequest, error) {
+	var req BankCardRequest
 
-	cardNumber := GenrateBankCardNumber(req)
-
-	_, err = conn.Exec(ctx, `
-		INSERT INTO bank_card (card_number, expiry_date)
-		VALUES ($1, $2)
-	`, cardNumber, req.BirthDate)
+	_, err := b.db.Exec(ctx, `
+	INSERT INTO card_request_list (first_name, last_name, card_type) 
+	VALUES ($1, $2, $3)`, first_name, last_name, card_type)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to insert bank card: %w", err)
+		return nil, fmt.Errorf("failed to insert date into the table: %w", err)
 	}
 
-	return cardNumber, nil
+	return &req, nil
+}
+
+func (b *BankcardService) CreateBankCardForUser(ctx context.Context) (*BankCardNumberGenerated, error) {
+	var res BankCardNumberGenerated
+
+	return &res, nil
 }

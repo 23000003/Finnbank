@@ -95,7 +95,7 @@ func GetBankCardEntityType() *graphql.Object {
 				"date_created": &graphql.Field{
 					Type: graphql.DateTime,
 				},
-				"card_type": &graphql.Field{
+				"card_type_final": &graphql.Field{
 					Type: graphql.EnumValueType,
 				},
 			},
@@ -103,33 +103,50 @@ func GetBankCardEntityType() *graphql.Object {
 	)
 }
 
-//	func GetTransactionEntityType() *graphql.Object {
-//		return graphql.NewObject(
-//			graphql.ObjectConfig{
-//				Name: "Transaction",
-//				Fields: graphql.Fields{
-//					"ref_number": &graphql.Field{
-//						Type: graphql.String, // UUID in DB
-//					},
-//					"sender": &graphql.Field{
-//						Type: graphql.Int,
-//					},
-//					"receiver": &graphql.Field{
-//						Type: graphql.Int,
-//					},
-//					"transaction_type": &graphql.Field{
-//						Type: graphql.EnumValueType,
-//					},
-//					"amount": &graphql.Field{
-//						Type: graphql.Int,
-//					},
-//					"date_created": &graphql.Field{
-//						Type: graphql.DateTime,
-//					},
-//				},
-//			},
-//		)
-//	}
+var bankCardReponseType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "BankCardResponse",
+	Fields: graphql.Fields{
+		"id": &graphql.Field{
+			Type: graphql.Int,
+		},
+		"first_name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"last_name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"card_type": &graphql.Field{
+			Type: graphql.String,
+		},
+		"status": &graphql.Field{
+			Type: graphql.String,
+		},
+	},
+})
+
+var bankCardRequestType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "BankCardRequest",
+	Fields: graphql.Fields{
+		"first_name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"last_name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"card_type": &graphql.Field{
+			Type: graphql.String,
+		},
+	},
+})
+
+func GetBankCardResponseEntity() *graphql.Object {
+	return bankCardReponseType
+}
+
+func GetBankCardRequestEntity() *graphql.Object {
+	return bankCardRequestType
+}
+
 var transactionType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Transaction",
 	Fields: graphql.Fields{
