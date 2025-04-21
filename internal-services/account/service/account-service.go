@@ -6,20 +6,15 @@ import (
 	"encoding/json"
 	pb "finnbank/common/grpc/auth"
 	"finnbank/common/utils"
-	"finnbank/internal-services/account/auth"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type AuthService struct {
 	Logger *utils.Logger
-	DB     *pgx.Conn
-	Helper *auth.AuthHelpers
 	Grpc   pb.AuthServiceServer
 	pb.UnimplementedAuthServiceServer
 }
@@ -66,7 +61,6 @@ func (s *AuthService) SignUpUser(ctx context.Context, in *pb.SignUpRequest) (*pb
 		s.Logger.Error("Signup failed with status %d: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("signup failed: %s", string(body))
 	}
-	
 
 	defer resp.Body.Close()
 	var token struct {
@@ -165,27 +159,4 @@ func (s *AuthService) LoginUser(c context.Context, in *pb.LoginRequest) (*pb.Aut
 	return authResponse, nil
 }
 
-// TODO: change this
-func (s *AuthService) HashAndEncryptPassowrd(c context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	oldEncryptedPassword, err := s.Helper.GetUserAuth(c, in.AuthID, s.DB)
-	if err != nil {
-		s.Logger.Error("Failed to get user auth: %v", err)
-		return nil, err
-	}
-	ok := s.Helper.VerifyPassword(oldEncryptedPassword.EnryptedPass, in.OldPassword)
-	if !ok {
-		s.Logger.Error("Old password is incorrect")
-		return nil, fmt.Errorf("old password is incorrect")
-	}
-	newEncryptedPassword, err := s.Helper.HashPassword(in.NewPassword)
-	if err != nil {
-		s.Logger.Error("Failed to hash new password: %v", err)
-		return nil, err
-	}
-
-	authResponse := &pb.UpdatePasswordResponse{
-		EncryptedPassword: newEncryptedPassword,
-	}
-	return authResponse, nil
-
-}
+//  Moved update password into the graphql-api because we were'nt using it in the anywhere else

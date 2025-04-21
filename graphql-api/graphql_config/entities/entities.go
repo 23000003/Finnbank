@@ -37,7 +37,16 @@ func GetAccountEntityType() *graphql.Object {
 				"email": &graphql.Field{
 					Type: graphql.String,
 				},
-				"full_name": &graphql.Field{
+
+				"first_name": &graphql.Field{
+					Type: graphql.String,
+				},
+
+				"middle_name": &graphql.Field{
+					Type: graphql.String,
+				},
+
+				"last_name": &graphql.Field{
 					Type: graphql.String,
 				},
 				"phone_number": &graphql.Field{
@@ -71,6 +80,15 @@ func GetAccountEntityType() *graphql.Object {
 					Type: graphql.String,
 				},
 				"auth_id": &graphql.Field{
+					Type: graphql.String,
+				},
+				"birthdate": &graphql.Field{
+					Type: graphql.DateTime,
+				},
+				"national_id": &graphql.Field{
+					Type: graphql.String,
+				},
+				"account_status": &graphql.Field{
 					Type: graphql.String,
 				},
 			},

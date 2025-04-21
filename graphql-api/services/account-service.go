@@ -11,6 +11,7 @@ import (
 	"finnbank/common/utils"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AccountService struct {
@@ -56,7 +57,7 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	if phoneExists {
 		return nil, fmt.Errorf("account with phone number already exists")
 	}
-	
+
 	accNum := GenAccNum()
 
 	// TODO: This seems really bad, will have to find a better way for this somehow
@@ -67,16 +68,17 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	if in.AccountType != "Personal" && in.AccountType != "Business" {
 		return nil, fmt.Errorf("account type must be either Personal or Business")
 	}
+	var acc types.Account
 	var res types.AddAccountResponse
 	createQuery := `
 	INSERT INTO account (
-		email, full_name, phone_number, address, nationality,
-		account_type, account_number, has_card, balance, auth_id
+		email, first_name, middle_name, last_name, phone_number, address, nationality,
+		account_type, account_number, has_card, balance, auth_id, birthdate, national_id
 	) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	RETURNING 
-		id, email, full_name, phone_number, address, nationality,
-		account_type, account_number, has_card, balance, date_created, auth_id
+		id, email, first_name, middle_name, last_name, phone_number, address, nationality,
+		account_type, account_number, has_card, balance, date_created, date_updated, auth_id, birthdate, national_id, account_status
 	`
 
 	s.l.Info("Creating account for user: %s", authRes)
@@ -85,31 +87,42 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	err = s.db.QueryRow(*ctx,
 		createQuery,
 		in.Email,
-		in.FullName,
+		in.FirstName,
+		in.MiddleName,
+		in.LastName,
 		in.PhoneNumber,
 		in.Address,
 		in.Nationality,
 		in.AccountType,
 		accNum,
 		false, 0.00,
-		authRes.User.Id).
+		authRes.User.Id,
+		in.BirthDate,
+		in.NationalID).
 		Scan(
-			&res.ID,
-			&res.Email,
-			&res.FullName,
-			&res.PhoneNumber,
-			&res.Address,
-			&res.Nationality,
-			&res.AccountType,
-			&res.AccountNumber,
-			&res.HasCard,
-			&res.Balance,
-			&res.DateCreated,
-			&res.AuthID,
+			&acc.ID,
+			&acc.Email,
+			&acc.FirstName,
+			&acc.MiddleName,
+			&acc.LastName,
+			&acc.PhoneNumber,
+			&acc.Address,
+			&acc.Nationality,
+			&acc.AccountType,
+			&acc.AccountNumber,
+			&acc.HasCard,
+			&acc.Balance,
+			&acc.DateCreated,
+			&acc.DateUpdated,
+			&acc.AuthID,
+			&acc.BirthDate,
+			&acc.NationalID,
+			&acc.AccountStatus,
 		)
 	if err != nil {
 		return nil, err
 	}
+	res.Account = acc
 
 	return &res, nil
 }
@@ -123,7 +136,6 @@ func (s *AccountService) FetchUserByAccountNumber(ctx *context.Context, req stri
 		&acc.ID,
 		&acc.AuthID,
 		&acc.Email,
-		&acc.FullName,
 		&acc.PhoneNumber,
 		&acc.HasCard,
 		&acc.AccountNumber,
@@ -133,6 +145,12 @@ func (s *AccountService) FetchUserByAccountNumber(ctx *context.Context, req stri
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
+		&acc.NationalID,
+		&acc.AccountStatus,
+		&acc.BirthDate,
+		&acc.FirstName,
+		&acc.MiddleName,
+		&acc.LastName,
 	)
 	if err != nil {
 		return nil, err
@@ -149,7 +167,6 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 		&acc.ID,
 		&acc.AuthID,
 		&acc.Email,
-		&acc.FullName,
 		&acc.PhoneNumber,
 		&acc.HasCard,
 		&acc.AccountNumber,
@@ -159,6 +176,12 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
+		&acc.NationalID,
+		&acc.AccountStatus,
+		&acc.BirthDate,
+		&acc.FirstName,
+		&acc.MiddleName,
+		&acc.LastName,
 	)
 	if err != nil {
 		return nil, err
@@ -175,7 +198,6 @@ func (s *AccountService) FetchUserByPhone(ctx *context.Context, req string) (*ty
 		&acc.ID,
 		&acc.AuthID,
 		&acc.Email,
-		&acc.FullName,
 		&acc.PhoneNumber,
 		&acc.HasCard,
 		&acc.AccountNumber,
@@ -185,6 +207,12 @@ func (s *AccountService) FetchUserByPhone(ctx *context.Context, req string) (*ty
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
+		&acc.NationalID,
+		&acc.AccountStatus,
+		&acc.BirthDate,
+		&acc.FirstName,
+		&acc.MiddleName,
+		&acc.LastName,
 	)
 	if err != nil {
 		return nil, err
@@ -202,7 +230,6 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 		&acc.ID,
 		&acc.AuthID,
 		&acc.Email,
-		&acc.FullName,
 		&acc.PhoneNumber,
 		&acc.HasCard,
 		&acc.AccountNumber,
@@ -212,13 +239,18 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
+		&acc.NationalID,
+		&acc.AccountStatus,
+		&acc.BirthDate,
+		&acc.FirstName,
+		&acc.MiddleName,
+		&acc.LastName,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &types.AccountResponse{Account: acc}, nil
 }
-
 
 func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*types.LoginResponse, error) {
 	req := &pb.LoginRequest{
@@ -236,37 +268,58 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	res.RefreshToken = authRes.RefreshToken
 	res.AuthID = authRes.User.Id
 
-	acc , err := s.FetchUserByAuthID(ctx, authRes.User.Id)
+	acc, err := s.FetchUserByAuthID(ctx, authRes.User.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	// for auth context
-	res.FullName = acc.Account.FullName
+	res.DisplayName = acc.Account.FirstName + " " + acc.Account.MiddleName + " " + acc.Account.LastName
 	res.AccountId = acc.Account.ID
 
 	return &res, nil
 }
 
 func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePasswordRequest) (*types.AccountResponse, error) {
-	req := &pb.UpdatePasswordRequest{
-		AuthID:      in.AuthID,
-		NewPassword: in.NewPassword,
-		OldPassword: in.OldPassword,
-	}
-	authRes, err := s.authService.HashAndEncryptPassowrd(*ctx, req)
+	old_encrpyptedPassword, err := s.GetUserAuth(*ctx, in.AuthID)
 	if err != nil {
 		return nil, err
 	}
-	updateQuery := `
-		UPDATE auth.users SET encrypted_password = $1 WHERE id = $2
-	`
-	_, err = s.db.Exec(*ctx, updateQuery, authRes.EncryptedPassword, in.AuthID)
+	if !VerifyPassword(old_encrpyptedPassword, in.OldPassword) {
+		return nil, fmt.Errorf("old password is incorrect")
+	}
+	new_encryptedPassword, err := HashPassword(in.NewPassword)
 	if err != nil {
 		return nil, err
 	}
-	// Just calling this to fetch the account again, we can remove this later, but for now im using this
-	// in testing
+	_, err = s.db.Exec(*ctx, "UPDATE auth.users SET encrypted_password = $1 WHERE id = $2", new_encryptedPassword, in.AuthID)
+	if err != nil {
+		return nil, err
+	}
 	res, _ := s.FetchUserByAuthID(ctx, in.AuthID)
 	return res, nil
+}
+
+// This too i guess
+func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string, error) {
+	var encrypted_password string
+	query := `SELECT encrypted_password FROM auth.users WHERE id = $1;`
+	err := s.db.QueryRow(ctx, query, authID).Scan(&encrypted_password)
+	if err != nil {
+		return "", fmt.Errorf("error querying auth user: %v", err)
+	}
+	return encrypted_password, nil
+}
+
+// These are just helper functions
+func VerifyPassword(hashedPassword, plainPassword string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
+	return err == nil
+}
+func HashPassword(plainPassword string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
 }
