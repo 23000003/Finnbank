@@ -3,9 +3,10 @@ package db
 import (
 	"context"
 	"finnbank/common/utils"
-	"time"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"finnbank/graphql-api/types"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func InitializeServiceDatabases(logger *utils.Logger) *types.StructServiceDatabasePools {
@@ -25,10 +26,10 @@ func InitializeServiceDatabases(logger *utils.Logger) *types.StructServiceDataba
 
 	return &types.StructServiceDatabasePools{
 		OpenedAccountDBPool: OADBPool,
-		AccountDBPool:      ACCDBPool,
-		TransactionDBPool:  TRANSACDBPool,
-		BankCardDBPool:     BCDBPool,
-		NotificationDBPool: NOTIFDBPool,
+		AccountDBPool:       ACCDBPool,
+		TransactionDBPool:   TRANSACDBPool,
+		BankCardDBPool:      BCDBPool,
+		NotificationDBPool:  NOTIFDBPool,
 	}
 }
 
@@ -38,7 +39,7 @@ func CleanupDatabase(dbPools *types.StructServiceDatabasePools, logger *utils.Lo
 
 	// Cleanup all pools in parallel (error channel)
 	errChan := make(chan error, 5)
-	
+
 	go cleanupPool(ctx, dbPools.OpenedAccountDBPool, "OpenedAccount", errChan, logger)
 	go cleanupPool(ctx, dbPools.AccountDBPool, "Account", errChan, logger)
 	go cleanupPool(ctx, dbPools.TransactionDBPool, "Transaction", errChan, logger)
@@ -47,7 +48,7 @@ func CleanupDatabase(dbPools *types.StructServiceDatabasePools, logger *utils.Lo
 
 	// Wait for all cleanups to complete
 	for range 5 {
-		if err := <-errChan; err != nil { // WTF is <- 
+		if err := <-errChan; err != nil { // WTF is <-
 			logger.Error("Cleanup error: %v", err)
 		}
 	}
@@ -64,7 +65,7 @@ func cleanupPool(ctx context.Context, pool *pgxpool.Pool, poolName string, errCh
 
 	// Clear prepared statements
 	if _, err := pool.Exec(ctx, "DISCARD ALL"); err != nil {
-		errChan <- err // Bruh 
+		errChan <- err // Bruh
 		return
 	}
 

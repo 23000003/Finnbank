@@ -30,7 +30,7 @@ func NewOpenedAccountService(db *pgxpool.Pool, logger *utils.Logger) *OpenedAcco
 	}
 }
 
-func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context, id int) ([]*OpenedAccounts, error) {
+func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context, id string) ([]*OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
@@ -101,7 +101,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 }
 
 // Create a new opened account
-func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountId int, accountType string, balance float64) (*OpenedAccounts, error) {
+func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountId string, accountType string, balance float64) (*OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)

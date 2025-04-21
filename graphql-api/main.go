@@ -36,7 +36,7 @@ func main() {
 	defer db.CleanupDatabase(dbServicesPool, logger)
 
 	server := initializeGraphQL(logger, dbServicesPool)
-
+// 
 	startAndShutdownServer(server, logger)
 }
 
