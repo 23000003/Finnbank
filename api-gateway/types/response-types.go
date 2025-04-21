@@ -106,4 +106,20 @@ type AccountSignUpGraphQLResponse struct {
 	Errors interface{} `json:"errors"`
 }
 
-
+type GetAccountDetailsGraphQLResponse struct {
+	Data struct {
+		AccountById struct {
+			Email            string    `json:"email"`
+			FullName         string    `json:"full_name"`
+			PhoneNumber      string    `json:"phone_number"`
+			DateCreated      time.Time `json:"date_created"`
+			AccountNumber    string    `json:"account_number"`
+			NationalId			 string    `json:"national_id_number"`
+			AccountStatus    string    `json:"account_status"`
+			Address          string    `json:"address"`
+			Nationality      string    `json:"nationality"`
+			AccountType      string    `json:"account_type"`
+		} `json:"account_by_id"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}

@@ -17,11 +17,11 @@ type UpdateProductRequest struct {
 // ==================== Opened Account Types ====================
 
 type GetAllOpenedAccountRequest struct {
-	AccountId int `json:"id"`
+	AccountId string `json:"id"`
 }
 
 type CreateOpenAccountRequest struct {
-	AccountId     int       `json:"account_id"`
+	AccountId     string    `json:"account_id"`
 	Balance       float64   `json:"balance"`
 	AccountType   string    `json:"account_type"`
 }

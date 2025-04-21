@@ -18,11 +18,11 @@ func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedA
 					Description: "Get all opened accounts by user id",
 					Args: graphql.FieldConfigArgument{
 						"account_id": &graphql.ArgumentConfig{
-							Type: graphql.Int,
+							Type: graphql.String,
 						},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						id, ok := p.Args["account_id"].(int)
+						id, ok := p.Args["account_id"].(string)
 						if ok {
 							data, err := OAService.GetAllOpenedAccountsByUserId(p.Context, id)
 							return data, err
@@ -65,7 +65,7 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 				Description: "Open a new account",
 				Args: graphql.FieldConfigArgument{
 					"account_id": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.NewNonNull(graphql.String),
 					},
 					"account_type": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -75,7 +75,7 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					account_id, ok := params.Args["account_id"].(int)
+					account_id, ok := params.Args["account_id"].(string)
 					accountType, ok1 := params.Args["account_type"].(string)
 					balance, ok2 := params.Args["balance"].(float64)
 					
