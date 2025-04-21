@@ -161,7 +161,7 @@ var TransactionEntityType = graphql.NewObject(graphql.ObjectConfig{
 var TransactionInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name: "TransactionInput",
 	Fields: graphql.InputObjectConfigFieldMap{
-		"ref_no":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		// "ref_no":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		"sender_id":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		"receiver_id":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		"transaction_type": &graphql.InputObjectFieldConfig{Type: ty.TransactionTypeEnum},
@@ -182,7 +182,7 @@ func GetTransactionInputType() *graphql.InputObject {
 
 type Transaction struct {
 	TransactionID     string    `json:"transaction_id"`
-	RefNo             string    `json:"ref_no"`
+	RefNo             int       `json:"ref_no"`
 	SenderID          string    `json:"sender_id"`
 	ReceiverID        string    `json:"receiver_id"`
 	TransactionType   string    `json:"transaction_type"`
