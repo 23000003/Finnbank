@@ -166,44 +166,24 @@ var notifTypeEnum = graphql.NewEnum(graphql.EnumConfig{
 	},
 })
 
+var notificationEntityType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "Notification",
+	Fields: graphql.Fields{
+		"notif_id":        &graphql.Field{Type: graphql.String},
+		"notif_type":      &graphql.Field{Type: notifTypeEnum},
+		"auth_id":         &graphql.Field{Type: graphql.String},
+		"notif_to_id":     &graphql.Field{Type: graphql.String},
+		"notif_from_name": &graphql.Field{Type: graphql.String},
+		"content":         &graphql.Field{Type: graphql.String},
+		"is_read":         &graphql.Field{Type: graphql.Boolean},
+		"redirect_url":    &graphql.Field{Type: graphql.String},
+		"date_notified":   &graphql.Field{Type: graphql.DateTime},
+		"date_read":       &graphql.Field{Type: graphql.DateTime},
+	},
+})
+
 func GetNotificationEntityType() *graphql.Object {
-	return graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "Notification",
-			Fields: graphql.Fields{
-				"notif_id": &graphql.Field{
-					Type: graphql.String, // UUID
-				},
-				"notif_type": &graphql.Field{
-					Type: notifTypeEnum,
-				},
-				"auth_id": &graphql.Field{
-					Type: graphql.String,
-				},
-				"notif_to_id": &graphql.Field{
-					Type: graphql.String,
-				},
-				"notif_from_name": &graphql.Field{
-					Type: graphql.String,
-				},
-				"content": &graphql.Field{
-					Type: graphql.String,
-				},
-				"is_read": &graphql.Field{
-					Type: graphql.Boolean,
-				},
-				"redirect_url": &graphql.Field{
-					Type: graphql.String,
-				},
-				"date_notified": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-				"date_read": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-			},
-		},
-	)
+	return notificationEntityType
 }
 
 // ======== OLD ======== //

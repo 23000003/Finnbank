@@ -3,15 +3,12 @@ package resolvers
 import (
 	"finnbank/graphql-api/graphql_config/entities"
 	sv "finnbank/graphql-api/services"
+	"time"
 
 	"github.com/graphql-go/graphql"
 )
 
-// "github.com/graphql-go/graphql"
-
-// func (s *StructGraphQLResolvers) GetNotificationQueryType(#) *graphql.Object {
-
-// }
+// func (s *StructGraphQLResolvers) GetNotificationQueryType(#) *graphql.Object
 
 func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.NotificationService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
@@ -55,6 +52,58 @@ func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.Notif
 	})
 }
 
-// func (s *StructGraphQLResolvers) GetNotificationMutationType(#) *graphql.Object {
+// func (s *StructGraphQLResolvers) GetNotificationMutationType(#) *graphql.Object
 
-// }
+func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.NotificationService) *graphql.Object {
+	return graphql.NewObject(graphql.ObjectConfig{
+		Name: "NotificationMutation",
+		Fields: graphql.Fields{
+			"generateNotification": &graphql.Field{
+				Type: entities.GetNotificationEntityType(),
+				Args: graphql.FieldConfigArgument{
+					"notif_type":      &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+					"auth_id":         &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+					"notif_to_id":     &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+					"notif_from_name": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+					"content":         &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+					"redirect_url":    &graphql.ArgumentConfig{Type: graphql.String},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					notif := sv.Notification{
+						NotifType:     p.Args["notif_type"].(string),
+						AuthID:        p.Args["auth_id"].(string),
+						NotifToID:     p.Args["notif_to_id"].(string),
+						NotifFromName: p.Args["notif_from_name"].(string),
+						Content:       p.Args["content"].(string),
+						IsRead:        false,
+						RedirectURL:   "",
+						DateNotified:  time.Now(),
+					}
+
+					// Optional redirect_url (nullable)
+					if val, ok := p.Args["redirect_url"].(string); ok {
+						notif.RedirectURL = val
+					}
+
+					createdNotif, err := NotifService.GenerateNotification(notif)
+					if err != nil {
+						return nil, err
+					}
+
+					return map[string]interface{}{
+						"notif_id":        createdNotif.NotifID,
+						"notif_type":      createdNotif.NotifType,
+						"auth_id":         createdNotif.AuthID,
+						"notif_to_id":     createdNotif.NotifToID,
+						"notif_from_name": createdNotif.NotifFromName,
+						"content":         createdNotif.Content,
+						"is_read":         createdNotif.IsRead,
+						"redirect_url":    createdNotif.RedirectURL,
+						"date_notified":   createdNotif.DateNotified,
+						"date_read":       createdNotif.DateRead,
+					}, nil
+				},
+			},
+		},
+	})
+}
