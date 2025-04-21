@@ -2,16 +2,20 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
+	"fmt"
+	"math/big"
+
 	"finnbank/common/utils"
 	en "finnbank/graphql-api/graphql_config/entities"
-	"fmt"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const DefaultTransactionStatus = "Pending"
+const (
+	DefaultTransactionStatus = "Pending"
+	RefNoLength              = 12
+)
 
 type TransactionService struct {
 	db *pgxpool.Pool
@@ -19,17 +23,22 @@ type TransactionService struct {
 }
 
 func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger) *TransactionService {
-	return &TransactionService{
-		db: db,
-		l:  logger,
+	return &TransactionService{db: db, l: logger}
+}
+
+// generateRefNo returns a random numeric string of length RefNoLength.
+func generateRefNo() (string, error) {
+	const digits = "0123456789"
+	ref := make([]byte, RefNoLength)
+	for i := range ref {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			return "", fmt.Errorf("failed to generate ref_no: %w", err)
+		}
+		ref[i] = digits[n.Int64()]
 	}
+	return string(ref), nil
 }
-
-func GenerateUUID() string {
-	return uuid.New().String()
-}
-
-// GetTransactionByUserId retrieves all transactions for a specific user.
 func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]en.Transaction, error) {
 	s.l.Info("Fetching transactions for user ID: %s", userId)
 
@@ -80,11 +89,11 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 	return transactions, nil
 }
 
-// CreateTransaction creates a new transaction.
+// CreateTransaction creates a new transaction, auto‑generating a numeric ref_no.
 func (s *TransactionService) CreateTransaction(ctx context.Context, req en.Transaction) (en.Transaction, error) {
 	s.l.Info("Creating transaction for user ID: %s", req.SenderID)
 
-	// Input validation
+	// 1) Validation
 	if req.SenderID == "" || req.ReceiverID == "" {
 		return en.Transaction{}, fmt.Errorf("sender_id and receiver_id cannot be empty")
 	}
@@ -95,47 +104,68 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req en.Trans
 		return en.Transaction{}, fmt.Errorf("transaction_fee cannot be negative")
 	}
 
-	query := `
-        INSERT INTO transactions (transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, transaction_status, date_transaction, transaction_fee, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, transaction_status, date_transaction, transaction_fee, notes
-    `
-
-	newTransaction := req
-	newTransaction.TransactionID = GenerateUUID() // Generate a unique ID
-	newTransaction.DateTransaction = time.Now()
-	newTransaction.TransactionStatus = DefaultTransactionStatus
-
-	row := s.db.QueryRow(ctx, query,
-		newTransaction.TransactionID,
-		newTransaction.RefNo,
-		newTransaction.SenderID,
-		newTransaction.ReceiverID,
-		newTransaction.TransactionType,
-		newTransaction.Amount,
-		newTransaction.TransactionStatus,
-		newTransaction.DateTransaction,
-		newTransaction.TransactionFee,
-		newTransaction.Notes,
-	)
-
-	err := row.Scan(
-		&newTransaction.TransactionID,
-		&newTransaction.RefNo,
-		&newTransaction.SenderID,
-		&newTransaction.ReceiverID,
-		&newTransaction.TransactionType,
-		&newTransaction.Amount,
-		&newTransaction.TransactionStatus,
-		&newTransaction.DateTransaction,
-		&newTransaction.TransactionFee,
-		&newTransaction.Notes,
-	)
+	// 2) Generate numeric-only ref_no
+	refNo, err := generateRefNo()
 	if err != nil {
-		s.l.Error("Error creating transaction with RefNo %s for user ID %s: %v", req.RefNo, req.SenderID, err)
-		return en.Transaction{}, fmt.Errorf("failed to create transaction for user ID %s: %w", req.SenderID, err)
+		s.l.Error("Error generating ref_no: %v", err)
+		return en.Transaction{}, fmt.Errorf("failed to generate ref_no: %w", err)
 	}
 
-	s.l.Info("Transaction created successfully: %+v", newTransaction)
-	return newTransaction, nil
+	// 3) Insert, letting the DB fill transaction_id and timestamp
+	query := `
+        INSERT INTO transactions
+          (ref_no, sender_id, receiver_id,
+           transaction_type, amount, transaction_status,
+           transaction_fee, notes)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING
+          transaction_id, ref_no, sender_id, receiver_id,
+          transaction_type, amount, transaction_status,
+          date_transaction, transaction_fee, notes;
+    `
+	row := s.db.QueryRow(ctx, query,
+		refNo,
+		req.SenderID,
+		req.ReceiverID,
+		req.TransactionType,
+		req.Amount,
+		DefaultTransactionStatus,
+		req.TransactionFee,
+		req.Notes,
+	)
+
+	var created en.Transaction
+	if err := row.Scan(
+		&created.TransactionID,
+		&created.RefNo,
+		&created.SenderID,
+		&created.ReceiverID,
+		&created.TransactionType,
+		&created.Amount,
+		&created.TransactionStatus,
+		&created.DateTransaction,
+		&created.TransactionFee,
+		&created.Notes,
+	); err != nil {
+		s.l.Error("Error creating transaction: %v", err)
+		return en.Transaction{}, fmt.Errorf("failed to create transaction: %w", err)
+	}
+
+	s.l.Info("Transaction created: %+v", created)
+	return created, nil
 }
+
+// todo: generate random 12 digit ref_no for transaction
+// add to the createTransaction function to generate a random 12 digit number and assign it to the ref_no field of the transaction struct before inserting it into the database.
+// This will ensure that each transaction has a unique reference number.
+
+//What changed?
+// Removed all calls to GenerateUUID()—we let Postgres SERIAL produce transaction_id.
+// Generate ref_no exactly once via generateRefNo().
+// Omit transaction_id and date_transaction from the column list; the table’s defaults will fill them.
+// Return the full, DB‑populated record (including your new numeric ref_no).
+// With this in place, every call to CreateTransaction yields:
+// A guaranteed unique, 12‑digit numeric ref_no
+// A DB‑assigned transaction_id
+// A timestamp set by the database
+// And your Go code never mutates the same struct twice or needs to orchestrate UUIDs itself.
