@@ -110,7 +110,7 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 						return data, err
 					}
 					
-					return nil, fmt.Errorf("invalid argument: %v %v", params.Args["openedaccount_id"], params.Args["oppenedaccount_status"]);
+					return nil, fmt.Errorf("invalid argument: %v %v", params.Args["openedaccount_id"], params.Args["openedaccount_status"]);
 				},
 			},
 		},
