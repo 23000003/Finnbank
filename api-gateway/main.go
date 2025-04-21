@@ -10,9 +10,10 @@ import (
 
 func CorsMiddleware(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"*"},
 		AllowCredentials: true,
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 	}))
 }
 
@@ -23,6 +24,8 @@ func main() {
 		panic(err)
 	}
 	logger.Info("Starting the application...")
+
+	CorsMiddleware(router)
 
 	serviceAPI := router.Group("/api")
 	{

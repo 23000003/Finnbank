@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"finnbank/common/grpc/auth"
 	"finnbank/common/grpc/products"
 	"finnbank/common/utils"
 	"finnbank/graphql-api/graphql_config/resolvers"
@@ -54,9 +55,12 @@ func (g *StructGraphQLHandler) ProductServicesHandler(connAddress string) *handl
 // HIGHLIGHT
 // Instead of adding gRPC here, initialize DB connector add pass it to the Query and Mutations
 
-func (g *StructGraphQLHandler) AccountServicesHandler() *handler.Handler {
+func (g *StructGraphQLHandler) AccountServicesHandler(connAddress string) *handler.Handler {
 
-	ACCService := sv.NewAccountService(g.db.AccountDBPool, g.l)
+	grpcConnection := grpc_client.NewGRPCClient(connAddress)
+	authServer := auth.NewAuthServiceClient(grpcConnection)
+
+	ACCService := sv.NewAccountService(g.db.AccountDBPool, g.l, authServer)
 
 	accountSchema, err := graphql.NewSchema(
 		graphql.SchemaConfig{
