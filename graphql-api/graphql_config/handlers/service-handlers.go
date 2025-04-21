@@ -104,7 +104,24 @@ func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *
 	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
 	// proto server
 
-	return nil
+	notifService := sv.NewNotificationService(g.db.NotificationDBPool, g.l)
+
+	notifSchema, err := graphql.NewSchema(graphql.SchemaConfig{
+		Query:    g.r.GetNotificationQueryType(notifService),
+		Mutation: g.r.GetNotificationMutationType(notifService),
+	})
+	if err != nil {
+		g.l.Fatal("Failed to configure Notification Handler Schema: %v", err)
+	}
+
+	notificationHandler := handler.New(&handler.Config{
+		Schema:   &notifSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	return notificationHandler
+
 }
 
 func (g *StructGraphQLHandler) StatementServicesHandler(connAddress string) *handler.Handler {
