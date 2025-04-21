@@ -1,13 +1,14 @@
 package types
 
 import (
-	"github.com/graphql-go/graphql"
 	"time"
+
+	"github.com/graphql-go/graphql"
 )
 
 type Transaction struct {
 	TransactionID     string    `json:"transaction_id"`
-	RefNo             int       `json:"ref_no"`
+	RefNo             string    `json:"ref_no"`
 	SenderID          string    `json:"sender_id"`
 	ReceiverID        string    `json:"receiver_id"`
 	TransactionType   string    `json:"transaction_type"`
