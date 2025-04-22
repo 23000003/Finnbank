@@ -11,7 +11,7 @@ type StatementService struct {
 	url string
 }
 
-func NewStatementService(log *utils.Logger) *StatementService {
+func newStatementService(log *utils.Logger) *StatementService {
 	return &StatementService{
 		log: log,
 		url: "http://localhost:8083/graphql/statement",

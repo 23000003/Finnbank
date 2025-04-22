@@ -11,7 +11,7 @@ type BankcardService struct {
 	url string
 }
 
-func NewBankcardService(log *utils.Logger) *BankcardService {
+func newBankcardService(log *utils.Logger) *BankcardService {
 	return &BankcardService{
 		log: log,
 		url: "http://localhost:8083/graphql/bankcard",
