@@ -26,7 +26,6 @@ func NewNotificationService(db *pgxpool.Pool, logger *utils.Logger) *Notificatio
 type Notification struct {
 	NotifID       string     `json:"notif_id"`
 	NotifType     string     `json:"notif_type"`
-	AuthID        string     `json:"auth_id"`
 	NotifToID     string     `json:"notif_to_id"`
 	NotifFromName string     `json:"notif_from_name"`
 	Content       string     `json:"content"`
@@ -39,7 +38,7 @@ type Notification struct {
 // GetAllNotificationByUserId, (Query)
 func (s *NotificationService) GetAllNotificationByUserId(notifToID string) ([]Notification, error) {
 	rows, err := s.db.Query(context.Background(), `
-		SELECT notif_id, notif_type, auth_id, notif_to_id, notif_from_name,
+		SELECT notif_id, notif_type, notif_to_id, notif_from_name,
 		       content, is_read, redirect_url, date_notified, date_read
 		FROM notifications
 		WHERE notif_to_id = $1
@@ -55,7 +54,7 @@ func (s *NotificationService) GetAllNotificationByUserId(notifToID string) ([]No
 	for rows.Next() {
 		var notif Notification
 		err := rows.Scan(
-			&notif.NotifID, &notif.NotifType, &notif.AuthID, &notif.NotifToID,
+			&notif.NotifID, &notif.NotifType, &notif.NotifToID,
 			&notif.NotifFromName, &notif.Content, &notif.IsRead,
 			&notif.RedirectURL, &notif.DateNotified, &notif.DateRead,
 		)
@@ -76,10 +75,10 @@ func (s *NotificationService) GenerateNotification(notif Notification) (*Notific
 
 	query := `
 		INSERT INTO notifications (
-			notif_id, notif_type, auth_id, notif_to_id, notif_from_name,
+			notif_id, notif_type, notif_to_id, notif_from_name,
 			content, is_read, redirect_url, date_notified
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING notif_id, date_notified
 	`
 
@@ -89,7 +88,6 @@ func (s *NotificationService) GenerateNotification(notif Notification) (*Notific
 	err := s.db.QueryRow(context.Background(), query,
 		notifID,
 		notif.NotifType,
-		notif.AuthID,
 		notif.NotifToID,
 		notif.NotifFromName,
 		notif.Content,
@@ -112,7 +110,7 @@ func (s *NotificationService) GenerateNotification(notif Notification) (*Notific
 // GetNotificationByUserId, (Query)
 func (s *NotificationService) GetNotificationByUserId(notifID string) (*Notification, error) {
 	query := `
-		SELECT notif_id, notif_type, auth_id, notif_to_id, notif_from_name,
+		SELECT notif_id, notif_type, notif_to_id, notif_from_name,
 		       content, is_read, redirect_url, date_notified, date_read
 		FROM notifications
 		WHERE notif_id = $1
@@ -120,7 +118,7 @@ func (s *NotificationService) GetNotificationByUserId(notifID string) (*Notifica
 
 	var notif Notification
 	err := s.db.QueryRow(context.Background(), query, notifID).Scan(
-		&notif.NotifID, &notif.NotifType, &notif.AuthID, &notif.NotifToID,
+		&notif.NotifID, &notif.NotifType, &notif.NotifToID,
 		&notif.NotifFromName, &notif.Content, &notif.IsRead,
 		&notif.RedirectURL, &notif.DateNotified, &notif.DateRead,
 	)
