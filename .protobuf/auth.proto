@@ -5,8 +5,6 @@ option go_package = "finnbank/commoin/grpc/auth";
 service AuthService {
   rpc SignUpUser(SignUpRequest) returns (AuthResponse);
   rpc LoginUser(LoginRequest) returns (AuthResponse);
-  rpc GetEncryptedPassword(AuthIDRequest) returns (AuthUserResponse);
-  rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse);
 }
 
 message SignUpRequest {
@@ -33,21 +31,4 @@ message UserInfo {
   string email = 2;
 }
 
-message AuthIDRequest {
-  string auth_id = 1;
-}
 
-message AuthUserResponse {
-  string encrypted_password = 1;
-}
-
-message UpdatePasswordRequest {
-  string auth_id = 1;
-  string old_password = 2;
-  string new_password = 3;
-}
-
-message UpdatePasswordResponse {
-  bool success = 1;
-  string message = 2;
-}

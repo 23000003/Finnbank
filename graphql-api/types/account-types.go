@@ -19,15 +19,17 @@ type LoginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	AuthID       string `json:"auth_id"`
 	// below are values for auth context in FE
-	FullName		string `json:"full_name"`
-	AccountId		string `json:"account_id"`
+	DisplayName string `json:"full_name"`
+	AccountId   string `json:"account_id"`
 }
 
 // Account represents an account.
 type Account struct {
 	ID            string    `json:"account_id"`
 	Email         string    `json:"email"`
-	FullName      string    `json:"full_name"`
+	FirstName     string    `json:"first_name"`
+	MiddleName    string    `json:"middle_name"`
+	LastName      string    `json:"last_name"`
 	PhoneNumber   string    `json:"phone_number"`
 	Address       string    `json:"address"`
 	AccountType   string    `json:"account_type"`
@@ -38,6 +40,9 @@ type Account struct {
 	DateCreated   time.Time `json:"date_created"`
 	DateUpdated   time.Time `json:"date_updated"`
 	Nationality   string    `json:"nationality"`
+	BirthDate     time.Time `json:"birthdate"`
+	NationalID    string    `json:"national_id"`
+	AccountStatus string    `json:"account_status"`
 }
 
 type AccountsResponse struct {
@@ -92,29 +97,33 @@ type DeleteUserResponse struct {
 
 // AddAccountRequest represents a request to add a new account.
 type AddAccountRequest struct {
-	Email       string `json:"email"`
-	FullName    string `json:"full_name"`
-	PhoneNumber string `json:"phone_number"`
-	Password    string `json:"password"`
-	Address     string `json:"address"`
-	AccountType string `json:"account_type"`
-	Nationality string `json:"nationality"`
+	Email       string    `json:"email"`
+	FirstName   string    `json:"first_name"`
+	MiddleName  string    `json:"middle_name"`
+	LastName    string    `json:"last_name"`
+	PhoneNumber string    `json:"phone_number"`
+	Password    string    `json:"password"`
+	Address     string    `json:"address"`
+	AccountType string    `json:"account_type"`
+	Nationality string    `json:"nationality"`
+	BirthDate   time.Time `json:"birthdate"`
+	NationalID  string    `json:"national_id"`
 }
 
 // AddAccountResponse represents a response for adding a new account.
 type AddAccountResponse struct {
-	ID            string    `json:"account_id"`
-	Email         string    `json:"email"`
-	FullName      string    `json:"full_name"`
-	PhoneNumber   string    `json:"phone_number"`
-	Address       string    `json:"address"`
-	AccountType   string    `json:"account_type"`
-	AccountNumber string    `json:"account_number"`
-	AuthID        string    `json:"auth_id"`
-	HasCard       bool      `json:"has_card"`
-	Balance       float64   `json:"balance"`
-	DateCreated   time.Time `json:"date_created"`
-	Nationality   string    `json:"nationality"`
+	Account Account `json:"account"`
+}
+
+type UpdateAccountRequest struct {
+	Email       string `json:"email"`
+	FirstName   string `json:"first_name"`
+	MiddleName  string `json:"middle_name"`
+	LastName    string `json:"last_name"`
+	PhoneNumber string `json:"phone_number"`
+}
+type UpdateAccountResponse struct {
+	Account Account `json:"account"`
 }
 
 // For signup input
@@ -129,6 +138,9 @@ var AccountInputType = graphql.NewInputObject(
 				Type: graphql.String,
 			},
 			"first_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"middle_name": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
 			"last_name": &graphql.InputObjectFieldConfig{
@@ -146,6 +158,12 @@ var AccountInputType = graphql.NewInputObject(
 			"nationality": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
+			"birthdate": &graphql.InputObjectFieldConfig{
+				Type: graphql.DateTime,
+			},
+			"national_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
 		},
 	},
 )
@@ -159,6 +177,24 @@ var LoginInputType = graphql.NewInputObject(
 				Type: graphql.String,
 			},
 			"password": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+
+// using this for Update Account
+var UpdatePasswordInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdatePasswordInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"auth_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"old_password": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"new_password": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
 		},

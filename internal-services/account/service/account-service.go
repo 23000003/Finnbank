@@ -6,20 +6,15 @@ import (
 	"encoding/json"
 	pb "finnbank/common/grpc/auth"
 	"finnbank/common/utils"
-	"finnbank/internal-services/account/auth"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type AuthService struct {
 	Logger *utils.Logger
-	DB     *pgx.Conn
-	Helper *auth.AuthHelpers
 	Grpc   pb.AuthServiceServer
 	pb.UnimplementedAuthServiceServer
 }
@@ -66,7 +61,6 @@ func (s *AuthService) SignUpUser(ctx context.Context, in *pb.SignUpRequest) (*pb
 		s.Logger.Error("Signup failed with status %d: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("signup failed: %s", string(body))
 	}
-	
 
 	defer resp.Body.Close()
 	var token struct {
@@ -164,53 +158,5 @@ func (s *AuthService) LoginUser(c context.Context, in *pb.LoginRequest) (*pb.Aut
 	}
 	return authResponse, nil
 }
-func (s *AuthService) GetEncryptedPassword(c context.Context, in *pb.AuthIDRequest) (*pb.AuthUserResponse, error) {
-	var encryptedPassword string
-	err := s.DB.QueryRow(c, "SELECT encrypted_password FROM auth.users WHERE id = $1", in.AuthId).Scan(&encryptedPassword)
-	if err != nil {
-		s.Logger.Error("Failed to get encrypted password: %v", err)
-		return nil, err
-	}
-	authResponse := &pb.AuthUserResponse{
-		EncryptedPassword: encryptedPassword,
-	}
-	return authResponse, nil
-}
 
-func (s *AuthService) UpdatePassword(c context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	// LOCAL_DB_URL <-- LOCAL Database
-	// ACC_DATABASE_URL <-- PROD Database
-	dbURL := os.Getenv("ACC_DATABASE_URL")
-	if dbURL == "" {
-		s.Logger.Error("ACC_DATABASE_URL is missing")
-		return nil, fmt.Errorf("ACC_DATABASE_URL is missing")
-	}
-	s.Logger.Info(dbURL)
-
-	oldEncryptedPassword, err := s.Helper.GetUserAuth(c, in.AuthId, s.DB)
-	if err != nil {
-		s.Logger.Error("Failed to get user auth: %v", err)
-		return nil, err
-	}
-	ok := s.Helper.VerifyPassword(oldEncryptedPassword.EnryptedPass, in.OldPassword)
-	if !ok {
-		s.Logger.Error("Old password is incorrect")
-		return nil, fmt.Errorf("old password is incorrect")
-	}
-	newEncryptedPassword, err := s.Helper.HashPassword(in.NewPassword)
-	if err != nil {
-		s.Logger.Error("Failed to hash new password: %v", err)
-		return nil, err
-	}
-	_, err = s.DB.Exec(c, "UPDATE auth.users SET encrypted_password = $1 WHERE id = $2", newEncryptedPassword, in.AuthId)
-	if err != nil {
-		s.Logger.Error("Failed to update password: %v", err)
-		return nil, err
-	}
-	authResponse := &pb.UpdatePasswordResponse{
-		Message: "Password updated successfully",
-		Success: true,
-	}
-	return authResponse, nil
-
-}
+//  Moved update password into the graphql-api because we were'nt using it in the anywhere else
