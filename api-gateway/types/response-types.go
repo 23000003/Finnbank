@@ -123,7 +123,7 @@ type GetAccountDetailsGraphQLResponse struct {
 	Errors interface{} `json:"errors"`
 }
 
-type AccountFetchResponse struct {
+type AccountNumberFetchResponse struct {
 	Data struct {
 		FetchedAccount struct {
 			AccountID     string  `json:"account_id"`
@@ -143,7 +143,31 @@ type AccountFetchResponse struct {
 			NationalID    string  `json:"national_id"`
 			Nationality   string  `json:"nationality"`
 			PhoneNumber   string  `json:"phone_number"`
-		}
+		} `json:"account_by_account_num"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+type EmailFetchResponse struct {
+	Data struct {
+		FetchedAccount struct {
+			AccountID     string  `json:"account_id"`
+			AccountStatus string  `json:"account_status"`
+			AccountType   string  `json:"account_type"`
+			Address       string  `json:"address"`
+			AuthID        string  `json:"auth_id"`
+			Balance       float64 `json:"balance"`
+			Birthdate     string  `json:"birthdate"`
+			DateCreated   string  `json:"date_created"`
+			DateUpdated   string  `json:"date_updated"`
+			Email         string  `json:"email"`
+			FirstName     string  `json:"first_name"`
+			HasCard       bool    `json:"has_card"`
+			LastName      string  `json:"last_name"`
+			MiddleName    string  `json:"middle_name"`
+			NationalID    string  `json:"national_id"`
+			Nationality   string  `json:"nationality"`
+			PhoneNumber   string  `json:"phone_number"`
+		} `json:"account_by_email"`
 	} `json:"data"`
 	Errors any `json:"errors"`
 }

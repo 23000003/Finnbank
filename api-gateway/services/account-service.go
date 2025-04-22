@@ -252,7 +252,7 @@ func (a *AccountService) GetUserAccountByAccountNumber(c *gin.Context) {
 		return
 	}
 
-	var res t.AccountFetchResponse
+	var res t.AccountNumberFetchResponse
 
 	if err := json.Unmarshal(body, &res); err != nil {
 		a.log.Info("Unmarshal Error: %v", err)
@@ -264,6 +264,8 @@ func (a *AccountService) GetUserAccountByAccountNumber(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
 		return
 	}
+	fmt.Println("RAW GQL Response:", string(body))
+
 	c.JSON(http.StatusOK, gin.H{"account": res.Data.FetchedAccount})
 }
 func (a *AccountService) GetUserAccountByEmail(c *gin.Context) {
@@ -271,7 +273,7 @@ func (a *AccountService) GetUserAccountByEmail(c *gin.Context) {
 
 	query := fmt.Sprintf(`{
 		account_by_email(
-		  account_number: "%s"
+		  email: "%s"
 		)
 		{
 		  account_id
@@ -314,7 +316,7 @@ func (a *AccountService) GetUserAccountByEmail(c *gin.Context) {
 		return
 	}
 
-	var res t.AccountFetchResponse
+	var res t.EmailFetchResponse
 
 	if err := json.Unmarshal(body, &res); err != nil {
 		a.log.Info("Unmarshal Error: %v", err)
@@ -341,29 +343,13 @@ func (a *AccountService) UpdateUserPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	query := fmt.Sprint(`{
+	query := fmt.Sprintf(`mutation {
 	update_password(UpdatePasswordInput:{
 		auth_id: "%s"
 		old_password: "%s"
 		new_password: "%s"
-	}) {
+		}) {
 		account_id
-		account_status
-		account_type
-		address
-		auth_id
-		balance
-		birthdate
-		date_created
-		date_updated
-		email
-		first_name
-		has_card
-		last_name
-		middle_name
-		national_id
-		nationality
-		phone_number
 		}
 	}
 	`, req.AuthId, req.OldPassword, req.NewPassword)
@@ -382,18 +368,25 @@ func (a *AccountService) UpdateUserPassword(c *gin.Context) {
 	defer resp.Body.Close()
 
 	// Decode response
-	var res t.AccountFetchResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		a.log.Info("GraphQL Decode Error: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid response from auth service"})
+	var res struct {
+		Data struct {
+			UpdatedPassword struct {
+				AccountID string `json:"account_id"`
+			} `json:"update_password"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
 		return
 	}
 
-	if res.Errors != nil {
-		a.log.Info("GraphQL Errors: %v", res.Errors)
-		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
-		return
-	}
-
-	c.JSON(http.StatusOK, res.Data.FetchedAccount)
+	fmt.Println("RAW GQL Response:", string(body))
+	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully", "id": res.Data.UpdatedPassword.AccountID})
 }
