@@ -1,12 +1,14 @@
 package services
 
 import (
-	"finnbank/common/utils"
-	"net/http"
 	"bytes"
-	"fmt"
 	"encoding/json"
 	t "finnbank/api-gateway/types"
+	"finnbank/common/utils"
+	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,8 +29,7 @@ import (
 // 	Account_Status ENUM('Active', 'Suspended', 'Closed'),
 //       Birthdate DATE (NEWW) add ??
 // 	Date_Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-// ) 
-
+// )
 
 type AccountService struct {
 	log *utils.Logger
@@ -147,10 +148,9 @@ func (a *AccountService) SignupUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": "Registered successfully"})
 }
 
-
 func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
 
-	id := ctx.Param("id");
+	id := ctx.Param("id")
 
 	a.log.Info("GetOpenedAccount: %v", id)
 
@@ -169,7 +169,7 @@ func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
 		}
 	}`, id)
 
-	qlrequestBody := map[string]interface{}{
+	qlrequestBody := map[string]any{
 		"query": query,
 	}
 
@@ -202,4 +202,198 @@ func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
 	data.Data.AccountById.NationalId = "6342123456789"
 
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.AccountById})
+}
+
+func (a *AccountService) GetUserAccountByAccountNumber(c *gin.Context) {
+	acc_num := c.Param("account_number")
+
+	query := fmt.Sprintf(`{
+  account_by_account_num(
+    account_number: "%s"
+  )
+  {
+    account_id
+    account_status
+    account_type
+    address
+    auth_id
+    balance
+    birthdate
+    date_created
+    date_updated
+    email
+    first_name
+    has_card
+    last_name
+    middle_name
+    national_id
+    nationality
+    phone_number
+  }
+}`, acc_num)
+
+	qlrequestBody := map[string]any{
+		"query": query,
+	}
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+
+	var res t.AccountFetchResponse
+
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+	if res.Errors != nil {
+		a.log.Info("GraphQL Error: %v", res.Errors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"account": res.Data.FetchedAccount})
+}
+func (a *AccountService) GetUserAccountByEmail(c *gin.Context) {
+	email := c.Param("email")
+
+	query := fmt.Sprintf(`{
+		account_by_email(
+		  account_number: "%s"
+		)
+		{
+		  account_id
+		  account_status
+		  account_type
+		  address
+		  auth_id
+		  balance
+		  birthdate
+		  date_created
+		  date_updated
+		  email
+		  first_name
+		  has_card
+		  last_name
+		  middle_name
+		  national_id
+		  nationality
+		  phone_number
+		}
+	  }`, email)
+
+	qlrequestBody := map[string]any{
+		"query": query,
+	}
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+
+	var res t.AccountFetchResponse
+
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+	if res.Errors != nil {
+		a.log.Info("GraphQL Error: %v", res.Errors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"account": res.Data.FetchedAccount})
+
+}
+func (a *AccountService) UpdateUserPassword(c *gin.Context) {
+	var req struct {
+		AuthId      string `json:"auth_id"`
+		OldPassword string `json:"old_password"`
+		NewPassword string `json:"new_password"`
+	}
+
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	query := fmt.Sprint(`{
+	update_password(UpdatePasswordInput:{
+		auth_id: "%s"
+		old_password: "%s"
+		new_password: "%s"
+	}) {
+		account_id
+		account_status
+		account_type
+		address
+		auth_id
+		balance
+		birthdate
+		date_created
+		date_updated
+		email
+		first_name
+		has_card
+		last_name
+		middle_name
+		national_id
+		nationality
+		phone_number
+		}
+	}
+	`, req.AuthId, req.OldPassword, req.NewPassword)
+
+	qlRequestBody := map[string]any{
+		"query": query,
+	}
+	qlRequestJSON, _ := json.Marshal(qlRequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlRequestJSON))
+	if err != nil {
+		a.log.Info("GraphQL Request Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Decode response
+	var res t.AccountFetchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		a.log.Info("GraphQL Decode Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid response from auth service"})
+		return
+	}
+
+	if res.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", res.Errors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
+		return
+	}
+
+	c.JSON(http.StatusOK, res.Data.FetchedAccount)
 }
