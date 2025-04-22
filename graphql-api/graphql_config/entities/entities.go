@@ -52,34 +52,6 @@ func GetAccountEntityType() *graphql.Object {
 	)
 }
 
-func GetBankCardEntityType() *graphql.Object {
-	return graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "BankCard",
-			Fields: graphql.Fields{
-				"card_number": &graphql.Field{
-					Type: graphql.String, // UUID in DB
-				},
-				"expiry": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-				"account_id": &graphql.Field{
-					Type: graphql.Int,
-				},
-				"pin_number": &graphql.Field{
-					Type: graphql.String,
-				},
-				"date_created": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-				"card_type_final": &graphql.Field{
-					Type: graphql.EnumValueType,
-				},
-			},
-		},
-	)
-}
-
 var bankCardReponseType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "BankCardResponse",
 	Fields: graphql.Fields{
@@ -116,6 +88,30 @@ var bankCardRequestType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
+var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "BankCardEntity",
+	Fields: graphql.Fields{
+		"bankcard_id": &graphql.Field{
+			Type: graphql.Int,
+		},
+		"bankcard_number": &graphql.Field{
+			Type: graphql.String,
+		},
+		"bankcard_pin": &graphql.Field{
+			Type: graphql.String,
+		},
+		"card_type": &graphql.Field{
+			Type: graphql.String,
+		},
+		"expiry_date": &graphql.Field{
+			Type: graphql.DateTime,
+		},
+		"account_id": &graphql.Field{
+			Type: graphql.String,
+		},
+	},
+})
+
 func GetBankCardResponseEntity() *graphql.Object {
 	return bankCardReponseType
 }
@@ -124,7 +120,11 @@ func GetBankCardRequestEntity() *graphql.Object {
 	return bankCardRequestType
 }
 
-var transactionType = graphql.NewObject(graphql.ObjectConfig{
+func GetBankCardEntity() *graphql.Object {
+	return bankCardEntityType
+}
+
+var TransactionEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Transaction",
 	Fields: graphql.Fields{
 		"transaction_id":     &graphql.Field{Type: graphql.String},
