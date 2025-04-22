@@ -2,6 +2,7 @@ package entities
 
 import (
 	ty "finnbank/graphql-api/types"
+
 	"github.com/graphql-go/graphql"
 )
 
@@ -128,7 +129,6 @@ func GetBankCardEntityType() *graphql.Object {
 	)
 }
 
-
 // ① Declare it once at package‐init time:
 var TransactionEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Transaction",
@@ -169,7 +169,6 @@ func GetTransactionInputType() *graphql.InputObject {
 	return TransactionInputType
 }
 
-
 // Experimenting
 var notifTypeEnum = graphql.NewEnum(graphql.EnumConfig{
 	Name: "NotificationType",
@@ -199,19 +198,18 @@ func GetNotificationEntityType() *graphql.Object {
 	return notificationEntityType
 }
 
-
 func GetOpenedAccountEntityType() *graphql.Object {
 	return graphql.NewObject(
 		graphql.ObjectConfig{
 			Name: "OpenedAccount",
 			Fields: graphql.Fields{
-				"openedaccount_id": 		&graphql.Field{Type: graphql.Int},
-				"account_id": 					&graphql.Field{Type: graphql.Int},
-				"bankcard_id": 					&graphql.Field{Type: graphql.Int},
-				"account_type": 				&graphql.Field{Type: graphql.String},
-				"balance": 							&graphql.Field{Type: graphql.Float},
+				"openedaccount_id":     &graphql.Field{Type: graphql.Int},
+				"account_id":           &graphql.Field{Type: graphql.Int},
+				"bankcard_id":          &graphql.Field{Type: graphql.Int},
+				"account_type":         &graphql.Field{Type: graphql.String},
+				"balance":              &graphql.Field{Type: graphql.Float},
 				"openedaccount_status": &graphql.Field{Type: graphql.String},
-				"date_created": 				&graphql.Field{Type: graphql.DateTime,},
+				"date_created":         &graphql.Field{Type: graphql.DateTime},
 			},
 		},
 	)
