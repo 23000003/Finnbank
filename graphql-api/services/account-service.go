@@ -300,6 +300,11 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	return res, nil
 }
 
+// TODO: This is not implemented yet, but i think it should be done by tommorow
+// func (s* AccountService) UpdateUser(ctx* context.Context, in * types.UpdateAccountRequest)(*types.UpdateAccountResponse, error) {
+
+// }
+
 // This too i guess
 func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string, error) {
 	var encrypted_password string
