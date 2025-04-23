@@ -66,6 +66,23 @@ func (s *StructGraphQLResolvers) GetBankCardQueryType(BCService *sv.BankcardServ
 						return data, err
 					},
 				},
+				"bankcard_by_bankcard_number": &graphql.Field{
+					Type:        bcen.GetBankCardEntity(),
+					Description: "Get all bank card requests by id",
+					Args: graphql.FieldConfigArgument{
+						"bankcard_number": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						bankcard_number, ok := p.Args["bankcard_number"].(string)
+						if !ok {
+							return nil, fmt.Errorf("bankcard_number argument is required and must be an int")
+						}
+						data, err := BCService.GetBankCardByNumber(p.Context, bankcard_number)
+						return data, err
+					},
+				},
 			},
 		},
 	)

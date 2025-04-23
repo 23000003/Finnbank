@@ -41,11 +41,13 @@ type BankCardNumberGenerated struct {
 }
 
 type BankCardNumberResponse struct {
-	BankCardNumber string `json: "bankcard_number"`
-	PinNumber      string `json: "bankcard_pin"`
-	ExpiryDate     string `json: "expiry_date"`
-	AccountId      string `json: "account_id"`
-	CardType       string `json: "card_type"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	CardType       string    `json:"card_type"`
+	BankCardNumber string    `json:"bankcard_number"`
+	PinNumber      string    `json:"bankcard_pin"`
+	ExpiryDate     time.Time `json:"expiry_date"`
+	AccountId      string    `json:"account_id"`
 }
 
 type BankcardService struct {
@@ -243,5 +245,34 @@ func (b *BankcardService) CreateBankCardForUser(ctx context.Context, fname strin
 		return nil, fmt.Errorf("failed to update the status of the request: %w", err)
 	}
 
+	return &res, nil
+}
+
+func (b *BankcardService) GetBankCardByNumber(ctx context.Context, card_number string) (*BankCardNumberResponse, error) {
+	var res BankCardNumberResponse
+	err := b.db.QueryRow(ctx, `
+        SELECT 
+            b.bankcard_number, 
+            b.bankcard_pin, 
+            b.expiry_date, 
+            b.account_id, 
+            b.card_type,
+            r.first_name,
+            r.last_name
+        FROM bankcard_list b
+        JOIN card_request_list r ON b.bankcard_number = r.bankcard_number
+        WHERE b.bankcard_number = $1
+    `, card_number).Scan(
+		&res.BankCardNumber,
+		&res.PinNumber,
+		&res.ExpiryDate,
+		&res.AccountId,
+		&res.CardType,
+		&res.FirstName,
+		&res.LastName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bank card: %w", err)
+	}
 	return &res, nil
 }

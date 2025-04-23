@@ -91,8 +91,11 @@ var bankCardRequestType = graphql.NewObject(graphql.ObjectConfig{
 var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "BankCardEntity",
 	Fields: graphql.Fields{
-		"bankcard_id": &graphql.Field{
-			Type: graphql.Int,
+		"first_name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"last_name": &graphql.Field{
+			Type: graphql.String,
 		},
 		"bankcard_number": &graphql.Field{
 			Type: graphql.String,
