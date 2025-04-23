@@ -142,10 +142,31 @@ func (g *StructGraphQLHandler) transactionServicesHandler() (http.Handler, error
 	g.l.Info("🛠 Initializing TransactionServicesHandler…")
 	txSvc := sv.NewTransactionService(g.db.TransactionDBPool, g.l)
 
-	schema, err := graphql.NewSchema(graphql.SchemaConfig{
-		Query:    g.r.GetTransactionQueryType(txSvc),
-		Mutation: g.r.GetTransactionMutationType(txSvc),
+	userQuery := g.r.GetTransactionQueryType(txSvc)
+	timeQuery := g.r.GetTransactionByTimeStampByUserId(txSvc)
+
+	mergedFields := graphql.Fields{}
+	for name, field := range userQuery.Fields() {
+		mergedFields[name] = field
+	}
+	for name, field := range timeQuery.Fields() {
+		mergedFields[name] = field
+	}
+	rootQuery := graphql.NewObject(graphql.ObjectConfig{
+		Name:   "RootQuery",
+		Fields: mergedFields,
 	})
+	mutation := g.r.GetTransactionMutationType(txSvc)
+
+	schema, err := graphql.NewSchema(graphql.SchemaConfig{
+		Query:    rootQuery,
+		Mutation: mutation,
+	})
+
+	// schema, err := graphql.NewSchema(graphql.SchemaConfig{
+	// 	Query:    g.r.GetTransactionQueryType(txSvc),
+	// 	Mutation: g.r.GetTransactionMutationType(txSvc),
+	// })
 	if err != nil {
 		g.l.Error("❌ Failed to configure Transaction schema: %v", err)
 		return nil, fmt.Errorf("failed to configure transaction schema: %w", err)
