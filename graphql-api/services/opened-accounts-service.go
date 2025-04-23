@@ -5,18 +5,10 @@ import (
 	"finnbank/common/utils"
 	"fmt"
 	"time"
-
+	t "finnbank/graphql-api/types"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type OpenedAccounts struct {
-	OpenedAccountID     int       `json:"openedaccount_id"`
-	BankCardID          *int      `json:"bankcard_id"`
-	Balance             float64   `json:"balance"`
-	AccountType         string    `json:"account_type"`
-	DateCreated         time.Time `json:"date_created"`
-	OpenedAccountStatus string    `json:"openedaccount_status"`
-}
 
 type OpenedAccountService struct {
 	db *pgxpool.Pool
@@ -30,7 +22,7 @@ func NewOpenedAccountService(db *pgxpool.Pool, logger *utils.Logger) *OpenedAcco
 	}
 }
 
-func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context, id string) ([]*OpenedAccounts, error) {
+func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context, id string) ([]*t.OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
@@ -50,9 +42,9 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	}
 	defer rows.Close()
 
-	var results []*OpenedAccounts
+	var results []*t.OpenedAccounts
 	for rows.Next() {
-		var acc OpenedAccounts
+		var acc t.OpenedAccounts
 		if err := rows.Scan(
 			&acc.OpenedAccountID,
 			&acc.BankCardID,
@@ -74,8 +66,8 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	return results, nil
 }
 
-func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int) (*OpenedAccounts, error) {
-	var acc OpenedAccounts
+func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int) (*t.OpenedAccounts, error) {
+	var acc t.OpenedAccounts
 
 	query := `
 		SELECT 
@@ -101,7 +93,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 }
 
 // Create a new opened account
-func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountId string, accountType string, balance float64) (*OpenedAccounts, error) {
+func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountId string, accountType string, balance float64) (*t.OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
@@ -111,7 +103,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountI
 	var bankcardId *int = nil
 	if accountType != "savings" {
 		bankcardId = new(int)
-		*bankcardId = 1 // TODO: Replace this with actual BankCardService integration
+		*bankcardId = 1 // TODO: will implement the create bankcard here tom
 	}
 
 	var openedAccountId int
@@ -124,7 +116,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountI
 		return nil, fmt.Errorf("insert failed: %w", err)
 	}
 
-	return &OpenedAccounts{
+	return &t.OpenedAccounts{
 		OpenedAccountID:     openedAccountId,
 		AccountType:         accountType,
 		Balance:             balance,

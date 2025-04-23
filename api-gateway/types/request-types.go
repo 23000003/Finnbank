@@ -48,3 +48,24 @@ type SignupAccountRequest struct {
 	AccountType string `json:"account_type"`
 	Nationality string `json:"nationality"`
 }
+
+
+// ====================== Transaction Types ======================
+
+type CreateTransactionRequest struct {
+	SenderId        string   `json:"sender_id"`
+	ReceiverId      string   `json:"receiver_id"`
+	TransactionType string   `json:"transaction_type"`
+	Amount          float64  `json:"amount"`
+	TransactionFee  float64  `json:"transaction_fee"`
+	Notes           string   `json:"notes"`
+}
+
+// ====================== Notifcation Types ======================
+
+type CreateNotificationRequest struct {
+	NotifType     string `json:"notif_type"`
+	NotifToID     string `json:"notif_to_id"`
+	NotifFromName string `json:"notif_from_name"`
+	Content       string `json:"content"`
+}

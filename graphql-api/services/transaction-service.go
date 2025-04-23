@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
 	"finnbank/common/utils"
 	t "finnbank/graphql-api/types"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,18 +23,7 @@ func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger) *TransactionS
 }
 
 // generateRefNo returns a random numeric string of length RefNoLength.
-func generateRefNo() (string, error) {
-	const digits = "0123456789"
-	ref := make([]byte, RefNoLength)
-	for i := range ref {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
-		if err != nil {
-			return "", fmt.Errorf("failed to generate ref_no: %w", err)
-		}
-		ref[i] = digits[n.Int64()]
-	}
-	return string(ref), nil
-}
+
 func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]t.Transaction, error) {
 	s.l.Info("Fetching transactions for user ID: %s", userId)
 
@@ -103,7 +90,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 	}
 
 	// 2) Generate numeric-only ref_no
-	refNo, err := generateRefNo()
+	refNo, err := generateRandomNumber(RefNoLength)
 	if err != nil {
 		s.l.Error("Error generating ref_no: %v", err)
 		return t.Transaction{}, fmt.Errorf("failed to generate ref_no: %w", err)

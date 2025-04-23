@@ -178,8 +178,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.CreateAccount})
-
+	ctx.JSON(http.StatusOK, gin.H{"data": "Opened account created successfully"})
 }
 
 func (a *OpenedAccountService) UpdateOpenedAccountStatus(ctx *gin.Context) {
