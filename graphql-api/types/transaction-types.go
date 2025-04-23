@@ -16,7 +16,7 @@ type Transaction struct {
 	TransactionStatus string    `json:"transaction_status"`
 	DateTransaction   time.Time `json:"date_transaction"`
 	TransactionFee    float64   `json:"transaction_fee"`
-	Notes             *string   `json:"notes"` //nullable
+	Notes             string    `json:"notes"`
 }
 
 // TransactionTypeEnum defines the allowed values for transaction types.
