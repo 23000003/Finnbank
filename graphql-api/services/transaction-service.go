@@ -3,10 +3,12 @@ package services
 import (
 	"context"
 	"crypto/rand"
-	"fmt"
-	"math/big"
 	"finnbank/common/utils"
 	t "finnbank/graphql-api/types"
+	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -167,3 +169,63 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 // A DB‑assigned transaction_id
 // A timestamp set by the database
 // And your Go code never mutates the same struct twice or needs to orchestrate UUIDs itself.
+
+// ============================Get TransactionByTimeStampByUserId============================
+// acceps userid, start and end time as arguments
+// this method fetches transactions for a specific user between the specified start and end time
+// run sql and return list of matching transaction obejct
+func (s *TransactionService) GetTransactionByTimestampByUserId(
+	ctx context.Context,
+	userId string,
+	start, end time.Time,
+) ([]t.Transaction, error) {
+	s.l.Info("Fetching transactions for user %s between %s and %s",
+		userId, start.Format(time.RFC3339), end.Format(time.RFC3339),
+	)
+
+	query := `
+        SELECT
+          transaction_id, ref_no, sender_id, receiver_id,
+          transaction_type, amount, transaction_status,
+          date_transaction, transaction_fee, notes
+        FROM public.transaction
+        WHERE (sender_id = $1 OR receiver_id = $1)
+          AND date_transaction BETWEEN $2 AND $3
+        ORDER BY date_transaction;
+    `
+
+	rows, err := s.db.Query(ctx, query, userId, start, end)
+	if err != nil {
+		s.l.Error("Error fetching by timestamp for user %s: %v", userId, err)
+		return nil, fmt.Errorf("failed to fetch transactions in range: %w", err)
+	}
+	defer rows.Close()
+
+	var txns []t.Transaction
+	for rows.Next() {
+		var t t.Transaction
+		if err := rows.Scan(
+			&t.TransactionID,
+			&t.RefNo,
+			&t.SenderID,
+			&t.ReceiverID,
+			&t.TransactionType,
+			&t.Amount,
+			&t.TransactionStatus,
+			&t.DateTransaction,
+			&t.TransactionFee,
+			&t.Notes,
+		); err != nil {
+			s.l.Error("Scan error for user %s: %v", userId, err)
+			return nil, fmt.Errorf("scan error: %w", err)
+		}
+		txns = append(txns, t)
+	}
+	if err := rows.Err(); err != nil {
+		s.l.Error("Row iteration error: %v", err)
+		return nil, fmt.Errorf("row error: %w", err)
+	}
+
+	s.l.Info("Fetched %d transactions in range for user %s", len(txns), userId)
+	return txns, nil
+}
