@@ -7,7 +7,7 @@ import (
 )
 
 type Transaction struct {
-	TransactionID     string    `json:"transaction_id"`
+	TransactionID     int64     `json:"transaction_id"`
 	RefNo             string    `json:"ref_no"`
 	SenderID          string    `json:"sender_id"`
 	ReceiverID        string    `json:"receiver_id"`
@@ -16,7 +16,7 @@ type Transaction struct {
 	TransactionStatus string    `json:"transaction_status"`
 	DateTransaction   time.Time `json:"date_transaction"`
 	TransactionFee    float64   `json:"transaction_fee"`
-	Notes             string    `json:"notes"`
+	Notes             *string   `json:"notes"` //nullable
 }
 
 // TransactionTypeEnum defines the allowed values for transaction types.
