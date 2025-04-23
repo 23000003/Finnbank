@@ -4,6 +4,7 @@ import (
 	sv "finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
 	"fmt"
+	"time"
 
 	// "finnbank/graphql-api/db"
 	"github.com/graphql-go/graphql"
@@ -115,7 +116,7 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			/* login
+			/* signup
 			http://localhost:8083/graphql/account?query=mutation+_{create_account(
 			// account: { email: "", password: "", first_name: "", last_name: "", phone_number: "", address: "", account_type: "", nationality: ""})
 			// {access_token, email, auth_id}}
@@ -136,28 +137,35 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					email, _ := accountInput["email"].(string)
 					password, _ := accountInput["password"].(string)
 					firstName, _ := accountInput["first_name"].(string)
+					middleName, _ := accountInput["middle_name"].(string)
 					lastName, _ := accountInput["last_name"].(string)
 					phoneNumber, _ := accountInput["phone_number"].(string)
 					address, _ := accountInput["address"].(string)
 					accountType, _ := accountInput["account_type"].(string)
 					nationality, _ := accountInput["nationality"].(string)
+					birthDate, _ := accountInput["birthdate"].(time.Time)
+					nationalID, _ := accountInput["national_id"].(string)
 					req := &types.AddAccountRequest{
 						Email:       email,
 						Password:    password,
-						FullName:    firstName + " " + lastName,
+						FirstName:   firstName,
+						MiddleName:  middleName,
+						LastName:    lastName,
 						PhoneNumber: phoneNumber,
 						Address:     address,
 						AccountType: accountType,
 						Nationality: nationality,
+						BirthDate:   birthDate,
+						NationalID:  nationalID,
 					}
-					account, err := ACCService.CreateUser(&p.Context, req)
+					res, err := ACCService.CreateUser(&p.Context, req)
 					if err != nil {
 						s.log.Error("Error creating account: %v", err)
 						return nil, fmt.Errorf("error creating account: %v", err)
 					}
-					s.log.Info("Account created successfully: %v", account.ID)
+					s.log.Info("Account created successfully: %v", res.Account.ID)
 
-					return account, nil
+					return res.Account, nil
 				},
 			},
 			/* login
@@ -195,7 +203,40 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					return res, nil
 				},
 			},
+			/* update_account
+			http://localhost:8083/graphql/account?query=mutation+_{update_account(
+			// account: { email: "", password: "", first_name: "", last_name: "", phone_number: "", address: "", account_type: "",
+			*/
+			"update_password": &graphql.Field{
+				Type:        accountType,
+				Description: "Update user password",
+				Args: graphql.FieldConfigArgument{
+					"UpdatePasswordInput": &graphql.ArgumentConfig{
+						Type: types.UpdatePasswordInputType,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (any, error) {
+					updateInput, ok := p.Args["UpdatePasswordInput"].(map[string]any)
+					if !ok {
+						return nil, fmt.Errorf("invalid account input")
+					}
+					auth_id, _ := updateInput["auth_id"].(string)
+					oldPassword, _ := updateInput["old_password"].(string)
+					newPassword, _ := updateInput["new_password"].(string)
+					req := &types.UpdatePasswordRequest{
+						AuthID:      auth_id,
+						OldPassword: oldPassword,
+						NewPassword: newPassword,
+					}
+					res, err := ACCService.UpdatePassword(&p.Context, req)
+					if err != nil {
+						s.log.Error("Error updating password: %v", err)
+						return nil, fmt.Errorf("error updating password: %v", err)
+					}
+					s.log.Info("Password updated successfully: %v", res.Account.ID)
+					return res.Account, nil
+				},
+			},
 		},
 	})
-
 }
