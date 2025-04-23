@@ -1,9 +1,10 @@
 package routers
 
 import (
-	"finnbank/common/utils"
 	"finnbank/api-gateway/middleware"
 	"finnbank/api-gateway/types"
+	"finnbank/common/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,10 +36,18 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 
 	// ======================== Services ========================
 
-	account := gr.r.Group("/account")
+	auth := gr.r.Group("/auth")
 	{
-		account.POST("/login", gr.s.AccountService.LoginUser)
-		account.POST("/signup", gr.s.AccountService.SignupUser)
+		auth.POST("/login", gr.s.AccountService.LoginUser)
+		auth.POST("/signup", gr.s.AccountService.SignupUser)
+	}
+	account := gr.r.Group("/account")
+	account.Use(middleware.AuthMiddleware())
+	{
+		// These could be used for a potential "search user by" functions in the frontend
+		account.GET("/get-user-by-account-number/:account_number", gr.s.AccountService.GetUserAccountByAccountNumber)
+		account.GET("/get-user-by-email/:email", gr.s.AccountService.GetUserAccountByEmail)
+		account.PATCH("/update-password", gr.s.AccountService.UpdateUserPassword)
 	}
 
 	statement := gr.r.Group("/statement")

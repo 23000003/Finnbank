@@ -94,7 +94,25 @@ func (g *StructGraphQLHandler) BankCardServicesHandler(connAddress string) *hand
 	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
 	// proto server
 
-	return nil
+	BCService := sv.NewBankcardService(g.db.BankCardDBPool, g.l)
+
+	bankcardSchema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query:    g.r.GetBankCardQueryType(BCService),
+			Mutation: g.r.GetBankCardMutationType(BCService),
+		},
+	)
+	if err != nil {
+		g.l.Fatal("Failed to configure Bank Card Handler Schema: %v", err)
+	}
+
+	bankcardHandler := handler.New(&handler.Config{
+		Schema:   &bankcardSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	return bankcardHandler
 }
 
 func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *handler.Handler {
