@@ -81,7 +81,7 @@ func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.Tran
 						TransactionType: in["transaction_type"].(string),
 						Amount:          in["amount"].(float64),
 						TransactionFee:  in["transaction_fee"].(float64),
-						Notes:           in["notes"].(*string),
+						Notes:           in["notes"].(string),
 					}
 					return txSvc.CreateTransaction(p.Context, txn)
 				},
@@ -156,7 +156,7 @@ func (r *StructGraphQLResolvers) TransactionMutationFields(
 					TransactionType: in["transaction_type"].(string),
 					Amount:          in["amount"].(float64),
 					TransactionFee:  in["transaction_fee"].(float64),
-					Notes:           in["notes"].(*string),
+					Notes:           in["notes"].(string),
 				}
 				return txSvc.CreateTransaction(p.Context, txn)
 			},
