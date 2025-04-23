@@ -103,9 +103,8 @@ func GenerateBankCardPinNumber() string {
 func (b *BankcardService) GetBankCardRequestsById(ctx context.Context, id int) (*BankCardResponse, error) {
 	var res BankCardResponse
 	_, err := b.db, b.db.QueryRow(ctx, `
-		select crl.first_name, crl.last_name, ct.name as card_type, crl.status from card_request_list crl
-	join card_types ct on crl.card_type = ct.card_type_id
-	where crl.request_id = $1;
+		select first_name, last_name, card_type, status from card_request_list
+	where request_id = $1;
 	`, id).Scan(
 		&res.FirstName,
 		&res.LastName,
@@ -116,6 +115,76 @@ func (b *BankcardService) GetBankCardRequestsById(ctx context.Context, id int) (
 		return nil, fmt.Errorf("failed to get bank card request: %w", err)
 	}
 	return &res, nil
+}
+
+func (b *BankcardService) GetBankCardRequestsByStatus(ctx context.Context, status string) ([]BankCardResponse, error) {
+	// Execute the query
+	rows, err := b.db.Query(ctx, `
+        SELECT first_name, last_name, card_type, status 
+        FROM card_request_list
+        WHERE status = $1;
+    `, status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	// Prepare a slice to hold the results
+	var responses []BankCardResponse
+
+	// Iterate over the rows
+	for rows.Next() {
+		var res BankCardResponse
+		// Scan the current row into the struct
+		if err := rows.Scan(&res.FirstName, &res.LastName, &res.CardType, &res.Status); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		// Append the result to the slice
+		responses = append(responses, res)
+	}
+
+	// Check for errors encountered during iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	// Return the slice of results
+	return responses, nil
+}
+
+func (b *BankcardService) GetBankCardRequestsByCardType(ctx context.Context, card_type string) ([]BankCardResponse, error) {
+	// Execute the query
+	rows, err := b.db.Query(ctx, `
+        SELECT first_name, last_name, card_type, status 
+        FROM card_request_list
+        WHERE card_type = $1;
+    `, card_type)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	// Prepare a slice to hold the results
+	var responses []BankCardResponse
+
+	// Iterate over the rows
+	for rows.Next() {
+		var res BankCardResponse
+		// Scan the current row into the struct
+		if err := rows.Scan(&res.FirstName, &res.LastName, &res.CardType, &res.Status); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		// Append the result to the slice
+		responses = append(responses, res)
+	}
+
+	// Check for errors encountered during iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	// Return the slice of results
+	return responses, nil
 }
 
 func (b *BankcardService) CreateCardRequest(ctx context.Context, first_name string, last_name string, card_type string) (*BankCardRequest, error) {
@@ -137,11 +206,23 @@ func (b *BankcardService) CreateBankCardForUser(ctx context.Context, fname strin
 	var res BankCardNumberGenerated
 
 	var card_number = GenerateBankCardNumber(fname, lname, cardtype)
-
 	var card_pin = GenerateBankCardPinNumber()
 
-	expiryDate := time.Now().AddDate(5, 0, 0).Format("2006-01-02") // "YYYY-MM-DD"
+	var card_type_expiry int
+	switch cardtype {
+	case "debit":
+		card_type_expiry = 8
+	case "credit":
+		card_type_expiry = 12
+	case "prepaid":
+		card_type_expiry = 3
+	default:
+		card_type_expiry = 5
+	}
 
+	expiryDate := time.Now().AddDate(card_type_expiry, 0, 0).Format("2006-01-02") // "YYYY-MM-DD"
+
+	// Inserting into the bankcard_list table
 	_, err := b.db.Exec(ctx, `
 		INSERT INTO bankcard_list (bankcard_number, bankcard_pin, expiry_date, account_id, card_type)
 		VALUES ($1, $2, $3, $4, $5)
@@ -149,6 +230,17 @@ func (b *BankcardService) CreateBankCardForUser(ctx context.Context, fname strin
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert data into the table: %w", err)
+	}
+
+	// Inserting into the card_request_list table
+	_, err = b.db.Exec(ctx, `
+	UPDATE card_request_list
+	SET status = 'approved', bankcard_number = $1
+	WHERE first_name = $2 AND last_name = $3 AND card_type = $4
+	`, card_number, fname, lname, cardtype)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update the status of the request: %w", err)
 	}
 
 	return &res, nil

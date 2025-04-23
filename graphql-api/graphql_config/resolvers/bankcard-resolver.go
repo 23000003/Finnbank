@@ -32,6 +32,40 @@ func (s *StructGraphQLResolvers) GetBankCardQueryType(BCService *sv.BankcardServ
 						return data, err
 					},
 				},
+				"request_by_status": &graphql.Field{
+					Type:        graphql.NewList(bcen.GetBankCardResponseEntity()),
+					Description: "Get all bank card requests by status",
+					Args: graphql.FieldConfigArgument{
+						"status": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						status, ok := p.Args["status"].(string)
+						if !ok {
+							return nil, fmt.Errorf("status argument is required and must be an string")
+						}
+						data, err := BCService.GetBankCardRequestsByStatus(p.Context, status)
+						return data, err
+					},
+				},
+				"request_by_card_type": &graphql.Field{
+					Type:        graphql.NewList(bcen.GetBankCardResponseEntity()),
+					Description: "Get all bank card requests by status",
+					Args: graphql.FieldConfigArgument{
+						"card_type": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						card_type, ok := p.Args["card_type"].(string)
+						if !ok {
+							return nil, fmt.Errorf("card_type argument is required and must be an string")
+						}
+						data, err := BCService.GetBankCardRequestsByCardType(p.Context, card_type)
+						return data, err
+					},
+				},
 			},
 		},
 	)
