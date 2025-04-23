@@ -15,39 +15,22 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type BankCardResponse struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	CardType  string `json:"card_type"`
-	Status    string `json: "status"`
-}
-
-type BankCardRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	CardType  string `json:"card_type"`
-}
-
 type BankCardNumberGenerated struct {
-	BankCardNumber string `json: "bankcard_number"`
-	PinNumber      string `json: "bankcard_pin"`
-	ExpiryDate     string `json: "expiry_date"`
-	AccountId      string `json: "account_id"`
-	CardType       string `json: "card_type"`
+	BankCardNumber string    `json:"card_number"`
+	ExpiryDate     time.Time `json:"expiry_date"`
+	AccountId      string    `json:"account_id"`
+	CardType       string    `json:"card_type"`
 }
 
 type BankCardNumberResponse struct {
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
-	CardType       string    `json:"card_type"`
-	BankCardNumber string    `json:"bankcard_number"`
-	PinNumber      string    `json:"bankcard_pin"`
+	BankCardNumber string    `json:"card_number"`
+	PinNumber      string    `json:"pin_number"`
 	ExpiryDate     time.Time `json:"expiry_date"`
 	AccountId      string    `json:"account_id"`
+	CardType       string    `json:"card_type"`
 }
 
 type BankcardService struct {
@@ -75,8 +58,6 @@ func GenerateBankCardNumber(first_name string, last_name string, card_type strin
 		prefix = "51"
 	case "credit":
 		prefix = "52"
-	case "prepaid":
-		prefix = "53"
 	default:
 		prefix = "50" // Fallback for unknown types
 	}
@@ -101,178 +82,72 @@ func GenerateBankCardPinNumber() string {
 	return string(pin)
 }
 
-// Bank Card Requests
-func (b *BankcardService) GetBankCardRequestsById(ctx context.Context, id int) (*BankCardResponse, error) {
-	var res BankCardResponse
-	_, err := b.db, b.db.QueryRow(ctx, `
-		select first_name, last_name, card_type, status from card_request_list
-	where request_id = $1;
-	`, id).Scan(
-		&res.FirstName,
-		&res.LastName,
-		&res.CardType,
-		&res.Status,
-	)
+func GenerateBankCardCVV() string {
+	b := make([]byte, 1)
+	_, err := rand.Read(b)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get bank card request: %w", err)
+		return "000"
 	}
-	return &res, nil
-}
-
-func (b *BankcardService) GetBankCardRequestsByStatus(ctx context.Context, status string) ([]BankCardResponse, error) {
-	// Execute the query
-	rows, err := b.db.Query(ctx, `
-        SELECT first_name, last_name, card_type, status 
-        FROM card_request_list
-        WHERE status = $1;
-    `, status)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer rows.Close()
-
-	// Prepare a slice to hold the results
-	var responses []BankCardResponse
-
-	// Iterate over the rows
-	for rows.Next() {
-		var res BankCardResponse
-		// Scan the current row into the struct
-		if err := rows.Scan(&res.FirstName, &res.LastName, &res.CardType, &res.Status); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
-		}
-		// Append the result to the slice
-		responses = append(responses, res)
-	}
-
-	// Check for errors encountered during iteration
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
-	}
-
-	// Return the slice of results
-	return responses, nil
-}
-
-func (b *BankcardService) GetBankCardRequestsByCardType(ctx context.Context, card_type string) ([]BankCardResponse, error) {
-	// Execute the query
-	rows, err := b.db.Query(ctx, `
-        SELECT first_name, last_name, card_type, status 
-        FROM card_request_list
-        WHERE card_type = $1;
-    `, card_type)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer rows.Close()
-
-	// Prepare a slice to hold the results
-	var responses []BankCardResponse
-
-	// Iterate over the rows
-	for rows.Next() {
-		var res BankCardResponse
-		// Scan the current row into the struct
-		if err := rows.Scan(&res.FirstName, &res.LastName, &res.CardType, &res.Status); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
-		}
-		// Append the result to the slice
-		responses = append(responses, res)
-	}
-
-	// Check for errors encountered during iteration
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
-	}
-
-	// Return the slice of results
-	return responses, nil
-}
-
-func (b *BankcardService) CreateCardRequest(ctx context.Context, first_name string, last_name string, card_type string) (*BankCardRequest, error) {
-	var req BankCardRequest
-
-	_, err := b.db.Exec(ctx, `
-	INSERT INTO card_request_list (first_name, last_name, card_type) 
-	VALUES ($1, $2, $3)`, first_name, last_name, card_type)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert data into the table: %w", err)
-	}
-
-	return &req, nil
+	return fmt.Sprintf("%03d", 100+int(b[0])%900) // 100–999
 }
 
 // Bank Card Creation
-func (b *BankcardService) CreateBankCardForUser(ctx context.Context, fname string, lname string, cardtype string, account_holder_id uuid.UUID) (*BankCardNumberGenerated, error) {
+func (b *BankcardService) CreateBankCardForUser(ctx context.Context, cardType string, accountId string, first_name string, last_name string) (*BankCardNumberGenerated, error) {
 	var res BankCardNumberGenerated
 
-	var card_number = GenerateBankCardNumber(fname, lname, cardtype)
-	var card_pin = GenerateBankCardPinNumber()
+	cardNumber := GenerateBankCardNumber(first_name, last_name, cardType)
+	cardPin := GenerateBankCardPinNumber()
+	cvv := GenerateBankCardCVV()
 
-	var card_type_expiry int
-	switch cardtype {
+	var expiryDate time.Time
+	switch cardType {
 	case "debit":
-		card_type_expiry = 8
+		expiryDate = time.Now().AddDate(8, 0, 0)
 	case "credit":
-		card_type_expiry = 12
-	case "prepaid":
-		card_type_expiry = 3
+		expiryDate = time.Now().AddDate(12, 0, 0)
 	default:
-		card_type_expiry = 5
+		expiryDate = time.Now().AddDate(5, 0, 0)
 	}
 
-	expiryDate := time.Now().AddDate(card_type_expiry, 0, 0).Format("2006-01-02") // "YYYY-MM-DD"
-
-	// Inserting into the bankcard_list table
 	_, err := b.db.Exec(ctx, `
-		INSERT INTO bankcard_list (bankcard_number, bankcard_pin, expiry_date, account_id, card_type)
-		VALUES ($1, $2, $3, $4, $5)
-	`, card_number, card_pin, expiryDate, account_holder_id, cardtype)
+		INSERT INTO BankCard (card_number, expiry_date, account_id, cvv, pin_number, card_type)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, cardNumber, expiryDate, accountId, cvv, cardPin, cardType)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert data into the table: %w", err)
+		return nil, fmt.Errorf("failed to insert into BankCard: %w", err)
 	}
 
-	// Inserting into the card_request_list table
-	_, err = b.db.Exec(ctx, `
-	UPDATE card_request_list
-	SET status = 'approved', bankcard_number = $1
-	WHERE first_name = $2 AND last_name = $3 AND card_type = $4
-	`, card_number, fname, lname, cardtype)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to update the status of the request: %w", err)
-	}
+	res.BankCardNumber = cardNumber
+	res.ExpiryDate = expiryDate
+	res.AccountId = accountId
+	res.CardType = cardType
 
 	return &res, nil
 }
 
-func (b *BankcardService) GetBankCardByNumber(ctx context.Context, card_number string) (*BankCardNumberResponse, error) {
+func (b *BankcardService) GetBankCardByNumber(ctx context.Context, cardNumber string) (*BankCardNumberResponse, error) {
 	var res BankCardNumberResponse
 	err := b.db.QueryRow(ctx, `
         SELECT 
-            b.bankcard_number, 
-            b.bankcard_pin, 
-            b.expiry_date, 
-            b.account_id, 
-            b.card_type,
-            r.first_name,
-            r.last_name
-        FROM bankcard_list b
-        JOIN card_request_list r ON b.bankcard_number = r.bankcard_number
-        WHERE b.bankcard_number = $1
-    `, card_number).Scan(
+            card_number, 
+            pin_number, 
+            expiry_date, 
+            account_id, 
+            card_type
+        FROM BankCard
+        WHERE card_number = $1
+    `, cardNumber).Scan(
 		&res.BankCardNumber,
 		&res.PinNumber,
 		&res.ExpiryDate,
 		&res.AccountId,
 		&res.CardType,
-		&res.FirstName,
-		&res.LastName,
 	)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bank card: %w", err)
 	}
+
 	return &res, nil
 }
