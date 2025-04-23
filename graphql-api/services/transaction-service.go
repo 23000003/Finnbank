@@ -188,7 +188,7 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
           transaction_id, ref_no, sender_id, receiver_id,
           transaction_type, amount, transaction_status,
           date_transaction, transaction_fee, notes
-        FROM public.transaction
+        FROM public.transactions
         WHERE (sender_id = $1 OR receiver_id = $1)
           AND date_transaction BETWEEN $2 AND $3
         ORDER BY date_transaction;
