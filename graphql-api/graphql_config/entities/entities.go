@@ -98,42 +98,6 @@ func GetAccountEntityType() *graphql.Object {
 	)
 }
 
-var bankCardReponseType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "BankCardResponse",
-	Fields: graphql.Fields{
-		"id": &graphql.Field{
-			Type: graphql.Int,
-		},
-		"first_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"last_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"card_type": &graphql.Field{
-			Type: graphql.String,
-		},
-		"status": &graphql.Field{
-			Type: graphql.String,
-		},
-	},
-})
-
-var bankCardRequestType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "BankCardRequest",
-	Fields: graphql.Fields{
-		"first_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"last_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"card_type": &graphql.Field{
-			Type: graphql.String,
-		},
-	},
-})
-
 var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "BankCardEntity",
 	Fields: graphql.Fields{
@@ -143,10 +107,10 @@ var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 		"last_name": &graphql.Field{
 			Type: graphql.String,
 		},
-		"bankcard_number": &graphql.Field{
+		"card_number": &graphql.Field{
 			Type: graphql.String,
 		},
-		"bankcard_pin": &graphql.Field{
+		"pin_number": &graphql.Field{
 			Type: graphql.String,
 		},
 		"card_type": &graphql.Field{
@@ -160,14 +124,6 @@ var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 		},
 	},
 })
-
-func GetBankCardResponseEntity() *graphql.Object {
-	return bankCardReponseType
-}
-
-func GetBankCardRequestEntity() *graphql.Object {
-	return bankCardRequestType
-}
 
 func GetBankCardEntity() *graphql.Object {
 	return bankCardEntityType
