@@ -140,6 +140,9 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 	}
 
 	s.l.Info("Transaction created: %+v", created)
+
+	s.queue.Enqueue(fmt.Sprintf("%d", created.TransactionID), created.SenderID, created.Amount)
+
 	return created, nil
 }
 
