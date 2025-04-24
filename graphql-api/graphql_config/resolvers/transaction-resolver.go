@@ -10,8 +10,11 @@
 package resolvers
 
 import (
+	e "finnbank/graphql-api/graphql_config/entities"
 	"finnbank/graphql-api/services"
 	t "finnbank/graphql-api/types"
+	"time"
+
 	"github.com/graphql-go/graphql"
 )
 
@@ -90,3 +93,73 @@ func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.Tran
 // for cmmit: change because to define one only. No duplicate names. easier maintenance. cleaner.
 //GetTransactionQueryType: Defines a query to fetch all transactions for a specific user by their userId.
 //GetTransactionMutationType: Defines a mutation to create a new transaction with detailed input fields.
+
+// GetTransactionByTimeStamByUserId
+
+func (r *StructGraphQLResolvers) TransactionQueryFields(
+	txSvc *services.TransactionService,
+) graphql.Fields {
+	return graphql.Fields{
+		"getTransactionsByUserId": &graphql.Field{
+			Type:        graphql.NewList(e.GetTransactionEntityType()),
+			Description: "Fetch all transactions for a specific user by userId.",
+			Args: graphql.FieldConfigArgument{
+				"userId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userId := p.Args["userId"].(string)
+				return txSvc.GetTransactionByUserId(p.Context, userId)
+			},
+		},
+	}
+}
+
+// returns the fields for “getTransactionsByTimeStampByUserId”
+func (r *StructGraphQLResolvers) TransactionTimeQueryFields(
+	txSvc *services.TransactionService,
+) graphql.Fields {
+	return graphql.Fields{
+		"getTransactionsByTimeStampByUserId": &graphql.Field{
+			Type:        graphql.NewList(e.GetTransactionEntityType()),
+			Description: "Fetch transactions for a user between two timestamps.",
+			Args: graphql.FieldConfigArgument{
+				"userId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+				"startTime": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.DateTime)},
+				"endTime":   &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.DateTime)},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userId := p.Args["userId"].(string)
+				start := p.Args["startTime"].(time.Time)
+				end := p.Args["endTime"].(time.Time)
+				return txSvc.GetTransactionByTimestampByUserId(p.Context, userId, start, end)
+			},
+		},
+	}
+}
+
+// returns the fields for your createTransaction mutation
+func (r *StructGraphQLResolvers) TransactionMutationFields(
+	txSvc *services.TransactionService,
+) graphql.Fields {
+	return graphql.Fields{
+		"createTransaction": &graphql.Field{
+			Type:        e.GetTransactionEntityType(),
+			Description: "Create a new transaction (ref_no auto-generated).",
+			Args: graphql.FieldConfigArgument{
+				"transaction": &graphql.ArgumentConfig{Type: graphql.NewNonNull(e.GetTransactionInputType())},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				in := p.Args["transaction"].(map[string]interface{})
+				txn := t.Transaction{
+					SenderID:        in["sender_id"].(string),
+					ReceiverID:      in["receiver_id"].(string),
+					TransactionType: in["transaction_type"].(string),
+					Amount:          in["amount"].(float64),
+					TransactionFee:  in["transaction_fee"].(float64),
+					Notes:           in["notes"].(string),
+				}
+				return txSvc.CreateTransaction(p.Context, txn)
+			},
+		},
+	}
+}
