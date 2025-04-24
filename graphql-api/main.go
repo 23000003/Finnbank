@@ -13,8 +13,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
 	"github.com/rs/cors"
+	q "finnbank/graphql-api/queue"
 )
 
 func CorsMiddleware() *cors.Cors {
@@ -35,16 +35,20 @@ func main() {
 	dbServicesPool := db.InitializeServiceDatabases(logger)
 	defer db.CleanupDatabase(dbServicesPool, logger)
 
-	server := initializeGraphQL(logger, dbServicesPool)
-// 
+	q := q.NewQueue(logger, context.Background())
+
+	server := initializeGraphQL(logger, dbServicesPool, q)
+
+	q.StartAutoDequeue(dbServicesPool.OpenedAccountDBPool, dbServicesPool.TransactionDBPool)
+
 	startAndShutdownServer(server, logger)
 }
 
-func initializeGraphQL(logger *utils.Logger, dbPool *types.StructServiceDatabasePools) *http.Server {
+func initializeGraphQL(logger *utils.Logger, dbPool *types.StructServiceDatabasePools, q *q.Queue) *http.Server {
 	resolvers := resolvers.NewGraphQLResolvers(logger)
 	handlers := handlers.NewGraphQLServicesHandler(logger, resolvers, dbPool)
 	graphql := graphql_config.NewGraphQL(logger, handlers)
-	graphql.ConfigureGraphQLHandlers()
+	graphql.ConfigureGraphQLHandlers(q)
 
 	http.HandleFunc("/graphql/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

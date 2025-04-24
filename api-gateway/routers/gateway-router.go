@@ -45,8 +45,9 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	account.Use(middleware.AuthMiddleware())
 	{
 		// These could be used for a potential "search user by" functions in the frontend
-		account.GET("/get-user-by-account-number/:account_number", gr.s.AccountService.GetUserAccountByAccountNumber)
+		account.GET("/get-user-by-id/:id", gr.s.AccountService.GetUserAccountById)
 		account.GET("/get-user-by-email/:email", gr.s.AccountService.GetUserAccountByEmail)
+		account.GET("/get-user-by-account-number/:account_number", gr.s.AccountService.GetUserAccountByAccountNumber)
 		account.PATCH("/update-password", gr.s.AccountService.UpdateUserPassword)
 	}
 
@@ -59,26 +60,24 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	bankcard := gr.r.Group("/bankcard")
 	bankcard.Use(middleware.AuthMiddleware())
 	{
-		bankcard.GET("/get-user-bankcard", gr.s.BankcardService.GetUserBankcard)
-		bankcard.POST("/generate-bankcard", gr.s.BankcardService.GenerateBankcardForUser)
-		bankcard.PATCH("/renew-bankcard/:id", gr.s.BankcardService.RenewBankcardForUser)
+		bankcard.GET("/get-all-bankcard/:id", gr.s.BankcardService.GetAllBankCardOfUserById)
+		bankcard.PATCH("/renew-bankcard/:id", gr.s.BankcardService.UpdateBankcardExpiryDateByUserId)
 	}
 
 	transaction := gr.r.Group("/transaction")
 	transaction.Use(middleware.AuthMiddleware())
 	{
-		transaction.GET("/get-all", gr.s.TransactionService.GetAllTransaction)
-		transaction.GET("/:id", gr.s.TransactionService.GetTransaction)
-		transaction.POST("/generate-transaction", gr.s.TransactionService.GenerateTransaction)
+		transaction.GET("/get-all/:id", gr.s.TransactionService.GetTransactionByUserId)
+		transaction.POST("/generate-transaction", gr.s.TransactionService.CreateTransaction)
 	}
 
 	notification := gr.r.Group("/notification")
 	notification.Use(middleware.AuthMiddleware())
 	{
-		notification.GET("/get-all", gr.s.NotificationService.GetUserNotifications)
+		notification.GET("/get-all/:id", gr.s.NotificationService.GetAllNotificationByUserId)
+		notification.GET("/get-one/:id", gr.s.NotificationService.GetNotificationByUserId)
 		notification.POST("/generate-notif", gr.s.NotificationService.GenerateNotification)
-		notification.PATCH("/mark-as-read/:id", gr.s.NotificationService.MarkAsReadNotification)
-		notification.DELETE("/clear-notif/:id", gr.s.NotificationService.DeleteNotification)
+		notification.PATCH("/mark-as-read/:id", gr.s.NotificationService.ReadNotificationByUserId)
 	}
 
 	openedAccount := gr.r.Group("/opened-account")

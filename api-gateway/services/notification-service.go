@@ -2,7 +2,11 @@ package services
 
 import (
 	"finnbank/common/utils"
-
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	t "finnbank/api-gateway/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,14 +22,178 @@ func newNotificationService(log *utils.Logger) *NotificationService {
 	}
 }
 
-func (a *NotificationService) GetUserNotifications(*gin.Context) {
+func (a *NotificationService) GetAllNotificationByUserId(ctx *gin.Context) {
+	id := ctx.Param("id");
+
+	query := fmt.Sprintf(`{
+		getAllNotificationByUserId(notif_to_id: "%s") {
+			notif_id
+			notif_type
+			notif_from_name
+			content
+			is_read
+			date_notified
+		}
+	}`, id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetAllNotificationsGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetAllNotificationByUserId})
 }
 
-func (a *NotificationService) GenerateNotification(*gin.Context) {
+func (a *NotificationService) GetNotificationByUserId(ctx *gin.Context) {
+	id := ctx.Param("id");
+
+	query := fmt.Sprintf(`{
+		getNotificationById(notif_id: "%s") {
+			notif_id
+			notif_type
+			notif_from_name
+			content
+			is_read
+			date_notified
+		}
+	}`, id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetNotificationGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetNotificationById})
 }
 
-func (a *NotificationService) MarkAsReadNotification(*gin.Context) {
+func (a *NotificationService) GenerateNotification(ctx *gin.Context) {
+	var req t.CreateNotificationRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	query := fmt.Sprintf(`mutation {
+		generateNotification(notif_type: "%s", notif_to_id: "%s", notif_from_name: "%s", content: "%s") {
+			notif_id
+		}
+	}`, req.NotifType, req.NotifToID, req.NotifFromName, req.Content)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	defer resp.Body.Close()
+
+	a.log.Info("Response: %v", resp.Body)
+
+	var data t.CreateOpenedAccountsGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	a.log.Info("%v ======= DATA", data)
+
+	if data.Errors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": "Notified successfully"})
 }
 
-func (a *NotificationService) DeleteNotification(*gin.Context) {
+func (a *NotificationService) ReadNotificationByUserId(ctx *gin.Context) {
+	id := ctx.Param("id");
+
+	query := fmt.Sprintf(`mutation {
+		readNotificationByUserId(notif_id: "%s") {
+			notif_id
+		}
+	}`, id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetNotificationGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": "Notification read successfully"})
 }

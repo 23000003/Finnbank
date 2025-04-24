@@ -1,10 +1,8 @@
 package resolvers
 
 import (
-	bcen "finnbank/graphql-api/graphql_config/entities"
 	sv "finnbank/graphql-api/services"
 	"fmt"
-
 	"github.com/graphql-go/graphql"
 )
 
@@ -13,21 +11,24 @@ func (s *StructGraphQLResolvers) GetBankCardQueryType(BCService *sv.BankcardServ
 		graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
-				"bankcard_by_bankcard_number": &graphql.Field{
-					Type:        bcen.GetBankCardEntity(),
-					Description: "Get all bank cards by bankcard number",
+				"get_all_bankcard": &graphql.Field{
+					Type: graphql.NewList(bankCardType),
+					Description: "Get all bank card of user",
 					Args: graphql.FieldConfigArgument{
-						"bankcard_number": &graphql.ArgumentConfig{
+						"user_id": &graphql.ArgumentConfig{
 							Type: graphql.String,
 						},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						bankcard_number, ok := p.Args["bankcard_number"].(string)
+						user_id, ok := p.Args["user_id"].(string)
 						if !ok {
-							return nil, fmt.Errorf("bankcard_number argument is required and must be an int")
+							return nil, fmt.Errorf("user_id argument is required and must be an int")
 						}
-						data, err := BCService.GetBankCardByNumber(p.Context, bankcard_number)
-						return data, err
+						data, err := BCService.GetAllBankCardOfUserById(p.Context, user_id)
+						if err != nil {
+							return nil, fmt.Errorf("failed to get bank card: %w", err)
+						}
+						return data, nil
 					},
 				},
 			},
@@ -40,53 +41,23 @@ func (s *StructGraphQLResolvers) GetBankCardMutationType(BCService *sv.BankcardS
 		graphql.ObjectConfig{
 			Name: "Mutation",
 			Fields: graphql.Fields{
-				"create_bankcard_function": &graphql.Field{
-					Type:        bcen.GetBankCardEntity(),
-					Description: "Create a new bank card",
+				"update_bankcard_expiry": &graphql.Field{
+					Type:        bankCardType,
+					Description: "Update bankcard expiry date",
 					Args: graphql.FieldConfigArgument{
-						"first_name": &graphql.ArgumentConfig{
-							Type: graphql.String,
-						},
-						"last_name": &graphql.ArgumentConfig{
-							Type: graphql.String,
-						},
-						"cardtype": &graphql.ArgumentConfig{
-							Type: graphql.String,
-						},
-						"account_holder_id": &graphql.ArgumentConfig{
-							Type: graphql.String,
+						"bankcard_id": &graphql.ArgumentConfig{
+							Type: graphql.Int,
 						},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						fname, okfname := p.Args["first_name"].(string)
-						lname, oklname := p.Args["last_name"].(string)
-						ctype, okctype := p.Args["cardtype"].(string)
-						cardholder_id, okcardholder_id := p.Args["account_holder_id"].(string)
-
-						if !okfname {
-							return nil, fmt.Errorf("first_name argument is required and must be an string")
+						bankcard_id, ok := p.Args["bankcard_id"].(int)
+						if !ok {
+							return nil, fmt.Errorf("bankcard_id argument is required and must be an int")
 						}
-
-						if !oklname {
-							return nil, fmt.Errorf("last_name argument is required and must be an string")
-						}
-
-						if !okctype {
-							return nil, fmt.Errorf("card_type argument is required and must be an string")
-						}
-
-						if !okcardholder_id {
-							return nil, fmt.Errorf("cardholder_id argument is required and must be an int")
-						}
-
-						data, err := BCService.CreateBankCardForUser(p.Context, ctype, cardholder_id, fname, lname)
-
+						data, err := BCService.UpdateBankcardExpiryDateByUserId(p.Context, bankcard_id)
 						if err != nil {
-							s.log.Error("Error in Creating Card Request: %v", err)
-							return nil, fmt.Errorf("error in Creating Card Request: %v", err)
+							return nil, fmt.Errorf("failed to update bankcard expiry date: %w", err)
 						}
-						s.log.Info("Request Created Successfully: %v", fname)
-
 						return data, nil
 					},
 				},

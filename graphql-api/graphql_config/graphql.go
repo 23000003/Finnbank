@@ -8,8 +8,8 @@ import (
 	"finnbank/common/utils"
 	"finnbank/graphql-api/types"
 	"net/http"
-
 	"github.com/99designs/gqlgen/graphql/playground"
+	q "finnbank/graphql-api/queue"
 )
 
 type StructGraphQL struct {
@@ -35,7 +35,7 @@ func NewGraphQL(log *utils.Logger, h types.IGraphQLHandlers) *StructGraphQL {
 	}
 }
 
-func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
+func (gql *StructGraphQL) ConfigureGraphQLHandlers(q *q.Queue) {
 
 	gql.log.Info("Configuring GraphQL Handlers...")
 
@@ -43,7 +43,7 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers() {
 	accountHandler := gql.h.AccountServicesHandler(gql.s.AuthServer)
 	bankCardHandler := gql.h.BankCardServicesHandler(gql.s.BankCardServer)
 	statementHandler := gql.h.StatementServicesHandler(gql.s.StatementServer)
-	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer)
+	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer, q)
 	notificationHandler := gql.h.NotificationServicesHandler(gql.s.NotificationServer)
 	openedAccountHandler := gql.h.OpenedAccountServicesHandler(gql.s.OpenedAccountServer)
 
