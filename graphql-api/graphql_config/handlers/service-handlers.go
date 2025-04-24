@@ -152,40 +152,58 @@ func (g *StructGraphQLHandler) StatementServicesHandler(connAddress string) *han
 	return nil
 }
 
+func mergeFields(fieldMaps ...graphql.Fields) graphql.Fields {
+	out := graphql.Fields{}
+	for _, m := range fieldMaps {
+		for k, f := range m {
+			out[k] = f
+		}
+	}
+	return out
+}
+
 func (g *StructGraphQLHandler) transactionServicesHandler() (http.Handler, error) {
 	if g.db.TransactionDBPool == nil {
 		return nil, fmt.Errorf("transaction DB pool is not initialized")
 	}
-
-	g.l.Info("🛠 Initializing TransactionServicesHandler…")
 	txSvc := sv.NewTransactionService(g.db.TransactionDBPool, g.l)
 
+	// pull the three field-maps
+	q1 := g.r.TransactionQueryFields(txSvc)
+	q2 := g.r.TransactionTimeQueryFields(txSvc)
+	m := g.r.TransactionMutationFields(txSvc)
+
+	// build root Query and Mutation
+	rootQuery := graphql.NewObject(graphql.ObjectConfig{
+		Name:   "Query",
+		Fields: mergeFields(q1, q2),
+	})
+	rootMutation := graphql.NewObject(graphql.ObjectConfig{
+		Name:   "Mutation",
+		Fields: m,
+	})
+
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
-		Query:    g.r.GetTransactionQueryType(txSvc),
-		Mutation: g.r.GetTransactionMutationType(txSvc),
+		Query:    rootQuery,
+		Mutation: rootMutation,
 	})
 	if err != nil {
-		g.l.Error("❌ Failed to configure Transaction schema: %v", err)
-		return nil, fmt.Errorf("failed to configure transaction schema: %w", err)
+		return nil, fmt.Errorf("failed to configure schema: %w", err)
 	}
-	g.l.Info("✅ Transaction GraphQL schema created")
 
-	graphiql := os.Getenv("ENABLE_GRAPHIQL") == "true"
-	gqlHandler := handler.New(&handler.Config{
+	h := handler.New(&handler.Config{
 		Schema:   &schema,
 		Pretty:   true,
-		GraphiQL: graphiql,
+		GraphiQL: os.Getenv("ENABLE_GRAPHIQL") == "true",
 	})
-
-	g.l.Info("🚀 TransactionServicesHandler ready")
-	return gqlHandler, nil
+	return h, nil
 }
+
 func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *handler.Handler {
 	h, err := g.transactionServicesHandler()
 	if err != nil {
 		g.l.Fatal("Could not initialize TransactionServicesHandler: %v", err)
 	}
-	// at this point h is the *gqlhandler.Handler you created above
 	return h.(*handler.Handler)
 }
 func (g *StructGraphQLHandler) OpenedAccountServicesHandler(connAddress string) *handler.Handler {
