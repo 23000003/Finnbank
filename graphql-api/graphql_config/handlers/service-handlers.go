@@ -8,7 +8,7 @@ import (
 	"finnbank/graphql-api/grpc_client"
 	sv "finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
-
+	q "finnbank/graphql-api/queue"
 	"fmt"
 	"net/http"
 	"os"
@@ -162,11 +162,11 @@ func mergeFields(fieldMaps ...graphql.Fields) graphql.Fields {
 	return out
 }
 
-func (g *StructGraphQLHandler) transactionServicesHandler() (http.Handler, error) {
+func (g *StructGraphQLHandler) transactionServicesHandler(queue *q.Queue) (http.Handler, error) {
 	if g.db.TransactionDBPool == nil {
 		return nil, fmt.Errorf("transaction DB pool is not initialized")
 	}
-	txSvc := sv.NewTransactionService(g.db.TransactionDBPool, g.l)
+	txSvc := sv.NewTransactionService(g.db.TransactionDBPool, g.l, queue)
 
 	// pull the three field-maps
 	q1 := g.r.TransactionQueryFields(txSvc)
@@ -200,8 +200,8 @@ func (g *StructGraphQLHandler) transactionServicesHandler() (http.Handler, error
 	return h, nil
 }
 
-func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *handler.Handler {
-	h, err := g.transactionServicesHandler()
+func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string, queue *q.Queue) *handler.Handler {
+	h, err := g.transactionServicesHandler(queue)
 	if err != nil {
 		g.l.Fatal("Could not initialize TransactionServicesHandler: %v", err)
 	}

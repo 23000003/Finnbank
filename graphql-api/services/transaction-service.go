@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 	"github.com/jackc/pgx/v5/pgxpool"
+	q "finnbank/graphql-api/queue"
 )
 
 const (
@@ -17,10 +18,11 @@ const (
 type TransactionService struct {
 	db *pgxpool.Pool
 	l  *utils.Logger
+	queue *q.Queue
 }
 
-func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger) *TransactionService {
-	return &TransactionService{db: db, l: logger}
+func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger, q *q.Queue) *TransactionService {
+	return &TransactionService{db: db, l: logger, queue: q}
 }
 
 // generateRefNo returns a random numeric string of length RefNoLength.
