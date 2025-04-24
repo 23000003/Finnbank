@@ -14,6 +14,7 @@ type BankCardResponse struct {
 }
 
 type GetBankCardResponse struct {
+	BankCardId   int    	 `json:"bankcard_id"`
 	CardNumber   string    `json:"card_number"`
 	ExpiryDate   time.Time `json:"expiry_date"`
 	CardType     string    `json:"card_type"`

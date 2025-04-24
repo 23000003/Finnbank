@@ -28,8 +28,8 @@ func (a *BankcardService) GetAllBankCardOfUserById(ctx *gin.Context) {
 	query := fmt.Sprintf(`{
 		get_all_bankcard(user_id: "%s") {
 			bankcard_id
-			bankcard_type
-			bankcard_number
+			card_type
+			card_number
 			expiry_date
 			date_created
 			cvv
@@ -57,6 +57,15 @@ func (a *BankcardService) GetAllBankCardOfUserById(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetAllBankCard})
+
 }
 
 func (a *BankcardService) UpdateBankcardExpiryDateByUserId(ctx *gin.Context) {

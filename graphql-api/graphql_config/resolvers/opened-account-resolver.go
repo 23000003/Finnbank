@@ -4,6 +4,7 @@ import (
 	sv "finnbank/graphql-api/services"
 	"fmt"
 	"github.com/graphql-go/graphql"
+	t "finnbank/graphql-api/types"
 )
 
 func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedAccountService) *graphql.Object {
@@ -53,7 +54,7 @@ func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedA
 	)
 }
 
-func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.OpenedAccountService) *graphql.Object {
+func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.OpenedAccountService, BCService *sv.BankcardService) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
@@ -73,14 +74,24 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 					"balance": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.Float),
 					},
+					"pin_number": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					account_id, ok := params.Args["account_id"].(string)
 					accountType, ok1 := params.Args["account_type"].(string)
 					balance, ok2 := params.Args["balance"].(float64)
-					
-					if ok && ok1 && ok2 {
-						data, err := OAService.CreateOpenedAccount(params.Context, account_id, accountType, balance)
+					pin_number, ok3 := params.Args["pin_number"].(string)
+
+					if ok && ok1 && ok2 && ok3 {
+						data, err := OAService.CreateOpenedAccount(params.Context, BCService, 
+							&t.CreateOpenedAccountRequest{
+								AccountId:      account_id,
+								AccountType:    accountType,
+								Balance:        balance,
+								PinNumber: 	 pin_number,	
+							})
 						return data, err
 					}
 					

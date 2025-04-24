@@ -24,6 +24,7 @@ type CreateOpenAccountRequest struct {
 	AccountId     string     `json:"account_id"`
 	Balance       float64   `json:"balance"`
 	AccountType   string    `json:"account_type"`
+	PinNumber 		string 		`json:"pin_number"`
 }
 
 type UpdateOpenAccountRequest struct {

@@ -38,7 +38,7 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 
 	rows, err := conn.Query(ctx,
 		`SELECT 
-			card_number, expiry_date, 
+			bankcard_id, card_number, expiry_date, 
 			card_type, cvv, date_created
 		FROM bankcard 
 		WHERE account_id = $1`,
@@ -53,6 +53,7 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 	for rows.Next() {
 		var bc t.GetBankCardResponse
 		if err := rows.Scan(
+			&bc.BankCardId,
 			&bc.CardNumber,
 			&bc.ExpiryDate,
 			&bc.CardType,
@@ -73,34 +74,41 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 }
 
 // called only in opened-account
-func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string, card_type string, pin_number string) (string, error) {
+func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string, card_type string, pin_number string) (int, error) {
 	conn, err := b.db.Acquire(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to acquire connection: %w", err)
+		return -1, fmt.Errorf("failed to acquire connection: %w", err)
 	}
 	defer conn.Release()
 
 	cardNumber, err := generateRandomNumber(16)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate card number: %w", err)
+		return -1, fmt.Errorf("failed to generate card number: %w", err)
 	}
 	cvv, err := generateRandomNumber(3)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate cvv: %w", err)
+		return -1, fmt.Errorf("failed to generate cvv: %w", err)
 	}
 	expiryDate := time.Now().AddDate(4, 0, 0)
+
+	var bankcard_type string
+	if card_type == "Checking" {
+		bankcard_type = "debit"
+	} else {
+		bankcard_type = "credit"
+	}
 
 	var bankcard_id int
 	err = conn.QueryRow(ctx,
 		`INSERT INTO bankcard (account_id, card_number, card_type, pin_number, cvv, expiry_date) 
 		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING bankcard_id`,
-			user_id, cardNumber, card_type, pin_number, cvv, expiryDate,
+			user_id, cardNumber, bankcard_type, pin_number, cvv, expiryDate,
 	).Scan(&bankcard_id)
 	if err != nil {
-		return "", fmt.Errorf("bankcard insert failed: %w", err)
+		return -1, fmt.Errorf("bankcard insert failed: %w", err)
 	}
 
-	return "Card created successfully", nil;
+	return bankcard_id, nil;
 }
 
 func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, bankcard_id int) (string, error) {

@@ -52,7 +52,7 @@ func GetAccountEntityType() *graphql.Object {
 var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "BankCardEntity",
 	Fields: graphql.Fields{
-		"bankcard_id": 	&graphql.Field{ Type: graphql.String },
+		"bankcard_id": 	&graphql.Field{ Type: graphql.Int },
 		"card_number": 	&graphql.Field{ Type: graphql.String },
 		"expiry_date": 	&graphql.Field{ Type: graphql.DateTime },
 		"account_id":		&graphql.Field{ Type: graphql.String },

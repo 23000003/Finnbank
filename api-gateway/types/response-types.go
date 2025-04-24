@@ -246,12 +246,12 @@ type GetNotificationGraphQLResponse struct {
 type GetAllBankCardsGraphQLResponse struct {
 	Data struct {
 		GetAllBankCard []struct {
-			BankCardID     int       `json:"bankcard_id"`
-			BankCardType   string    `json:"bankcard_type"`
-			BankCardNumber string    `json:"bankcard_number"`
-			ExpiryDate     time.Time `json:"expiry_date"`
-			DateCreated    time.Time `json:"date_created"`
-			CVV            string    `json:"cvv"`
+			BankCardID     	int       `json:"bankcard_id"`
+			CardType   			string    `json:"card_type"`
+			CardNumber 			string    `json:"card_number"`
+			ExpiryDate     	time.Time `json:"expiry_date"`
+			DateCreated    	time.Time `json:"date_created"`
+			CVV            	string    `json:"cvv"`
 		} `json:"get_all_bankcard"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`

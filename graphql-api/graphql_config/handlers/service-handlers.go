@@ -187,7 +187,7 @@ func (g *StructGraphQLHandler) transactionServicesHandler() (http.Handler, error
 		Query:    rootQuery,
 		Mutation: rootMutation,
 	})
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure schema: %w", err)
 	}
@@ -207,17 +207,20 @@ func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string) *h
 	}
 	return h.(*handler.Handler)
 }
+
+
 func (g *StructGraphQLHandler) OpenedAccountServicesHandler(connAddress string) *handler.Handler {
 
 	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
 	// proto server
 
 	OAService := sv.NewOpenedAccountService(g.db.OpenedAccountDBPool, g.l)
+	BCService := sv.NewBankcardService(g.db.BankCardDBPool, g.l)
 
 	openedAccountSchema, err := graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query:    g.r.GetOpenedAccountQueryType(OAService),
-			Mutation: g.r.GetOpenedAccountMutationType(OAService),
+			Mutation: g.r.GetOpenedAccountMutationType(OAService, BCService),
 		},
 	)
 	if err != nil {
