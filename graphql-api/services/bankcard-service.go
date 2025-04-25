@@ -102,13 +102,13 @@ func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string,
 	err = conn.QueryRow(ctx,
 		`INSERT INTO bankcard (account_id, card_number, card_type, pin_number, cvv, expiry_date) 
 		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING bankcard_id`,
-			user_id, cardNumber, bankcard_type, pin_number, cvv, expiryDate,
+		user_id, cardNumber, bankcard_type, pin_number, cvv, expiryDate,
 	).Scan(&bankcard_id)
 	if err != nil {
 		return -1, fmt.Errorf("bankcard insert failed: %w", err)
 	}
 
-	return bankcard_id, nil;
+	return bankcard_id, nil
 }
 
 func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, bankcard_id int) (string, error) {
@@ -133,4 +133,3 @@ func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, 
 
 	return "Update Successful", nil
 }
-

@@ -36,7 +36,6 @@ type Account struct {
 	AccountNumber string    `json:"account_number"`
 	AuthID        string    `json:"auth_id"`
 	HasCard       bool      `json:"has_card"`
-	Balance       float64   `json:"balance"`
 	DateCreated   time.Time `json:"date_created"`
 	DateUpdated   time.Time `json:"date_updated"`
 	Nationality   string    `json:"nationality"`
