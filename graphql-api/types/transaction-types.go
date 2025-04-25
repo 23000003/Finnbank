@@ -7,10 +7,10 @@ import (
 )
 
 type Transaction struct {
-	TransactionID     int64     `json:"transaction_id"`
+	TransactionID     int     	`json:"transaction_id"`
 	RefNo             string    `json:"ref_no"`
-	SenderID          string    `json:"sender_id"`
-	ReceiverID        string    `json:"receiver_id"`
+	SenderID          int    `json:"sender_id"`
+	ReceiverID        int    `json:"receiver_id"`
 	TransactionType   string    `json:"transaction_type"`
 	Amount            float64   `json:"amount"`
 	TransactionStatus string    `json:"transaction_status"`

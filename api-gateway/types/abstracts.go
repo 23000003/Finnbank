@@ -36,7 +36,7 @@ type IStatementService interface {
 }
 
 type ITransactionService interface {
-	GetTransactionByUserId(*gin.Context)
+	GetTransactionByOpenAccountId(*gin.Context)
 	CreateTransaction(*gin.Context) // post req
 }
 

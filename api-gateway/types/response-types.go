@@ -36,11 +36,12 @@ type GetAllOpenedAccountsGraphQLResponse struct {
 	Data struct {
 		GetAll []struct {
 			OpenedAccountID     int       `json:"openedaccount_id"`
-			BankCardID          *int      `json:"bankcard_id"`
+			BankCardID          int      `json:"bankcard_id"`
 			Balance             float64   `json:"balance"`
 			AccountType         string    `json:"account_type"`
 			DateCreated         time.Time `json:"date_created"`
 			OpenedAccountStatus string    `json:"openedaccount_status"`
+			AccountNumber 		 string    `json:"account_number"`
 		} `json:"get_all"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -50,11 +51,12 @@ type GetOpenedAccountsGraphQLResponse struct {
 	Data struct {
 		GetById struct {
 			OpenedAccountID     int       `json:"openedaccount_id"`
-			BankCardID          *int      `json:"bankcard_id"`
+			BankCardID          int      `json:"bankcard_id"`
 			Balance             float64   `json:"balance"`
 			AccountType         string    `json:"account_type"`
 			DateCreated         time.Time `json:"date_created"`
 			OpenedAccountStatus string    `json:"openedaccount_status"`
+			AccountNumber 		 string    `json:"account_number"`
 		} `json:"get_by_id"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -64,7 +66,7 @@ type CreateOpenedAccountsGraphQLResponse struct {
 	Data struct {
 		CreateAccount struct {
 			OpenedAccountID     int       `json:"openedaccount_id"`
-			BankCardID          *int      `json:"bankcard_id"`
+			BankCardID          int      `json:"bankcard_id"`
 			Balance             float64   `json:"balance"`
 			AccountType         string    `json:"account_type"`
 			DateCreated         time.Time `json:"date_created"`
@@ -179,8 +181,8 @@ type GetAllTransactionsGraphQLResponse struct {
 		GetTransactionsByUserId []struct {
 			TransactionID      string       `json:"transaction_id"`
 			RefNo              string    `json:"ref_no"`
-			SenderID           string    `json:"sender_id"`
-			ReceiverID         string    `json:"receiver_id"`
+			SenderID           int    `json:"sender_id"`
+			ReceiverID         int    `json:"receiver_id"`
 			TransactionType    string    `json:"transaction_type"`
 			Amount             float64   `json:"amount"`
 			TransactionStatus  string    `json:"transaction_status"`
@@ -197,8 +199,8 @@ type CreateTransactionsGraphQLResponse struct {
 		CreateTransaction struct {
 			TransactionID      string       `json:"transaction_id"`
 			RefNo              string    `json:"ref_no"`
-			SenderID           string    `json:"sender_id"`
-			ReceiverID         string    `json:"receiver_id"`
+			SenderID           int    `json:"sender_id"`
+			ReceiverID         int    `json:"receiver_id"`
 			TransactionType    string    `json:"transaction_type"`
 			Amount             float64   `json:"amount"`
 			TransactionStatus  string    `json:"transaction_status"`

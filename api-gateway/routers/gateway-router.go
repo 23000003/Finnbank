@@ -67,7 +67,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	transaction := gr.r.Group("/transaction")
 	transaction.Use(middleware.AuthMiddleware())
 	{
-		transaction.GET("/get-all/:id", gr.s.TransactionService.GetTransactionByUserId)
+		transaction.GET("/get-all/:id", gr.s.TransactionService.GetTransactionByOpenAccountId)
 		transaction.POST("/generate-transaction", gr.s.TransactionService.CreateTransaction)
 	}
 

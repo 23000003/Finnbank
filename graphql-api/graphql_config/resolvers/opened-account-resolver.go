@@ -7,7 +7,7 @@ import (
 	t "finnbank/graphql-api/types"
 )
 
-func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedAccountService) *graphql.Object {
+func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedAccountService, BCService *sv.BankcardService) *graphql.Object {
 	
 	return graphql.NewObject(
 		graphql.ObjectConfig{
@@ -26,7 +26,19 @@ func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedA
 						id, ok := p.Args["account_id"].(string)
 						if ok {
 							data, err := OAService.GetAllOpenedAccountsByUserId(p.Context, id)
-							return data, err
+							if err != nil {
+								return nil, err
+							}
+							for i := range data {
+								if data[i].AccountType != "Savings" {
+									accNum, err := BCService.GetAccountNumberByOpenedAccountId(p.Context, *data[i].BankCardID)
+									if err != nil {
+										return nil, err
+									}
+									data[i].AccountNumber = accNum
+								}
+							}
+							return data, nil
 						}
 						return nil, fmt.Errorf("invalid argument: %v", p.Args["account_id"])
 					},

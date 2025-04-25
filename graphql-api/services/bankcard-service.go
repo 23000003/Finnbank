@@ -73,6 +73,30 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 	return results, nil
 }
 
+func (b *BankcardService) GetAccountNumberByOpenedAccountId(ctx context.Context, id int) (string, error) {
+	conn, err := b.db.Acquire(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	var cardNumber string
+	err = conn.QueryRow(ctx,
+		`SELECT card_number 
+		FROM bankcard 
+		WHERE bankcard_id = $1`,
+		id,
+	).Scan(&cardNumber)
+
+	if err != nil {
+		return "", fmt.Errorf("query failed: %w", err)
+	}
+
+	b.l.Info("Card number: %v", cardNumber)
+	return cardNumber, nil
+}
+
+
 // called only in opened-account
 func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string, card_type string, pin_number string) (int, error) {
 	conn, err := b.db.Acquire(ctx)

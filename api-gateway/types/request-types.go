@@ -50,12 +50,11 @@ type SignupAccountRequest struct {
 	Nationality string `json:"nationality"`
 }
 
-
 // ====================== Transaction Types ======================
 
 type CreateTransactionRequest struct {
-	SenderId        string   `json:"sender_id"`
-	ReceiverId      string   `json:"receiver_id"`
+	SenderId        int   `json:"sender_id"`
+	ReceiverId      int   `json:"receiver_id"`
 	TransactionType string   `json:"transaction_type"`
 	Amount          float64  `json:"amount"`
 	TransactionFee  float64  `json:"transaction_fee"`

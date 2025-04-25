@@ -36,6 +36,7 @@ func (a *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx *gin.Context) {
 			account_type
 			date_created
 			openedaccount_status
+			account_number
 		}
 	}`, id)
 
@@ -91,6 +92,7 @@ func (a *OpenedAccountService) GetOpenedAccountOfUserById(ctx *gin.Context) {
 			account_type
 			date_created
 			openedaccount_status
+			account_number
 		}
 	}`, id)
 

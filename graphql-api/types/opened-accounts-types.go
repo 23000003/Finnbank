@@ -9,6 +9,7 @@ type OpenedAccounts struct {
 	AccountType         string    `json:"account_type"`
 	DateCreated         time.Time `json:"date_created"`
 	OpenedAccountStatus string    `json:"openedaccount_status"`
+	AccountNumber          string    `json:"account_number"`
 }
 
 type CreateOpenedAccountRequest struct {

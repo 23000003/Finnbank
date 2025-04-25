@@ -190,7 +190,6 @@ func (s *AccountService) FetchUserById(ctx *context.Context, req string) (*types
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,

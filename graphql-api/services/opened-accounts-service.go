@@ -61,7 +61,7 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
-
+	
 	s.l.Info("All opened accounts: %v", results)
 	return results, nil
 }
@@ -115,7 +115,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCServic
 		return nil, fmt.Errorf("account with type %s already exists for this user", data.AccountType)
 	}
 
-	var bankcardId *int = nil
+	var bankcardId *int = nil;
 	if data.AccountType != "savings" {
 		id, err := BCService.CreateCardRequest(ctx, data.AccountId, data.AccountType, data.PinNumber)
 		s.l.Info("Bankcard ID: %d", id)

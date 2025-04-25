@@ -37,7 +37,6 @@ func GetAccountEntityType() *graphql.Object {
 				"account_number": &graphql.Field{ Type: graphql.String },
 				"has_card": 			&graphql.Field{ Type: graphql.Boolean },
 				"address": 				&graphql.Field{ Type: graphql.String },
-				"balance": 				&graphql.Field{ Type: graphql.Float },
 				"account_type": 	&graphql.Field{ Type: graphql.String },
 				"nationality": 		&graphql.Field{ Type: graphql.String },
 				"auth_id": 				&graphql.Field{ Type: graphql.String },
@@ -71,10 +70,10 @@ func GetBankCardEntity() *graphql.Object {
 var TransactionEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Transaction",
 	Fields: graphql.Fields{
-		"transaction_id":     &graphql.Field{Type: graphql.String},
+		"transaction_id":     &graphql.Field{Type: graphql.Int},
 		"ref_no":             &graphql.Field{Type: graphql.String},
-		"sender_id":          &graphql.Field{Type: graphql.String},
-		"receiver_id":        &graphql.Field{Type: graphql.String},
+		"sender_id":          &graphql.Field{Type: graphql.Int},
+		"receiver_id":        &graphql.Field{Type: graphql.Int},
 		"transaction_type":   &graphql.Field{Type: ty.TransactionTypeEnum},
 		"amount":             &graphql.Field{Type: graphql.Float},
 		"transaction_status": &graphql.Field{Type: ty.TransactionStatusEnum},
@@ -89,8 +88,8 @@ var TransactionInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name: "TransactionInput",
 	Fields: graphql.InputObjectConfigFieldMap{
 		// "ref_no":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-		"sender_id":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-		"receiver_id":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		"sender_id":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+		"receiver_id":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
 		"transaction_type": &graphql.InputObjectFieldConfig{Type: ty.TransactionTypeEnum},
 		"amount":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Float)},
 		"transaction_fee":  &graphql.InputObjectFieldConfig{Type: graphql.Float},
@@ -147,6 +146,7 @@ func GetOpenedAccountEntityType() *graphql.Object {
 				"balance":              &graphql.Field{Type: graphql.Float},
 				"openedaccount_status": &graphql.Field{Type: graphql.String},
 				"date_created":         &graphql.Field{Type: graphql.DateTime},
+				"account_number":     &graphql.Field{Type: graphql.String},
 			},
 		},
 	)
