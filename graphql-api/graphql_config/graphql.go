@@ -6,10 +6,11 @@ package graphql_config
 
 import (
 	"finnbank/common/utils"
+	q "finnbank/graphql-api/queue"
 	"finnbank/graphql-api/types"
 	"net/http"
+
 	"github.com/99designs/gqlgen/graphql/playground"
-	q "finnbank/graphql-api/queue"
 )
 
 type StructGraphQL struct {

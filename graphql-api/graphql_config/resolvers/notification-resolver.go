@@ -3,8 +3,9 @@ package resolvers
 import (
 	"finnbank/graphql-api/graphql_config/entities"
 	sv "finnbank/graphql-api/services"
-	"time"
 	t "finnbank/graphql-api/types"
+	"time"
+
 	"github.com/graphql-go/graphql"
 )
 

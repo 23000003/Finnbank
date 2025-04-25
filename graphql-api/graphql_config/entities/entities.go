@@ -11,10 +11,10 @@ func GetProductEntityType() *graphql.Object {
 		graphql.ObjectConfig{
 			Name: "Product",
 			Fields: graphql.Fields{
-				"id": 		&graphql.Field{ Type: graphql.Int	},
-				"name": 	&graphql.Field{ Type: graphql.String },
-				"info": 	&graphql.Field{ Type: graphql.String },
-				"price": 	&graphql.Field{ Type: graphql.Float },
+				"id":    &graphql.Field{Type: graphql.Int},
+				"name":  &graphql.Field{Type: graphql.String},
+				"info":  &graphql.Field{Type: graphql.String},
+				"price": &graphql.Field{Type: graphql.Float},
 			},
 		},
 	)
@@ -51,17 +51,16 @@ func GetAccountEntityType() *graphql.Object {
 var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "BankCardEntity",
 	Fields: graphql.Fields{
-		"bankcard_id": 	&graphql.Field{ Type: graphql.Int },
-		"card_number": 	&graphql.Field{ Type: graphql.String },
-		"expiry_date": 	&graphql.Field{ Type: graphql.DateTime },
-		"account_id":		&graphql.Field{ Type: graphql.String },
-		"cvv": 					&graphql.Field{ Type: graphql.String },
-		"pin_number": 	&graphql.Field{ Type: graphql.String },
-		"card_type": 		&graphql.Field{ Type: graphql.String },
-		"date_created": &graphql.Field{ Type: graphql.DateTime },
+		"bankcard_id":  &graphql.Field{Type: graphql.Int},
+		"card_number":  &graphql.Field{Type: graphql.String},
+		"expiry_date":  &graphql.Field{Type: graphql.DateTime},
+		"account_id":   &graphql.Field{Type: graphql.String},
+		"cvv":          &graphql.Field{Type: graphql.String},
+		"pin_number":   &graphql.Field{Type: graphql.String},
+		"card_type":    &graphql.Field{Type: graphql.String},
+		"date_created": &graphql.Field{Type: graphql.DateTime},
 	},
 })
-
 
 func GetBankCardEntity() *graphql.Object {
 	return bankCardEntityType

@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // ==================== Product Types ====================
 
 type CreateProductRequest struct {
@@ -21,15 +23,15 @@ type GetAllOpenedAccountRequest struct {
 }
 
 type CreateOpenAccountRequest struct {
-	AccountId     string     `json:"account_id"`
-	Balance       float64   `json:"balance"`
-	AccountType   string    `json:"account_type"`
+	AccountId   string  `json:"account_id"`
+	Balance     float64 `json:"balance"`
+	AccountType string  `json:"account_type"`
 	PinNumber 		string 		`json:"pin_number"`
 }
 
 type UpdateOpenAccountRequest struct {
-	OpenedAccountId     	int       `json:"openedaccount_id"`
-	OpenedAccountStatus   string    `json:"openedaccount_status"`
+	OpenedAccountId     int    `json:"openedaccount_id"`
+	OpenedAccountStatus string `json:"openedaccount_status"`
 }
 
 // ===================== Account Types ====================
@@ -40,14 +42,17 @@ type LoginAccountRequest struct {
 }
 
 type SignupAccountRequest struct {
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	PhoneNumber string `json:"phone_number"`
-	Address     string `json:"address"`
-	AccountType string `json:"account_type"`
-	Nationality string `json:"nationality"`
+	Email       string    `json:"email"`
+	Password    string    `json:"password"`
+	FirstName   string    `json:"first_name"`
+	MiddleName  string    `json:"middle_name"`
+	LastName    string    `json:"last_name"`
+	PhoneNumber string    `json:"phone_number"`
+	Address     string    `json:"address"`
+	AccountType string    `json:"account_type"`
+	NationalID  string    `json:"national_id"`
+	Nationality string    `json:"nationality"`
+	Birthdate   time.Time `json:"birthdate"`
 }
 
 // ====================== Transaction Types ======================

@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	pb "finnbank/common/grpc/auth"
+	"finnbank/common/utils"
 	"finnbank/graphql-api/types"
 	"fmt"
-	"finnbank/common/utils"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -42,7 +43,7 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		return nil, fmt.Errorf("account with phone number already exists")
 	}
 
-	accNum, err := generateRandomNumber(16);
+	accNum, err := generateRandomNumber(16)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate account number: %v", err)
@@ -61,12 +62,12 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	createQuery := `
 	INSERT INTO account (
 		email, first_name, middle_name, last_name, phone_number, address, nationality,
-		account_type, account_number, has_card, balance, auth_id, birthdate, national_id
+		account_type, account_number, has_card, auth_id, birthdate, national_id
 	) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	RETURNING 
 		id, email, first_name, middle_name, last_name, phone_number, address, nationality,
-		account_type, account_number, has_card, balance, date_created, date_updated, auth_id, birthdate, national_id, account_status
+		account_type, account_number, has_card, date_created, date_updated, auth_id, birthdate, national_id, account_status
 	`
 
 	s.l.Info("Creating account for user: %s", authRes)
@@ -83,7 +84,7 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		in.Nationality,
 		in.AccountType,
 		accNum,
-		false, 0.00,
+		false,
 		authRes.User.Id,
 		in.BirthDate,
 		in.NationalID).
@@ -99,7 +100,6 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 			&acc.AccountType,
 			&acc.AccountNumber,
 			&acc.HasCard,
-			&acc.Balance,
 			&acc.DateCreated,
 			&acc.DateUpdated,
 			&acc.AuthID,
@@ -128,7 +128,6 @@ func (s *AccountService) FetchUserByAccountNumber(ctx *context.Context, req stri
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
@@ -159,7 +158,6 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
@@ -221,7 +219,6 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
@@ -302,4 +299,3 @@ func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string
 	}
 	return encrypted_password, nil
 }
-
