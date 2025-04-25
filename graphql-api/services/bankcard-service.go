@@ -98,41 +98,49 @@ func (b *BankcardService) GetAccountNumberByOpenedAccountId(ctx context.Context,
 
 
 // called only in opened-account
-func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string, card_type string, pin_number string) (int, error) {
+func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string) ([]int, error) {
 	conn, err := b.db.Acquire(ctx)
 	if err != nil {
-		return -1, fmt.Errorf("failed to acquire connection: %w", err)
+		return nil, fmt.Errorf("failed to acquire connection: %w", err)
 	}
 	defer conn.Release()
 
-	cardNumber, err := generateRandomNumber(16)
-	if err != nil {
-		return -1, fmt.Errorf("failed to generate card number: %w", err)
+	debit, err := generateRandomNumber(16)
+	credit, err1 := generateRandomNumber(16)
+	if err != nil || err1 != nil {
+		return nil, fmt.Errorf("failed to generate card number: %w %w", err, err1)
 	}
-	cvv, err := generateRandomNumber(3)
-	if err != nil {
-		return -1, fmt.Errorf("failed to generate cvv: %w", err)
+	debitCVV, err := generateRandomNumber(3)
+	creditCVV, err1 := generateRandomNumber(3)
+	if err != nil || err1 != nil {
+		return nil, fmt.Errorf("failed to generate cvv: %w %w", err, err1)
 	}
 	expiryDate := time.Now().AddDate(4, 0, 0)
 
-	var bankcard_type string
-	if card_type == "Checking" {
-		bankcard_type = "debit"
-	} else {
-		bankcard_type = "credit"
-	}
-
-	var bankcard_id int
-	err = conn.QueryRow(ctx,
+	defaultPin := 1234
+	var bankcardIDs []int
+	rows, err := conn.Query(ctx,
 		`INSERT INTO bankcard (account_id, card_number, card_type, pin_number, cvv, expiry_date) 
-		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING bankcard_id`,
-		user_id, cardNumber, bankcard_type, pin_number, cvv, expiryDate,
-	).Scan(&bankcard_id)
+		 VALUES 
+			($1, $2, $3, $4, $5, $6), 
+			($1, $7, $8, $4, $9, $6)
+		 RETURNING bankcard_id`,
+		user_id, credit, "Credit", defaultPin, creditCVV, expiryDate, debit, "Debit", debitCVV,
+	)
 	if err != nil {
-		return -1, fmt.Errorf("bankcard insert failed: %w", err)
+		return nil, fmt.Errorf("bankcard insert failed: %w", err)
 	}
+	defer rows.Close()
 
-	return bankcard_id, nil
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan bankcard_id: %w", err)
+		}
+		bankcardIDs = append(bankcardIDs, id)
+	}
+	
+	return bankcardIDs, nil
 }
 
 func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, bankcard_id int) (string, error) {
@@ -157,3 +165,26 @@ func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, 
 
 	return "Update Successful", nil
 }
+
+
+func (b *BankcardService) UpdateBankcardPinNumberById(ctx context.Context, bankcard_id int, pin_number string) (string, error) {
+	conn, err := b.db.Acquire(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	var bankcardId int
+	err = conn.QueryRow(ctx,
+		`UPDATE bankcard SET pin_number = $1 
+		 WHERE bankcard_id = $2 
+		 RETURNING bankcard_id`,
+		bankcard_id, pin_number).Scan(&bankcardId)
+
+	if err != nil {
+		return "", fmt.Errorf("update failed: %w", err)
+	}
+
+	return "Update Successful", nil
+}
+

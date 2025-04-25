@@ -272,3 +272,18 @@ type UpdateBankCardGraphQLResponse struct {
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
 }
+
+
+type UpdateBankCardPinNumberGraphQLResponse struct {
+	Data struct {
+		UpdatePinNumber []struct {
+			BankCardID     int       `json:"bankcard_id"`
+			BankCardType   string    `json:"bankcard_type"`
+			BankCardNumber string    `json:"bankcard_number"`
+			ExpiryDate     time.Time `json:"expiry_date"`
+			DateCreated    time.Time `json:"date_created"`
+			CVV            string    `json:"cvv"`
+		} `json:"update_pin_number"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}

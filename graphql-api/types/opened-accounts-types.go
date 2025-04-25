@@ -11,10 +11,3 @@ type OpenedAccounts struct {
 	OpenedAccountStatus string    `json:"openedaccount_status"`
 	AccountNumber          string    `json:"account_number"`
 }
-
-type CreateOpenedAccountRequest struct {
-	AccountId          string  `json:"account_id"`
-	AccountType        string  `json:"account_type"`
-	Balance           float64 `json:"balance"`
-	PinNumber         string `json:"pin_number"`
-}
