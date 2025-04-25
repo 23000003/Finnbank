@@ -148,7 +148,7 @@ func (a *AccountService) SignupUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": "Registered successfully"})
 }
 
-func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
+func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 
 	id := ctx.Param("id")
 
@@ -158,14 +158,23 @@ func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
 	// To add : account status, nationalIdNumber
 	query := fmt.Sprintf(`{
 		account_by_id(id: "%s") {
-			email
-			full_name
-			phone_number
-			date_created
-			account_number
-			address
-			nationality,
+			account_id
+			account_status
 			account_type
+			address
+			auth_id
+			balance
+			birthdate
+			date_created
+			date_updated
+			email
+			first_name
+			has_card
+			last_name
+			middle_name
+			national_id
+			nationality
+			phone_number
 		}
 	}`, id)
 

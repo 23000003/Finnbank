@@ -25,6 +25,7 @@ type IProductService interface {
 type IAccountService interface {
 	LoginUser(*gin.Context)
 	SignupUser(*gin.Context)
+	GetUserAccountById(*gin.Context)
 	GetUserAccountByAccountNumber(*gin.Context)
 	GetUserAccountByEmail(*gin.Context)
 	UpdateUserPassword(*gin.Context)
@@ -35,22 +36,20 @@ type IStatementService interface {
 }
 
 type ITransactionService interface {
-	GetAllTransaction(*gin.Context)
-	GetTransaction(*gin.Context)
-	GenerateTransaction(*gin.Context) // post req
+	GetTransactionByUserId(*gin.Context)
+	CreateTransaction(*gin.Context) // post req
 }
 
 type IBankcardService interface {
-	GetUserBankcard(*gin.Context)
-	GenerateBankcardForUser(*gin.Context) // post req
-	RenewBankcardForUser(*gin.Context)    // update req
+	GetAllBankCardOfUserById(*gin.Context)
+	UpdateBankcardExpiryDateByUserId(*gin.Context)    // update req
 }
 
 type INotificationService interface {
-	GetUserNotifications(*gin.Context)
+	GetAllNotificationByUserId(*gin.Context)
+	GetNotificationByUserId(*gin.Context)
 	GenerateNotification(*gin.Context)   // post req
-	MarkAsReadNotification(*gin.Context) // update req
-	DeleteNotification(*gin.Context)
+	ReadNotificationByUserId(*gin.Context) // update req
 }
 
 type IOpenedAccountService interface {

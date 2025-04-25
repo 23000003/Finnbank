@@ -171,3 +171,102 @@ type EmailFetchResponse struct {
 	} `json:"data"`
 	Errors any `json:"errors"`
 }
+
+// ================= Transaction Types ====================
+
+type GetAllTransactionsGraphQLResponse struct {
+	Data struct {
+		GetTransactionsByUserId []struct {
+			TransactionID      string       `json:"transaction_id"`
+			RefNo              string    `json:"ref_no"`
+			SenderID           string    `json:"sender_id"`
+			ReceiverID         string    `json:"receiver_id"`
+			TransactionType    string    `json:"transaction_type"`
+			Amount             float64   `json:"amount"`
+			TransactionStatus  string    `json:"transaction_status"`
+			DateTransaction   time.Time `json:"date_transaction"`
+			TransactionFee     float64   `json:"transaction_fee"`
+			Notes              string    `json:"notes"`
+		} `json:"getTransactionsByUserId"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+type CreateTransactionsGraphQLResponse struct {
+	Data struct {
+		CreateTransaction struct {
+			TransactionID      string       `json:"transaction_id"`
+			RefNo              string    `json:"ref_no"`
+			SenderID           string    `json:"sender_id"`
+			ReceiverID         string    `json:"receiver_id"`
+			TransactionType    string    `json:"transaction_type"`
+			Amount             float64   `json:"amount"`
+			TransactionStatus  string    `json:"transaction_status"`
+			DateTransaction   time.Time `json:"date_transaction"`
+			TransactionFee     float64   `json:"transaction_fee"`
+			Notes              string    `json:"notes"`
+		} `json:"createTransaction"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+
+// ===================== Notification Types ====================
+
+type GetAllNotificationsGraphQLResponse struct {
+	Data struct {
+		GetAllNotificationByUserId []struct {
+			NotifID       string     `json:"notif_id"`
+			NotifType     string     `json:"notif_type"`
+			NotifFromName string     `json:"notif_from_name"`
+			Content       string     `json:"content"`
+			IsRead        bool       `json:"is_read"`
+			DateNotified  time.Time  `json:"date_notified"`
+		} `json:"getAllNotificationByUserId"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+type GetNotificationGraphQLResponse struct {
+	Data struct {
+		GetNotificationById struct {
+			NotifID       string     `json:"notif_id"`
+			NotifType     string     `json:"notif_type"`
+			NotifFromName string     `json:"notif_from_name"`
+			Content       string     `json:"content"`
+			IsRead        bool       `json:"is_read"`
+			DateNotified  time.Time  `json:"date_notified"`
+		} `json:"getNotificationById"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+// ===================== Bankcard Types ====================
+
+type GetAllBankCardsGraphQLResponse struct {
+	Data struct {
+		GetAllBankCard []struct {
+			BankCardID     	int       `json:"bankcard_id"`
+			CardType   			string    `json:"card_type"`
+			CardNumber 			string    `json:"card_number"`
+			ExpiryDate     	time.Time `json:"expiry_date"`
+			DateCreated    	time.Time `json:"date_created"`
+			CVV            	string    `json:"cvv"`
+		} `json:"get_all_bankcard"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+type UpdateBankCardGraphQLResponse struct {
+	Data struct {
+		UpdateBankcardExpiry []struct {
+			BankCardID     int       `json:"bankcard_id"`
+			BankCardType   string    `json:"bankcard_type"`
+			BankCardNumber string    `json:"bankcard_number"`
+			ExpiryDate     time.Time `json:"expiry_date"`
+			DateCreated    time.Time `json:"date_created"`
+			CVV            string    `json:"cvv"`
+		} `json:"update_bankcard_expiry"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}

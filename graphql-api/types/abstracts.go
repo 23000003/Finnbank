@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/graphql-go/handler"
+	q "finnbank/graphql-api/queue"
 )
 
 type IGraphQLHandlers interface {
@@ -10,6 +11,6 @@ type IGraphQLHandlers interface {
 	BankCardServicesHandler(connAddress string) *handler.Handler
 	NotificationServicesHandler(connAddress string) *handler.Handler
 	StatementServicesHandler(connAddress string) *handler.Handler
-	TransactionServicesHandler(connAddress string) *handler.Handler
+	TransactionServicesHandler(connAddress string, queue *q.Queue) *handler.Handler
 	OpenedAccountServicesHandler(connAddress string) *handler.Handler
 }

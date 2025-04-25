@@ -5,13 +5,8 @@ import (
 	pb "finnbank/common/grpc/auth"
 	"finnbank/graphql-api/types"
 	"fmt"
-	"math/rand"
-	"time"
-
 	"finnbank/common/utils"
-
 	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AccountService struct {
@@ -26,17 +21,6 @@ func NewAccountService(db *pgxpool.Pool, logger *utils.Logger, pb pb.AuthService
 		l:           logger,
 		authService: pb,
 	}
-}
-
-// This just generates a random 16 digit account number
-// this works for now until i come up with a better solution
-func GenAccNum() string {
-	rand.Seed(time.Now().UnixNano())
-	var accNum string
-	for i := 0; i < 16; i++ {
-		accNum += string(rune('0' + rand.Intn(10)))
-	}
-	return accNum
 }
 
 func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRequest) (*types.AddAccountResponse, error) {
@@ -58,7 +42,11 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		return nil, fmt.Errorf("account with phone number already exists")
 	}
 
-	accNum := GenAccNum()
+	accNum, err := generateRandomNumber(16);
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate account number: %v", err)
+	}
 
 	// TODO: This seems really bad, will have to find a better way for this somehow
 	authRes, err := s.authService.SignUpUser(*ctx, req)
@@ -285,10 +273,10 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	if err != nil {
 		return nil, err
 	}
-	if !VerifyPassword(old_encrpyptedPassword, in.OldPassword) {
+	if !verifyPassword(old_encrpyptedPassword, in.OldPassword) {
 		return nil, fmt.Errorf("old password is incorrect")
 	}
-	new_encryptedPassword, err := HashPassword(in.NewPassword)
+	new_encryptedPassword, err := hashPassword(in.NewPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -316,15 +304,3 @@ func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string
 	return encrypted_password, nil
 }
 
-// These are just helper functions
-func VerifyPassword(hashedPassword, plainPassword string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
-	return err == nil
-}
-func HashPassword(plainPassword string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
-}

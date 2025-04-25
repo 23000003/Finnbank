@@ -3,6 +3,7 @@ package resolvers
 import (
 	"finnbank/graphql-api/graphql_config/entities"
 	sv "finnbank/graphql-api/services"
+	t "finnbank/graphql-api/types"
 	"time"
 
 	"github.com/graphql-go/graphql"
@@ -94,7 +95,7 @@ func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.No
 					"redirect_url":    &graphql.ArgumentConfig{Type: graphql.String},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					notif := sv.Notification{
+					notif := t.Notification{
 						NotifType:     p.Args["notif_type"].(string),
 						NotifToID:     p.Args["notif_to_id"].(string),
 						NotifFromName: p.Args["notif_from_name"].(string),

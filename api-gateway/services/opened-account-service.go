@@ -139,7 +139,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 
 	// http://localhost:8083/graphql/opened-account?query=mutation+_{create_account(account_id:1,account_type:"string",balance:1.99){<entities>}}
 	query := fmt.Sprintf(`mutation {
-		create_account(account_id: "%s", account_type: "%s", balance: %f) {
+		create_account(account_id: "%s", account_type: "%s", balance: %f, pin_number: "%s") {
 			openedaccount_id
 			bankcard_id
 			balance
@@ -147,7 +147,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 			date_created
 			openedaccount_status
 		}
-	}`, req.AccountId, req.AccountType, req.Balance)
+	}`, req.AccountId, req.AccountType, req.Balance, req.PinNumber)
 
 	qlrequestBody := map[string]interface{}{
 		"query": query,
@@ -178,8 +178,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.CreateAccount})
-
+	ctx.JSON(http.StatusOK, gin.H{"data": "Opened account created successfully"})
 }
 
 func (a *OpenedAccountService) UpdateOpenedAccountStatus(ctx *gin.Context) {

@@ -5,18 +5,10 @@ import (
 	"finnbank/common/utils"
 	"fmt"
 	"time"
-
+	t "finnbank/graphql-api/types"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type OpenedAccounts struct {
-	OpenedAccountID     int       `json:"openedaccount_id"`
-	BankCardID          *int      `json:"bankcard_id"`
-	Balance             float64   `json:"balance"`
-	AccountType         string    `json:"account_type"`
-	DateCreated         time.Time `json:"date_created"`
-	OpenedAccountStatus string    `json:"openedaccount_status"`
-}
 
 type OpenedAccountService struct {
 	db *pgxpool.Pool
@@ -30,7 +22,7 @@ func NewOpenedAccountService(db *pgxpool.Pool, logger *utils.Logger) *OpenedAcco
 	}
 }
 
-func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context, id string) ([]*OpenedAccounts, error) {
+func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context, id string) ([]*t.OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
@@ -50,9 +42,9 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	}
 	defer rows.Close()
 
-	var results []*OpenedAccounts
+	var results []*t.OpenedAccounts
 	for rows.Next() {
-		var acc OpenedAccounts
+		var acc t.OpenedAccounts
 		if err := rows.Scan(
 			&acc.OpenedAccountID,
 			&acc.BankCardID,
@@ -74,8 +66,8 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	return results, nil
 }
 
-func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int) (*OpenedAccounts, error) {
-	var acc OpenedAccounts
+func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int) (*t.OpenedAccounts, error) {
+	var acc t.OpenedAccounts
 
 	query := `
 		SELECT 
@@ -101,33 +93,52 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 }
 
 // Create a new opened account
-func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, accountId string, accountType string, balance float64) (*OpenedAccounts, error) {
+func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCService *BankcardService, data *t.CreateOpenedAccountRequest) (*t.OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
 	}
 	defer conn.Release()
 
+	// Checks if account with same type already exists (only 1 per account_type)
+	var existingAccountCount int
+	err = conn.QueryRow(ctx,
+		`SELECT COUNT(*) 
+		 FROM openedaccount 
+		 WHERE account_id = $1 AND account_type = $2`,
+		data.AccountId, data.AccountType,
+	).Scan(&existingAccountCount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check existing account: %w", err)
+	}
+	if existingAccountCount > 0 {
+		return nil, fmt.Errorf("account with type %s already exists for this user", data.AccountType)
+	}
+
 	var bankcardId *int = nil
-	if accountType != "savings" {
-		bankcardId = new(int)
-		*bankcardId = 1 // TODO: Replace this with actual BankCardService integration
+	if data.AccountType != "savings" {
+		id, err := BCService.CreateCardRequest(ctx, data.AccountId, data.AccountType, data.PinNumber)
+		s.l.Info("Bankcard ID: %d", id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create card request: %w", err)
+		}
+		bankcardId = &id
 	}
 
 	var openedAccountId int
 	err = conn.QueryRow(ctx,
 		`INSERT INTO openedaccount (account_id, bankcard_id, balance, account_type) 
 		 VALUES ($1, $2, $3, $4) RETURNING openedaccount_id`,
-		accountId, bankcardId, balance, accountType,
+		data.AccountId, bankcardId, data.Balance, data.AccountType,
 	).Scan(&openedAccountId)
 	if err != nil {
 		return nil, fmt.Errorf("insert failed: %w", err)
 	}
 
-	return &OpenedAccounts{
+	return &t.OpenedAccounts{
 		OpenedAccountID:     openedAccountId,
-		AccountType:         accountType,
-		Balance:             balance,
+		AccountType:         data.AccountType,
+		Balance:             data.Balance,
 		DateCreated:         time.Now(),
 		BankCardID:          bankcardId,
 		OpenedAccountStatus: "Active", // default status (optional)

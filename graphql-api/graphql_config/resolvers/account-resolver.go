@@ -1,12 +1,10 @@
 package resolvers
 
 import (
-	sv "finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
 	"fmt"
 	"time"
-
-	// "finnbank/graphql-api/db"
+	sv "finnbank/graphql-api/services"
 	"github.com/graphql-go/graphql"
 )
 

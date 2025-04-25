@@ -2,14 +2,12 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
 	"finnbank/common/utils"
 	t "finnbank/graphql-api/types"
 	"fmt"
-	"math/big"
 	"time"
-
 	"github.com/jackc/pgx/v5/pgxpool"
+	q "finnbank/graphql-api/queue"
 )
 
 const (
@@ -20,25 +18,15 @@ const (
 type TransactionService struct {
 	db *pgxpool.Pool
 	l  *utils.Logger
+	queue *q.Queue
 }
 
-func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger) *TransactionService {
-	return &TransactionService{db: db, l: logger}
+func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger, q *q.Queue) *TransactionService {
+	return &TransactionService{db: db, l: logger, queue: q}
 }
 
 // generateRefNo returns a random numeric string of length RefNoLength.
-func generateRefNo() (string, error) {
-	const digits = "0123456789"
-	ref := make([]byte, RefNoLength)
-	for i := range ref {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
-		if err != nil {
-			return "", fmt.Errorf("failed to generate ref_no: %w", err)
-		}
-		ref[i] = digits[n.Int64()]
-	}
-	return string(ref), nil
-}
+
 func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]t.Transaction, error) {
 	s.l.Info("Fetching transactions for user ID: %s", userId)
 
@@ -105,7 +93,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 	}
 
 	// 2) Generate numeric-only ref_no
-	refNo, err := generateRefNo()
+	refNo, err := generateRandomNumber(RefNoLength)
 	if err != nil {
 		s.l.Error("Error generating ref_no: %v", err)
 		return t.Transaction{}, fmt.Errorf("failed to generate ref_no: %w", err)
@@ -152,6 +140,9 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 	}
 
 	s.l.Info("Transaction created: %+v", created)
+
+	s.queue.Enqueue(fmt.Sprintf("%d", created.TransactionID), created.SenderID, created.Amount)
+
 	return created, nil
 }
 
