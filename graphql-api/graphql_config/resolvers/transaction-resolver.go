@@ -34,17 +34,17 @@ func (r *StructGraphQLResolvers) GetTransactionQueryType(txSvc *services.Transac
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query", // or "TransactionQuery"
 		Fields: graphql.Fields{
-			"getTransactionsByUserId": &graphql.Field{
+			"getTransactionsByOpenAccountId": &graphql.Field{
 				Type:        graphql.NewList(transactionType),
-				Description: "Fetch all transactions for a specific user by their user ID.",
+				Description: "Fetch all transactions for a specific user by their opened accounts ID.",
 				Args: graphql.FieldConfigArgument{
-					"userId": &graphql.ArgumentConfig{
+					"accountId": &graphql.ArgumentConfig{
 						Type:        graphql.NewNonNull(graphql.String),
 						Description: "The ID of the user whose transactions are to be fetched.",
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					userId := p.Args["userId"].(string)
+					userId := p.Args["accountId"].(string)
 					return txSvc.GetTransactionByUserId(p.Context, userId)
 				},
 			},
@@ -76,8 +76,8 @@ func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.Tran
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					in := p.Args["transaction"].(map[string]interface{})
 					txn := t.Transaction{
-						SenderID:        in["sender_id"].(string),
-						ReceiverID:      in["receiver_id"].(string),
+						SenderID:        in["sender_id"].(int),
+						ReceiverID:      in["receiver_id"].(int),
 						TransactionType: in["transaction_type"].(string),
 						Amount:          in["amount"].(float64),
 						TransactionFee:  in["transaction_fee"].(float64),
@@ -151,8 +151,8 @@ func (r *StructGraphQLResolvers) TransactionMutationFields(
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				in := p.Args["transaction"].(map[string]interface{})
 				txn := t.Transaction{
-					SenderID:        in["sender_id"].(string),
-					ReceiverID:      in["receiver_id"].(string),
+					SenderID:        in["sender_id"].(int),
+					ReceiverID:      in["receiver_id"].(int),
 					TransactionType: in["transaction_type"].(string),
 					Amount:          in["amount"].(float64),
 					TransactionFee:  in["transaction_fee"].(float64),

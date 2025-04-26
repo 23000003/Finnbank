@@ -1,13 +1,15 @@
 package services
 
 import (
+	"bytes"
+	"encoding/json"
+	t "finnbank/api-gateway/types"
 	"finnbank/common/utils"
 	"fmt"
 	"net/http"
-	"encoding/json"
-	"bytes"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
-	t "finnbank/api-gateway/types"
 )
 
 type TransactionService struct {
@@ -22,11 +24,15 @@ func newTransactionService(log *utils.Logger) *TransactionService {
 	}
 }
 
-func (a *TransactionService) GetTransactionByUserId(ctx *gin.Context) {
-	id := ctx.Param("id");
+func (a *TransactionService) GetTransactionByOpenAccountId(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
 
 	query := fmt.Sprintf(`{
-		getTransactionsByUserId(userId: "%s") {
+		getTransactionsByOpenAccountId(accountId: %d) {
 			transaction_id
 			ref_no
 			sender_id
@@ -83,7 +89,7 @@ func (a *TransactionService) CreateTransaction(ctx *gin.Context) {
 	// (sender_id:"1",receiver_id:"1", transaction_type:"string", amount:1.99, transaction_fee:1.99, notes: "Thanis")
 	// {transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, transaction_status, date_transaction, transaction_fee, notes}}
 	query := fmt.Sprintf(`mutation {
-		createTransaction( transaction: { sender_id: "%s",receiver_id: "%s", transaction_type: %s, amount: %f, transaction_fee: %f, notes: "%s" }) {
+		createTransaction( transaction: { sender_id: %d, receiver_id: %d, transaction_type: "%s", amount: %f, transaction_fee: %f, notes: "%s" }) {
 			transaction_id
 			ref_no
 			sender_id

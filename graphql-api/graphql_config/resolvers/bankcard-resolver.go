@@ -61,6 +61,30 @@ func (s *StructGraphQLResolvers) GetBankCardMutationType(BCService *sv.BankcardS
 						return data, nil
 					},
 				},
+				"update_pin_number": &graphql.Field{
+					Type:        bankCardType,
+					Description: "Update bankcard pin number",
+					Args: graphql.FieldConfigArgument{
+						"bankcard_id": &graphql.ArgumentConfig{
+							Type: graphql.Int,
+						},
+						"pin_number": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						bankcard_id, ok := p.Args["bankcard_id"].(int)
+						pin_number, ok2 := p.Args["pin_number"].(string)
+						if !ok || !ok2 {
+							return nil, fmt.Errorf("bankcard_id argument is required and must be an int")
+						}
+						data, err := BCService.UpdateBankcardPinNumberById(p.Context, bankcard_id, pin_number)
+						if err != nil {
+							return nil, fmt.Errorf("failed to update bankcard pin number: %w", err)
+						}
+						return data, nil
+					},
+				},
 			},
 		},
 	)

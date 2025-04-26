@@ -4,10 +4,9 @@ import (
 	sv "finnbank/graphql-api/services"
 	"fmt"
 	"github.com/graphql-go/graphql"
-	t "finnbank/graphql-api/types"
 )
 
-func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedAccountService) *graphql.Object {
+func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedAccountService, BCService *sv.BankcardService) *graphql.Object {
 	
 	return graphql.NewObject(
 		graphql.ObjectConfig{
@@ -26,7 +25,19 @@ func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedA
 						id, ok := p.Args["account_id"].(string)
 						if ok {
 							data, err := OAService.GetAllOpenedAccountsByUserId(p.Context, id)
-							return data, err
+							if err != nil {
+								return nil, err
+							}
+							for i := range data {
+								if data[i].AccountType != "Savings" {
+									accNum, err := BCService.GetAccountNumberByOpenedAccountId(p.Context, *data[i].BankCardID)
+									if err != nil {
+										return nil, err
+									}
+									data[i].AccountNumber = accNum
+								}
+							}
+							return data, nil
 						}
 						return nil, fmt.Errorf("invalid argument: %v", p.Args["account_id"])
 					},
@@ -62,40 +73,22 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 			http://localhost:8083/graphql/opened-account?query=mutation+_{create_account(account_id:1,account_type:"string",balance:1.99){<entities>}}
 			// */
 			"create_account": &graphql.Field{
-				Type:        openedAccountType,
+				Type:        graphql.NewList(openedAccountType),
 				Description: "Open a new account",
 				Args: graphql.FieldConfigArgument{
 					"account_id": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"account_type": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
-					},
-					"balance": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Float),
-					},
-					"pin_number": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
-					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					account_id, ok := params.Args["account_id"].(string)
-					accountType, ok1 := params.Args["account_type"].(string)
-					balance, ok2 := params.Args["balance"].(float64)
-					pin_number, ok3 := params.Args["pin_number"].(string)
 
-					if ok && ok1 && ok2 && ok3 {
-						data, err := OAService.CreateOpenedAccount(params.Context, BCService, 
-							&t.CreateOpenedAccountRequest{
-								AccountId:      account_id,
-								AccountType:    accountType,
-								Balance:        balance,
-								PinNumber: 	 pin_number,	
-							})
+					if ok {
+						data, err := OAService.CreateOpenedAccount(params.Context, BCService, account_id);
 						return data, err
 					}
 					
-					return nil, fmt.Errorf("invalid argument: %v %v %v", params.Args["account_id"], params.Args["account_type"], params.Args["balance"]);
+					return nil, fmt.Errorf("invalid argument: %v", params.Args["account_id"]);
 				},
 			},
 			/* Update account Status

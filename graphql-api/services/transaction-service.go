@@ -79,12 +79,7 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 
 // CreateTransaction creates a new transaction, auto‑generating a numeric ref_no.
 func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transaction) (t.Transaction, error) {
-	s.l.Info("Creating transaction for user ID: %s", req.SenderID)
 
-	// 1) Validation
-	if req.SenderID == "" || req.ReceiverID == "" {
-		return t.Transaction{}, fmt.Errorf("sender_id and receiver_id cannot be empty")
-	}
 	if req.Amount < 0 {
 		return t.Transaction{}, fmt.Errorf("amount cannot be negative")
 	}
@@ -141,7 +136,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 
 	s.l.Info("Transaction created: %+v", created)
 
-	s.queue.Enqueue(fmt.Sprintf("%d", created.TransactionID), created.SenderID, created.Amount)
+	s.queue.Enqueue(created.TransactionID, created.SenderID, created.Amount)
 
 	return created, nil
 }

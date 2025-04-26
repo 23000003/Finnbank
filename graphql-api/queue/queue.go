@@ -16,8 +16,8 @@ import (
 // **********************************************************************
 
 type Queue struct {
-	transacId	 []string
-	openAccId	 []string
+	transacId	 []int
+	openAccId	 []int
 	openAccAmount []float64
 	mu    sync.Mutex
 	l 		*utils.Logger
@@ -27,8 +27,8 @@ type Queue struct {
 
 func NewQueue(l *utils.Logger, c context.Context) *Queue {
 	return &Queue{
-		transacId: []string{},
-		openAccId: []string{},
+		transacId: []int{},
+		openAccId: []int{},
 		openAccAmount: []float64{},
 		mu: sync.Mutex{},
 		l: l,
@@ -36,7 +36,7 @@ func NewQueue(l *utils.Logger, c context.Context) *Queue {
 	}
 }
 
-func (q *Queue) Enqueue(transacId string, openAccId string, openAccAmount float64) {
+func (q *Queue) Enqueue(transacId int, openAccId int, openAccAmount float64) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -46,17 +46,17 @@ func (q *Queue) Enqueue(transacId string, openAccId string, openAccAmount float6
 	q.openAccAmount = append(q.openAccAmount, openAccAmount)
 	
 	q.l.Info("Enqueued:")
-	q.l.Info(" - Transaction ID: %s", transacId)
-	q.l.Info(" - Open Account ID: %s", openAccId)
+	q.l.Info(" - Transaction ID: %d", transacId)
+	q.l.Info(" - Open Account ID: %d", openAccId)
 	q.l.Info(" - Open Account Balance: %f", openAccAmount)
 }
 
-func (q *Queue) Dequeue() (string, string, float64, bool) {
+func (q *Queue) Dequeue() (int, int, float64, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	if len(q.openAccAmount) == 0 || len(q.openAccId) == 0 || len(q.transacId) == 0 {
-		return "", "", 0, false
+		return 0, 0, 0, false
 	}
 
 	transacId := q.transacId[0]

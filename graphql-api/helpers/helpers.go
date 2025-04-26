@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-func SuccessTransaction(ctx context.Context, db *pgxpool.Pool, transacId string) error {
+func SuccessTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) error {
 	conn, err := db.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %w", err)
@@ -28,7 +28,7 @@ func SuccessTransaction(ctx context.Context, db *pgxpool.Pool, transacId string)
 	return nil
 }
 
-func FailedTransaction(ctx context.Context, db *pgxpool.Pool, transacId string) error {
+func FailedTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) error {
 	conn, err := db.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %w", err)
@@ -49,7 +49,7 @@ func FailedTransaction(ctx context.Context, db *pgxpool.Pool, transacId string) 
 	return nil
 }
 
-func DeductOpenedAccountBalance(ctx context.Context, db *pgxpool.Pool, openAccId string, amount float64) error {
+func DeductOpenedAccountBalance(ctx context.Context, db *pgxpool.Pool, openAccId int, amount float64) error {
 	conn, err := db.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %w", err)

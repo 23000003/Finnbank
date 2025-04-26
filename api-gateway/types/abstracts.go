@@ -36,13 +36,14 @@ type IStatementService interface {
 }
 
 type ITransactionService interface {
-	GetTransactionByUserId(*gin.Context)
+	GetTransactionByOpenAccountId(*gin.Context)
 	CreateTransaction(*gin.Context) // post req
 }
 
 type IBankcardService interface {
 	GetAllBankCardOfUserById(*gin.Context)
 	UpdateBankcardExpiryDateByUserId(*gin.Context)    // update req
+	UpdateBankcardPinNumberById(*gin.Context)
 }
 
 type INotificationService interface {

@@ -219,7 +219,7 @@ func (g *StructGraphQLHandler) OpenedAccountServicesHandler(connAddress string) 
 
 	openedAccountSchema, err := graphql.NewSchema(
 		graphql.SchemaConfig{
-			Query:    g.r.GetOpenedAccountQueryType(OAService),
+			Query:    g.r.GetOpenedAccountQueryType(OAService, BCService),
 			Mutation: g.r.GetOpenedAccountMutationType(OAService, BCService),
 		},
 	)

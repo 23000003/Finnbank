@@ -36,6 +36,7 @@ func (a *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx *gin.Context) {
 			account_type
 			date_created
 			openedaccount_status
+			account_number
 		}
 	}`, id)
 
@@ -91,6 +92,7 @@ func (a *OpenedAccountService) GetOpenedAccountOfUserById(ctx *gin.Context) {
 			account_type
 			date_created
 			openedaccount_status
+			account_number
 		}
 	}`, id)
 
@@ -135,11 +137,11 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 		return
 	}
 
-	a.log.Info("OpenAnAccountByAccountType: %s %s %f", req.AccountId, req.AccountType, req.Balance)
+	a.log.Info("OpenAnAccountByAccountType: %s", req.AccountId)
 
 	// http://localhost:8083/graphql/opened-account?query=mutation+_{create_account(account_id:1,account_type:"string",balance:1.99){<entities>}}
 	query := fmt.Sprintf(`mutation {
-		create_account(account_id: "%s", account_type: "%s", balance: %f, pin_number: "%s") {
+		create_account(account_id: "%s") {
 			openedaccount_id
 			bankcard_id
 			balance
@@ -147,7 +149,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 			date_created
 			openedaccount_status
 		}
-	}`, req.AccountId, req.AccountType, req.Balance, req.PinNumber)
+	}`, req.AccountId)
 
 	qlrequestBody := map[string]interface{}{
 		"query": query,

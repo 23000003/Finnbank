@@ -62,12 +62,13 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	{
 		bankcard.GET("/get-all-bankcard/:id", gr.s.BankcardService.GetAllBankCardOfUserById)
 		bankcard.PATCH("/renew-bankcard/:id", gr.s.BankcardService.UpdateBankcardExpiryDateByUserId)
+		bankcard.PATCH("/update-pin-number/:id/:new-pin", gr.s.BankcardService.UpdateBankcardPinNumberById)
 	}
 
 	transaction := gr.r.Group("/transaction")
 	transaction.Use(middleware.AuthMiddleware())
 	{
-		transaction.GET("/get-all/:id", gr.s.TransactionService.GetTransactionByUserId)
+		transaction.GET("/get-all/:id", gr.s.TransactionService.GetTransactionByOpenAccountId)
 		transaction.POST("/generate-transaction", gr.s.TransactionService.CreateTransaction)
 	}
 

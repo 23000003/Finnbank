@@ -61,7 +61,7 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
-
+	
 	s.l.Info("All opened accounts: %v", results)
 	return results, nil
 }
@@ -93,56 +93,49 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 }
 
 // Create a new opened account
-func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCService *BankcardService, data *t.CreateOpenedAccountRequest) (*t.OpenedAccounts, error) {
+func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCService *BankcardService, user_id string) ([]*t.OpenedAccounts, error) {
 	conn, err := s.db.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
 	}
 	defer conn.Release()
 
-	// Checks if account with same type already exists (only 1 per account_type)
-	var existingAccountCount int
-	err = conn.QueryRow(ctx,
-		`SELECT COUNT(*) 
-		 FROM openedaccount 
-		 WHERE account_id = $1 AND account_type = $2`,
-		data.AccountId, data.AccountType,
-	).Scan(&existingAccountCount)
+	var bankcardId []int = nil;
+	id, err := BCService.CreateCardRequest(ctx, user_id)
+	s.l.Info("Bankcard ID: %d", id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check existing account: %w", err)
+		return nil, fmt.Errorf("failed to create card request: %w", err)
 	}
-	if existingAccountCount > 0 {
-		return nil, fmt.Errorf("account with type %s already exists for this user", data.AccountType)
-	}
+	bankcardId = id
 
-	var bankcardId *int = nil
-	if data.AccountType != "savings" {
-		id, err := BCService.CreateCardRequest(ctx, data.AccountId, data.AccountType, data.PinNumber)
-		s.l.Info("Bankcard ID: %d", id)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create card request: %w", err)
-		}
-		bankcardId = &id
-	}
-
-	var openedAccountId int
-	err = conn.QueryRow(ctx,
-		`INSERT INTO openedaccount (account_id, bankcard_id, balance, account_type) 
-		 VALUES ($1, $2, $3, $4) RETURNING openedaccount_id`,
-		data.AccountId, bankcardId, data.Balance, data.AccountType,
-	).Scan(&openedAccountId)
+	var accounts []*t.OpenedAccounts
+	rows, err := conn.Query(ctx,
+		`INSERT INTO openedaccount (account_id, bankcard_id, balance, account_type, openedaccount_status) 
+		 VALUES 
+			($1, $2, $3, $4, $8), 
+			($1, $5, $3, $6, $8),
+			($1, NULL, $3, $7)
+		RETURNING openedaccount_id, account_type, bankcard_id, balance, openedaccount_status`,
+		user_id, bankcardId[0], 0, "Credit",
+		bankcardId[1], "Checking", "Savings", "Closed",
+	)
 	if err != nil {
 		return nil, fmt.Errorf("insert failed: %w", err)
 	}
+	defer rows.Close()
 
-	return &t.OpenedAccounts{
-		OpenedAccountID:     openedAccountId,
-		AccountType:         data.AccountType,
-		Balance:             data.Balance,
-		DateCreated:         time.Now(),
-		BankCardID:          bankcardId,
-		OpenedAccountStatus: "Active", // default status (optional)
-	}, nil
+	for rows.Next() {
+		var acc t.OpenedAccounts
+		var bankCardIDNullable *int
+		if err := rows.Scan(&acc.OpenedAccountID, &acc.AccountType, &bankCardIDNullable, &acc.Balance, &acc.OpenedAccountStatus); err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+		acc.DateCreated = time.Now()
+		acc.BankCardID = bankCardIDNullable
+		accounts = append(accounts, &acc)
+	}
+
+	return accounts, nil
 }
 
 func (s *OpenedAccountService) UpdateOpenedAccountStatus(ctx context.Context, openedAccountId int, status string) (string, error) {

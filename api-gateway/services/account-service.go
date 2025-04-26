@@ -163,7 +163,6 @@ func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 			account_type
 			address
 			auth_id
-			balance
 			birthdate
 			date_created
 			date_updated
