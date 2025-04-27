@@ -11,3 +11,8 @@ type OpenedAccounts struct {
 	OpenedAccountStatus string    `json:"openedaccount_status"`
 	AccountNumber          string    `json:"account_number"`
 }
+
+type OpenedAccountNumber struct {
+	OpenedAccountID int    `json:"openedaccount_id"`
+	AccountNumber   string `json:"account_number"`
+}

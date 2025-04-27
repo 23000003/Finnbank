@@ -30,27 +30,28 @@ type TransactionResolver struct {
 // returns the transactions or an error if any occurs
 
 // GetTransactionQueryType defines the query for fetching transactions.
-func (r *StructGraphQLResolvers) GetTransactionQueryType(txSvc *services.TransactionService) *graphql.Object {
-	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "Query", // or "TransactionQuery"
-		Fields: graphql.Fields{
-			"getTransactionsByOpenAccountId": &graphql.Field{
-				Type:        graphql.NewList(transactionType),
-				Description: "Fetch all transactions for a specific user by their opened accounts ID.",
-				Args: graphql.FieldConfigArgument{
-					"accountId": &graphql.ArgumentConfig{
-						Type:        graphql.NewNonNull(graphql.String),
-						Description: "The ID of the user whose transactions are to be fetched.",
-					},
-				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					userId := p.Args["accountId"].(string)
-					return txSvc.GetTransactionByUserId(p.Context, userId)
-				},
-			},
-		},
-	})
-}
+// just use the ById below
+// func (r *StructGraphQLResolvers) GetTransactionQueryType(txSvc *services.TransactionService) *graphql.Object {
+// 	return graphql.NewObject(graphql.ObjectConfig{
+// 		Name: "Query", // or "TransactionQuery"
+// 		Fields: graphql.Fields{
+// 			"getTransactionsByOpenAccountId": &graphql.Field{
+// 				Type:        graphql.NewList(transactionType),
+// 				Description: "Fetch all transactions for a specific user by their opened accounts ID.",
+// 				Args: graphql.FieldConfigArgument{
+// 					"accountId": &graphql.ArgumentConfig{
+// 						Type:        graphql.NewNonNull(graphql.Int),
+// 						Description: "The ID of the user whose transactions are to be fetched.",
+// 					},
+// 				},
+// 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+// 					userId := p.Args["accountId"].(int)
+// 					return txSvc.GetTransactionByUserId(p.Context, userId)
+// 				},
+// 			},
+// 		},
+// 	})
+// }
 
 // for creating a new transaction
 // mutation name: createTransaction
@@ -104,11 +105,17 @@ func (r *StructGraphQLResolvers) TransactionQueryFields(
 			Type:        graphql.NewList(e.GetTransactionEntityType()),
 			Description: "Fetch all transactions for a specific user by userId.",
 			Args: graphql.FieldConfigArgument{
-				"userId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+				"creditId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"debitId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"savingsId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"limit": &graphql.ArgumentConfig{Type: graphql.Int},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Args["userId"].(string)
-				return txSvc.GetTransactionByUserId(p.Context, userId)
+				creditId := p.Args["creditId"].(int)
+				debitId := p.Args["debitId"].(int)
+				savingsId := p.Args["savingsId"].(int)
+				limit := p.Args["limit"].(int)
+				return txSvc.GetTransactionByUserId(p.Context, creditId, debitId, savingsId, limit)
 			},
 		},
 	}

@@ -27,19 +27,22 @@ func NewTransactionService(db *pgxpool.Pool, logger *utils.Logger, q *q.Queue) *
 
 // generateRefNo returns a random numeric string of length RefNoLength.
 
-func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId string) ([]t.Transaction, error) {
-	s.l.Info("Fetching transactions for user ID: %s", userId)
+func (s *TransactionService) GetTransactionByUserId(ctx context.Context, creditId int, debitId int, savingsId int, limit int) ([]t.Transaction, error) {
 
 	query := `
-        SELECT transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, transaction_status, date_transaction, transaction_fee, notes
-        FROM transactions
-        WHERE sender_id = $1 OR receiver_id = $1
-    `
+		SELECT 
+			transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, 
+			transaction_status, date_transaction, transaction_fee, notes
+		FROM transactions
+		WHERE sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3)
+		ORDER BY date_transaction DESC
+		LIMIT $4;
+	`
 
-	rows, err := s.db.Query(ctx, query, userId)
+	rows, err := s.db.Query(ctx, query, creditId, debitId, savingsId, limit)
 	if err != nil {
-		s.l.Error("Error fetching transactions for user ID %s: %v", userId, err)
-		return nil, fmt.Errorf("failed to fetch transactions for user ID %s: %w", userId, err)
+		s.l.Error("Error fetching transactions %v", err)
+		return nil, fmt.Errorf("failed to fetch transactions %w", err)
 	}
 	defer rows.Close()
 
@@ -59,21 +62,17 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, userId 
 			&txn.Notes,
 		)
 		if err != nil {
-			s.l.Error("Error scanning transaction row for user ID %s: %v", userId, err)
-			return nil, fmt.Errorf("failed to scan transaction row for user ID %s: %w", userId, err)
+			s.l.Error("Error scanning transaction row %v", err)
+			return nil, fmt.Errorf("failed to scan transaction row %w", err)
 		}
 		transactions = append(transactions, txn)
 	}
 
 	if rows.Err() != nil {
-		s.l.Error("Error iterating through transaction rows for user ID %s: %v", userId, rows.Err())
-		return nil, fmt.Errorf("failed to iterate through transaction rows for user ID %s: %w", userId, rows.Err())
-	}
-	if len(transactions) == 0 {
-		s.l.Info("No transactions found for user ID: %s", userId)
+		s.l.Error("Error iterating through transaction rows %v", rows.Err())
+		return nil, fmt.Errorf("failed to iterate through transaction rows %w", rows.Err())
 	}
 
-	s.l.Info("Successfully fetched %d transactions for user ID: %s", len(transactions), userId)
 	return transactions, nil
 }
 
@@ -104,7 +103,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
         RETURNING
           transaction_id, ref_no, sender_id, receiver_id,
           transaction_type, amount, transaction_status,
-          date_transaction, transaction_fee, notes;
+          date_transaction, transaction_fee, notes
     `
 	row := s.db.QueryRow(ctx, query,
 		refNo,

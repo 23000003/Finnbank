@@ -56,6 +56,8 @@ type INotificationService interface {
 type IOpenedAccountService interface {
 	GetAllOpenedAccountsByUserId(*gin.Context)
 	GetOpenedAccountOfUserById(*gin.Context)
+	GetOpenedAccountIdByAccountNumber(*gin.Context)
+	GetBothAccountNumberForReceipt(*gin.Context)
 	OpenAnAccountByAccountType(*gin.Context)
 	UpdateOpenedAccountStatus(*gin.Context)
 }

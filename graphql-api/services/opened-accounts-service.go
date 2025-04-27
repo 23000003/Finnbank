@@ -32,7 +32,7 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	rows, err := conn.Query(ctx,
 		`SELECT 
 			openedaccount_id, bankcard_id, balance, 
-			account_type, openedaccount_status, date_created 
+			account_type, openedaccount_status, date_created, account_number
 		FROM openedaccount 
 		WHERE account_id = $1`,
 		id,
@@ -52,6 +52,7 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 			&acc.AccountType,
 			&acc.OpenedAccountStatus,
 			&acc.DateCreated,
+			&acc.AccountNumber,
 		); err != nil {
 			return nil, fmt.Errorf("row scan failed: %w", err)
 		}
@@ -66,13 +67,62 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	return results, nil
 }
 
+func (s *OpenedAccountService) GetOpenedAccountIdByAccountNumber(ctx context.Context, account_num string) (int, error) {
+
+	query := `
+		SELECT 
+			openedaccount_id
+		FROM openedaccount 
+		WHERE account_number = $1
+	`
+
+	var openedAccountId int
+	err := s.db.QueryRow(ctx, query, account_num).Scan(&openedAccountId)
+	if err != nil {
+		return -1, fmt.Errorf("failed to fetch opened account ID: %w", err)
+	}
+	
+	return openedAccountId, nil
+}
+
+func (s *OpenedAccountService) GetBothAccountNumberForReceipt(ctx context.Context, sent_id int, receive_id int) ([]*t.OpenedAccountNumber, error) {
+
+	query := `
+		SELECT 
+			openedaccount_id, account_number
+		FROM openedaccount 
+		WHERE openedaccount_id = $1 OR openedaccount_id = $2
+	`
+
+	s.l.Info("Id: %d, %d", sent_id, receive_id)
+
+	rows, err := s.db.Query(ctx, query, sent_id, receive_id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch opened account IDs: %w", err)
+	}
+	defer rows.Close()
+
+	var results []*t.OpenedAccountNumber
+	for rows.Next() {
+		var acc t.OpenedAccountNumber
+		if err := rows.Scan(&acc.OpenedAccountID, &acc.AccountNumber); err != nil {
+			return nil, fmt.Errorf("row scan failed: %w", err)
+		}
+		results = append(results, &acc)
+	}
+
+	s.l.Info("Both account numbers: %v", results)
+	
+	return results, nil
+}
+
 func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int) (*t.OpenedAccounts, error) {
 	var acc t.OpenedAccounts
 
 	query := `
 		SELECT 
 			openedaccount_id, bankcard_id, balance, 
-			account_type, openedaccount_status, date_created 
+			account_type, openedaccount_status, date_created, account_number
 		FROM openedaccount 
 		WHERE openedaccount_id = $1
 	`
@@ -84,6 +134,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 		&acc.AccountType,
 		&acc.OpenedAccountStatus,
 		&acc.DateCreated,
+		&acc.AccountNumber,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch opened account: %w", err)
@@ -108,16 +159,24 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCServic
 	}
 	bankcardId = id
 
+	debit, err := generateRandomNumber(16)
+	credit, err1 := generateRandomNumber(16)
+	savings, err2 := generateRandomNumber(16)
+
+	if err != nil || err1 != nil || err2 != nil {
+		return nil, fmt.Errorf("failed to generate random numbers: %w", err)
+	}
+
 	var accounts []*t.OpenedAccounts
 	rows, err := conn.Query(ctx,
-		`INSERT INTO openedaccount (account_id, bankcard_id, balance, account_type, openedaccount_status) 
+		`INSERT INTO openedaccount (account_id, bankcard_id, balance, account_type, openedaccount_status, account_number) 
 		 VALUES 
-			($1, $2, $3, $4, $8), 
-			($1, $5, $3, $6, $8),
-			($1, NULL, $3, $7)
+			($1, $2, $3, $4, $8, $10), 
+			($1, $5, $3, $6, $8, $11),
+			($1, NULL, $3, $7, $9, $12)
 		RETURNING openedaccount_id, account_type, bankcard_id, balance, openedaccount_status`,
 		user_id, bankcardId[0], 0, "Credit",
-		bankcardId[1], "Checking", "Savings", "Closed",
+		bankcardId[1], "Checking", "Savings", "Closed", "Active", credit, debit, savings,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("insert failed: %w", err)
