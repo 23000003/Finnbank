@@ -25,14 +25,19 @@ func newTransactionService(log *utils.Logger) *TransactionService {
 }
 
 func (a *TransactionService) GetTransactionByOpenAccountId(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
+	creditId, err := strconv.Atoi(ctx.Query("credit"))
+	debitId, err1 := strconv.Atoi(ctx.Query("debit"))
+	savingsId, err2 := strconv.Atoi(ctx.Query("savings"))
+	limit, err3 := strconv.Atoi(ctx.Query("limit")) 
+
+	if err != nil || err1 != nil || err2 != nil || err3 != nil {
+		a.log.Info("Error converting ID to int: %v, %v, %v, %v", err, err1, err2, err3)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	query := fmt.Sprintf(`{
-		getTransactionsByOpenAccountId(accountId: %d) {
+		getTransactionsByUserId(creditId: %d, debitId: %d, savingsId: %d, limit: %d) {
 			transaction_id
 			ref_no
 			sender_id
@@ -44,7 +49,7 @@ func (a *TransactionService) GetTransactionByOpenAccountId(ctx *gin.Context) {
 			transaction_fee
 			notes
 		}
-	}`, id)
+	}`, creditId, debitId, savingsId, limit)
 
 	qlrequestBody := map[string]interface{}{
 		"query": query,
@@ -89,7 +94,7 @@ func (a *TransactionService) CreateTransaction(ctx *gin.Context) {
 	// (sender_id:"1",receiver_id:"1", transaction_type:"string", amount:1.99, transaction_fee:1.99, notes: "Thanis")
 	// {transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, transaction_status, date_transaction, transaction_fee, notes}}
 	query := fmt.Sprintf(`mutation {
-		createTransaction( transaction: { sender_id: %d, receiver_id: %d, transaction_type: "%s", amount: %f, transaction_fee: %f, notes: "%s" }) {
+		createTransaction( transaction: { sender_id: %d, receiver_id: %d, transaction_type: %s, amount: %f, transaction_fee: %f, notes: "%s" }) {
 			transaction_id
 			ref_no
 			sender_id

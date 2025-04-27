@@ -63,6 +63,7 @@ type CreateTransactionRequest struct {
 	Notes           string   `json:"notes"`
 }
 
+
 // ====================== Notifcation Types ======================
 
 type CreateNotificationRequest struct {

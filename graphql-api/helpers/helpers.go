@@ -14,7 +14,7 @@ func SuccessTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) er
 	}
 	defer conn.Release()
 
-	query := `UPDATE transaction SET transaction_status = $1 
+	query := `UPDATE transactions SET transaction_status = $1 
 		 WHERE transaction_id = $2 
 		 RETURNING transaction_id` 
 
@@ -35,7 +35,7 @@ func FailedTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) err
 	}
 	defer conn.Release()
 
-	query := `UPDATE transaction SET transaction_status = $1 
+	query := `UPDATE transactions SET transaction_status = $1 
 		 WHERE transaction_id = $2 
 		 RETURNING transaction_id` 
 

@@ -16,9 +16,9 @@ import (
 // **********************************************************************
 
 type Queue struct {
-	transacId	 []int
-	openAccId	 []int
-	openAccAmount []float64
+	transacId	 []int // To update status
+	openAccId	 []int // To deduct
+	openAccAmount []float64 // Num to deduct
 	mu    sync.Mutex
 	l 		*utils.Logger
 	ctx  	context.Context
@@ -77,15 +77,16 @@ func (q *Queue) StartAutoDequeue(OADBPool *pgxpool.Pool, TXDBPool *pgxpool.Pool)
 		for range ticker.C {
 			transacId, openAccId, openAccAmount, ok := q.Dequeue()
 			if ok {
+				q.l.Info("Dequeued:")
 				err := h.SuccessTransaction(q.ctx, TXDBPool, transacId)
 				if err != nil {
+					_ = h.FailedTransaction(q.ctx, TXDBPool, transacId)
 					q.l.Error("Failed to update transaction status: %v", err)
-					h.FailedTransaction(q.ctx, TXDBPool, transacId)
-					break
-				}
-				err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, openAccId, openAccAmount)
-				if err1 != nil {
-					q.l.Error("Failed to deduct opened account balance: %v", err1)
+				} else {
+					err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, openAccId, openAccAmount)
+					if err1 != nil {
+						q.l.Error("Failed to deduct opened account balance: %v", err1)
+					}
 				}
 			} else {
 				fmt.Println("Queue is empty.")
