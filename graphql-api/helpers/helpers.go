@@ -7,19 +7,51 @@ import (
 	"fmt"
 )
 
-func SuccessTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) error {
-	conn, err := db.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to acquire connection: %w", err)
+func SuccessTransaction(ctx context.Context, oaDB *pgxpool.Pool, accDB *pgxpool.Pool ,transacId int) error {
+	oaConn, err := oaDB.Acquire(ctx)
+	accConn, err1 := accDB.Acquire(ctx)
+	if err != nil || err1 != nil {
+		return fmt.Errorf("failed to acquire connection: %w %w", err, err1)
 	}
-	defer conn.Release()
+	defer oaConn.Release()
+
+	validateReceiverStatus := `
+		SELECT openedaccount_status, account_id
+		FROM openedaccount
+		WHERE openedaccount_id = $1 AND openedaccount_status = $2
+	`
+
+	var openAccStatus string
+	var accountId int
+	err = oaConn.QueryRow(ctx, validateReceiverStatus, transacId, "Active").Scan(&openAccStatus, &accountId)
+	if err != nil {
+		return fmt.Errorf("query failed: %w", err)
+	}
+	if openAccStatus != "Active" {
+		return fmt.Errorf("account is not active")
+	}
+
+	validateReceiverAcc := `
+		SELECT is_active
+		FROM account
+		WHERE account_id = $1 AND account_status = $2
+	`
+
+	var isActive bool
+	err = accConn.QueryRow(ctx, validateReceiverAcc, accountId, true).Scan(&isActive)
+	if err != nil {
+		return fmt.Errorf("query failed: %w", err)
+	}
+	if !isActive {
+		return fmt.Errorf("account is not active")
+	}
 
 	query := `UPDATE transactions SET transaction_status = $1 
 		 WHERE transaction_id = $2 
 		 RETURNING transaction_id` 
 
 	var transac_id int
-	err = conn.QueryRow(ctx, query, "Completed" ,transacId).Scan(&transac_id)
+	err = oaConn.QueryRow(ctx, query, "Completed" ,transacId).Scan(&transac_id)
 
 	if err != nil {
 		return fmt.Errorf("update failed: %w", err)

@@ -54,7 +54,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	statement := gr.r.Group("/statement")
 	statement.Use(middleware.AuthMiddleware())
 	{
-		statement.POST("/generate-statement", gr.s.StatementService.GenerateStatement)
+		statement.GET("/generate-statement", gr.s.StatementService.GenerateStatement)
 	}
 
 	bankcard := gr.r.Group("/bankcard")

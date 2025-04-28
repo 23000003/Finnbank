@@ -307,3 +307,15 @@ type UpdateBankCardPinNumberGraphQLResponse struct {
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
 }
+
+
+// ===================== Statement Types ====================
+
+type GetStatementGraphQLResponse struct {
+	Data struct {
+		GenerateStatement struct {
+			PdfBuffer      string       `json:"pdf_buffer"`
+		} `json:"generate_statement"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
