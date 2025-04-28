@@ -7,14 +7,15 @@ import (
 	"finnbank/graphql-api/graphql_config"
 	"finnbank/graphql-api/graphql_config/handlers"
 	"finnbank/graphql-api/graphql_config/resolvers"
+	q "finnbank/graphql-api/queue"
 	"finnbank/graphql-api/types"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
 	"github.com/rs/cors"
-	q "finnbank/graphql-api/queue"
 )
 
 func CorsMiddleware() *cors.Cors {
