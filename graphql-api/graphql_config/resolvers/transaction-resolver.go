@@ -126,19 +126,26 @@ func (r *StructGraphQLResolvers) TransactionTimeQueryFields(
 	txSvc *services.TransactionService,
 ) graphql.Fields {
 	return graphql.Fields{
+		// http://localhost:8083/graphql/transaction?query=
+		// {getTransactionsByTimeStampByUserId(creditId:1, debitId:2, savingsId:3, 
+		// startTime:"2025-04-19T00:00:00Z", endTime:"2025-04-29T00:00:00Z"){ref_no}}
 		"getTransactionsByTimeStampByUserId": &graphql.Field{
 			Type:        graphql.NewList(e.GetTransactionEntityType()),
 			Description: "Fetch transactions for a user between two timestamps.",
 			Args: graphql.FieldConfigArgument{
-				"userId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+				"creditId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"debitId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"savingsId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
 				"startTime": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.DateTime)},
 				"endTime":   &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.DateTime)},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Args["userId"].(string)
+				creditId := p.Args["creditId"].(int)
+				debitId := p.Args["debitId"].(int)
+				savingsId := p.Args["savingsId"].(int)
 				start := p.Args["startTime"].(time.Time)
 				end := p.Args["endTime"].(time.Time)
-				return txSvc.GetTransactionByTimestampByUserId(p.Context, userId, start, end)
+				return txSvc.GetTransactionByTimestampByUserId(p.Context, creditId, debitId, savingsId, start, end)
 			},
 		},
 	}
