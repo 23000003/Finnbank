@@ -169,7 +169,7 @@ func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 			date_updated
 			email
 			first_name
-			has_card
+			is_active
 			last_name
 			middle_name
 			national_id
@@ -232,7 +232,7 @@ func (a *AccountService) GetUserAccountByAccountNumber(c *gin.Context) {
     date_updated
     email
     first_name
-    has_card
+    is_active
     last_name
     middle_name
     national_id
@@ -296,7 +296,7 @@ func (a *AccountService) GetUserAccountByEmail(c *gin.Context) {
 		  date_updated
 		  email
 		  first_name
-		  has_card
+		  is_active
 		  last_name
 		  middle_name
 		  national_id

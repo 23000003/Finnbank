@@ -62,12 +62,12 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	createQuery := `
 	INSERT INTO account (
 		email, first_name, middle_name, last_name, phone_number, address, nationality,
-		account_type, account_number, has_card, auth_id, birthdate, national_id
+		account_type, account_number, is_active, auth_id, birthdate, national_id
 	) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	RETURNING 
 		id, email, first_name, middle_name, last_name, phone_number, address, nationality,
-		account_type, account_number, has_card, date_created, date_updated, auth_id, birthdate, national_id, account_status
+		account_type, account_number, is_active, date_created, date_updated, auth_id, birthdate, national_id, account_status
 	`
 
 	s.l.Info("Creating account for user: %s", authRes)
@@ -99,7 +99,7 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 			&acc.Nationality,
 			&acc.AccountType,
 			&acc.AccountNumber,
-			&acc.HasCard,
+			&acc.IsActive,
 			&acc.DateCreated,
 			&acc.DateUpdated,
 			&acc.AuthID,
@@ -125,7 +125,7 @@ func (s *AccountService) FetchUserByAccountNumber(ctx *context.Context, req stri
 		&acc.AuthID,
 		&acc.Email,
 		&acc.PhoneNumber,
-		&acc.HasCard,
+		&acc.IsActive,
 		&acc.AccountNumber,
 		&acc.Address,
 		&acc.AccountType,
@@ -155,7 +155,7 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 		&acc.AuthID,
 		&acc.Email,
 		&acc.PhoneNumber,
-		&acc.HasCard,
+		&acc.IsActive,
 		&acc.AccountNumber,
 		&acc.Address,
 		&acc.AccountType,
@@ -185,7 +185,7 @@ func (s *AccountService) FetchUserById(ctx *context.Context, req string) (*types
 		&acc.AuthID,
 		&acc.Email,
 		&acc.PhoneNumber,
-		&acc.HasCard,
+		&acc.IsActive,
 		&acc.AccountNumber,
 		&acc.Address,
 		&acc.AccountType,
@@ -216,7 +216,7 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 		&acc.AuthID,
 		&acc.Email,
 		&acc.PhoneNumber,
-		&acc.HasCard,
+		&acc.IsActive,
 		&acc.AccountNumber,
 		&acc.Address,
 		&acc.AccountType,
