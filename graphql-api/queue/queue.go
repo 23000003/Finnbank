@@ -71,17 +71,17 @@ func (q *Queue) Dequeue() (int, int, float64, bool) {
 }
 
 // StartAutoDequeue starts a ticker that dequeues every 1 minute
-func (q *Queue) StartAutoDequeue(OADBPool *pgxpool.Pool, TXDBPool *pgxpool.Pool) {
+func (q *Queue) StartAutoDequeue(OADBPool *pgxpool.Pool, TXDBPool *pgxpool.Pool, ACCDBPool *pgxpool.Pool) {
 	ticker := time.NewTicker(1 * time.Minute)
 	go func() {
 		for range ticker.C {
 			transacId, openAccId, openAccAmount, ok := q.Dequeue()
 			if ok {
 				q.l.Info("Dequeued:")
-				err := h.SuccessTransaction(q.ctx, TXDBPool, transacId)
+				err := h.SuccessTransaction(q.ctx, TXDBPool, ACCDBPool, transacId)
 				if err != nil {
 					_ = h.FailedTransaction(q.ctx, TXDBPool, transacId)
-					q.l.Error("Failed to update transaction status: %v", err)
+					q.l.Error("Failed to update: %v", err)
 				} else {
 					err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, openAccId, openAccAmount)
 					if err1 != nil {

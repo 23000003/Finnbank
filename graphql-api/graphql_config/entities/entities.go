@@ -150,3 +150,15 @@ func GetOpenedAccountEntityType() *graphql.Object {
 		},
 	)
 }
+
+func GetStatementEntityType() *graphql.Object {
+	return graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "OpenedAccount",
+			Fields: graphql.Fields{
+				"pdf_buffer":     &graphql.Field{Type: graphql.String},
+			},
+		},
+	)
+}
+

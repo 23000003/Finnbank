@@ -3,6 +3,7 @@ package handlers
 import (
 	"finnbank/common/grpc/auth"
 	"finnbank/common/grpc/products"
+	"finnbank/common/grpc/statement"
 	"finnbank/common/utils"
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"finnbank/graphql-api/grpc_client"
@@ -144,12 +145,27 @@ func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *
 
 func (g *StructGraphQLHandler) StatementServicesHandler(connAddress string) *handler.Handler {
 
-	// Follow AccountServiceHandler | OpenedAccountServicesHandler
+	grpcConnection := grpc_client.NewGRPCClient(connAddress)
+	statementServer := statement.NewStatementServiceClient(grpcConnection)
 
-	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
-	// proto server
+	STservice := sv.NewStatementService(g.db.AccountDBPool, g.l, statementServer)
 
-	return nil
+	accountSchema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query:    g.r.GetStatementQueryType(STservice),
+		},
+	)
+	if err != nil {
+		g.l.Fatal("Failed to configure Statement Handler Schema: %v", err)
+	}
+
+	statementHandler := handler.New(&handler.Config{
+		Schema:   &accountSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	return statementHandler
 }
 
 func mergeFields(fieldMaps ...graphql.Fields) graphql.Fields {
