@@ -159,7 +159,7 @@ type AccountNumberFetchResponse struct {
 			DateUpdated   string  `json:"date_updated"`
 			Email         string  `json:"email"`
 			FirstName     string  `json:"first_name"`
-			IsActive      bool    `json:"is_active"`
+			HasCard       bool    `json:"has_card"`
 			LastName      string  `json:"last_name"`
 			MiddleName    string  `json:"middle_name"`
 			NationalID    string  `json:"national_id"`
@@ -183,7 +183,7 @@ type EmailFetchResponse struct {
 			DateUpdated   string  `json:"date_updated"`
 			Email         string  `json:"email"`
 			FirstName     string  `json:"first_name"`
-			IsActive      bool    `json:"is_active"`
+			HasCard       bool    `json:"has_card"`
 			LastName      string  `json:"last_name"`
 			MiddleName    string  `json:"middle_name"`
 			NationalID    string  `json:"national_id"`

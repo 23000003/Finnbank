@@ -35,7 +35,7 @@ func GetAccountEntityType() *graphql.Object {
 				"date_created":   &graphql.Field{Type: graphql.DateTime},
 				"date_updated":   &graphql.Field{Type: graphql.DateTime},
 				"account_number": &graphql.Field{Type: graphql.String},
-				"is_active":      &graphql.Field{Type: graphql.Boolean},
+				"has_card":       &graphql.Field{Type: graphql.Boolean},
 				"address":        &graphql.Field{Type: graphql.String},
 				"account_type":   &graphql.Field{Type: graphql.String},
 				"nationality":    &graphql.Field{Type: graphql.String},

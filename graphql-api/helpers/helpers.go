@@ -3,11 +3,12 @@ package helpers
 // prevent import cycle
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"fmt"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SuccessTransaction(ctx context.Context, oaDB *pgxpool.Pool, accDB *pgxpool.Pool ,transacId int) error {
+func SuccessTransaction(ctx context.Context, oaDB *pgxpool.Pool, accDB *pgxpool.Pool, transacId int) error {
 	oaConn, err := oaDB.Acquire(ctx)
 	accConn, err1 := accDB.Acquire(ctx)
 	if err != nil || err1 != nil {
@@ -32,26 +33,26 @@ func SuccessTransaction(ctx context.Context, oaDB *pgxpool.Pool, accDB *pgxpool.
 	}
 
 	validateReceiverAcc := `
-		SELECT is_active
+		SELECT account_status
 		FROM account
 		WHERE account_id = $1 AND account_status = $2
 	`
 
-	var isActive bool
-	err = accConn.QueryRow(ctx, validateReceiverAcc, accountId, true).Scan(&isActive)
+	var AccountStatus string
+	err = accConn.QueryRow(ctx, validateReceiverAcc, accountId, "Active").Scan(&AccountStatus)
 	if err != nil {
 		return fmt.Errorf("query failed: %w", err)
 	}
-	if !isActive {
+	if AccountStatus != "Active" {
 		return fmt.Errorf("account is not active")
 	}
 
 	query := `UPDATE transactions SET transaction_status = $1 
 		 WHERE transaction_id = $2 
-		 RETURNING transaction_id` 
+		 RETURNING transaction_id`
 
 	var transac_id int
-	err = oaConn.QueryRow(ctx, query, "Completed" ,transacId).Scan(&transac_id)
+	err = oaConn.QueryRow(ctx, query, "Completed", transacId).Scan(&transac_id)
 
 	if err != nil {
 		return fmt.Errorf("update failed: %w", err)
@@ -69,7 +70,7 @@ func FailedTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) err
 
 	query := `UPDATE transactions SET transaction_status = $1 
 		 WHERE transaction_id = $2 
-		 RETURNING transaction_id` 
+		 RETURNING transaction_id`
 
 	var transac_id int
 	err = conn.QueryRow(ctx, query, "Failed", transacId).Scan(&transac_id)
@@ -90,10 +91,10 @@ func DeductOpenedAccountBalance(ctx context.Context, db *pgxpool.Pool, openAccId
 
 	query := `UPDATE openedaccount SET balance = balance - $1 
 		 WHERE openedaccount_id = $2 
-		 RETURNING openedaccount_id` 
+		 RETURNING openedaccount_id`
 
 	var open_acc_id int
-	err = conn.QueryRow(ctx, query, amount ,openAccId).Scan(&open_acc_id)
+	err = conn.QueryRow(ctx, query, amount, openAccId).Scan(&open_acc_id)
 
 	if err != nil {
 		return fmt.Errorf("update failed: %w", err)
