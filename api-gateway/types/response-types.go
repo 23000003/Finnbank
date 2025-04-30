@@ -36,12 +36,12 @@ type GetAllOpenedAccountsGraphQLResponse struct {
 	Data struct {
 		GetAll []struct {
 			OpenedAccountID     int       `json:"openedaccount_id"`
-			BankCardID          int      `json:"bankcard_id"`
+			BankCardID          int       `json:"bankcard_id"`
 			Balance             float64   `json:"balance"`
 			AccountType         string    `json:"account_type"`
 			DateCreated         time.Time `json:"date_created"`
 			OpenedAccountStatus string    `json:"openedaccount_status"`
-			AccountNumber 		 string    `json:"account_number"`
+			AccountNumber       string    `json:"account_number"`
 		} `json:"get_all"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -51,12 +51,12 @@ type GetOpenedAccountsGraphQLResponse struct {
 	Data struct {
 		GetById struct {
 			OpenedAccountID     int       `json:"openedaccount_id"`
-			BankCardID          int      `json:"bankcard_id"`
+			BankCardID          int       `json:"bankcard_id"`
 			Balance             float64   `json:"balance"`
 			AccountType         string    `json:"account_type"`
 			DateCreated         time.Time `json:"date_created"`
 			OpenedAccountStatus string    `json:"openedaccount_status"`
-			AccountNumber 		 string    `json:"account_number"`
+			AccountNumber       string    `json:"account_number"`
 		} `json:"get_by_id"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -64,9 +64,9 @@ type GetOpenedAccountsGraphQLResponse struct {
 
 type CreateOpenedAccountsGraphQLResponse struct {
 	Data struct {
-		CreateAccount struct {
+		CreateAccount []struct {
 			OpenedAccountID     int       `json:"openedaccount_id"`
-			BankCardID          int      `json:"bankcard_id"`
+			BankCardID          int       `json:"bankcard_id"`
 			Balance             float64   `json:"balance"`
 			AccountType         string    `json:"account_type"`
 			DateCreated         time.Time `json:"date_created"`
@@ -99,9 +99,9 @@ type AccountLoginGraphQLResponse struct {
 type AccountSignUpGraphQLResponse struct {
 	Data struct {
 		CreateAccount struct {
-			AccessToken string `json:"access_token"`
-			Email       string `json:"email"`
-			AuthID      string `json:"auth_id"`
+			Email     string `json:"email"`
+			AuthID    string `json:"auth_id"`
+			AccountID string `json:"account_id"`
 		} `json:"create_account"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -179,16 +179,16 @@ type EmailFetchResponse struct {
 type GetAllTransactionsGraphQLResponse struct {
 	Data struct {
 		GetTransactionsByUserId []struct {
-			TransactionID      string       `json:"transaction_id"`
-			RefNo              string    `json:"ref_no"`
-			SenderID           int    `json:"sender_id"`
-			ReceiverID         int    `json:"receiver_id"`
-			TransactionType    string    `json:"transaction_type"`
-			Amount             float64   `json:"amount"`
-			TransactionStatus  string    `json:"transaction_status"`
+			TransactionID     string    `json:"transaction_id"`
+			RefNo             string    `json:"ref_no"`
+			SenderID          int       `json:"sender_id"`
+			ReceiverID        int       `json:"receiver_id"`
+			TransactionType   string    `json:"transaction_type"`
+			Amount            float64   `json:"amount"`
+			TransactionStatus string    `json:"transaction_status"`
 			DateTransaction   time.Time `json:"date_transaction"`
-			TransactionFee     float64   `json:"transaction_fee"`
-			Notes              string    `json:"notes"`
+			TransactionFee    float64   `json:"transaction_fee"`
+			Notes             string    `json:"notes"`
 		} `json:"getTransactionsByUserId"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -197,33 +197,32 @@ type GetAllTransactionsGraphQLResponse struct {
 type CreateTransactionsGraphQLResponse struct {
 	Data struct {
 		CreateTransaction struct {
-			TransactionID      string       `json:"transaction_id"`
-			RefNo              string    `json:"ref_no"`
-			SenderID           int    `json:"sender_id"`
-			ReceiverID         int    `json:"receiver_id"`
-			TransactionType    string    `json:"transaction_type"`
-			Amount             float64   `json:"amount"`
-			TransactionStatus  string    `json:"transaction_status"`
+			TransactionID     string    `json:"transaction_id"`
+			RefNo             string    `json:"ref_no"`
+			SenderID          int       `json:"sender_id"`
+			ReceiverID        int       `json:"receiver_id"`
+			TransactionType   string    `json:"transaction_type"`
+			Amount            float64   `json:"amount"`
+			TransactionStatus string    `json:"transaction_status"`
 			DateTransaction   time.Time `json:"date_transaction"`
-			TransactionFee     float64   `json:"transaction_fee"`
-			Notes              string    `json:"notes"`
+			TransactionFee    float64   `json:"transaction_fee"`
+			Notes             string    `json:"notes"`
 		} `json:"createTransaction"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
 }
-
 
 // ===================== Notification Types ====================
 
 type GetAllNotificationsGraphQLResponse struct {
 	Data struct {
 		GetAllNotificationByUserId []struct {
-			NotifID       string     `json:"notif_id"`
-			NotifType     string     `json:"notif_type"`
-			NotifFromName string     `json:"notif_from_name"`
-			Content       string     `json:"content"`
-			IsRead        bool       `json:"is_read"`
-			DateNotified  time.Time  `json:"date_notified"`
+			NotifID       string    `json:"notif_id"`
+			NotifType     string    `json:"notif_type"`
+			NotifFromName string    `json:"notif_from_name"`
+			Content       string    `json:"content"`
+			IsRead        bool      `json:"is_read"`
+			DateNotified  time.Time `json:"date_notified"`
 		} `json:"getAllNotificationByUserId"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -232,12 +231,12 @@ type GetAllNotificationsGraphQLResponse struct {
 type GetNotificationGraphQLResponse struct {
 	Data struct {
 		GetNotificationById struct {
-			NotifID       string     `json:"notif_id"`
-			NotifType     string     `json:"notif_type"`
-			NotifFromName string     `json:"notif_from_name"`
-			Content       string     `json:"content"`
-			IsRead        bool       `json:"is_read"`
-			DateNotified  time.Time  `json:"date_notified"`
+			NotifID       string    `json:"notif_id"`
+			NotifType     string    `json:"notif_type"`
+			NotifFromName string    `json:"notif_from_name"`
+			Content       string    `json:"content"`
+			IsRead        bool      `json:"is_read"`
+			DateNotified  time.Time `json:"date_notified"`
 		} `json:"getNotificationById"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -248,12 +247,12 @@ type GetNotificationGraphQLResponse struct {
 type GetAllBankCardsGraphQLResponse struct {
 	Data struct {
 		GetAllBankCard []struct {
-			BankCardID     	int       `json:"bankcard_id"`
-			CardType   			string    `json:"card_type"`
-			CardNumber 			string    `json:"card_number"`
-			ExpiryDate     	time.Time `json:"expiry_date"`
-			DateCreated    	time.Time `json:"date_created"`
-			CVV            	string    `json:"cvv"`
+			BankCardID  int       `json:"bankcard_id"`
+			CardType    string    `json:"card_type"`
+			CardNumber  string    `json:"card_number"`
+			ExpiryDate  time.Time `json:"expiry_date"`
+			DateCreated time.Time `json:"date_created"`
+			CVV         string    `json:"cvv"`
 		} `json:"get_all_bankcard"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -272,7 +271,6 @@ type UpdateBankCardGraphQLResponse struct {
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
 }
-
 
 type UpdateBankCardPinNumberGraphQLResponse struct {
 	Data struct {
