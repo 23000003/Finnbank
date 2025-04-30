@@ -159,14 +159,25 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 // acceps userid, start and end time as arguments
 // this method fetches transactions for a specific user between the specified start and end time
 // run sql and return list of matching transaction obejct
+
+// func (s *TransactionService) GetTransactionByUserId(ctx context.Context, creditId int, debitId int, savingsId int, limit int) ([]t.Transaction, error) {
+
+// 	query := `
+// 		SELECT 
+// 			transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, 
+// 			transaction_status, date_transaction, transaction_fee, notes
+// 		FROM transactions
+// 		WHERE sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3)
+// 		ORDER BY date_transaction DESC
+// 		LIMIT $4;
+// 	`
+
+
 func (s *TransactionService) GetTransactionByTimestampByUserId(
 	ctx context.Context,
-	userId string,
+	creditId int, debitId int, savingsId int,
 	start, end time.Time,
 ) ([]t.Transaction, error) {
-	s.l.Info("Fetching transactions for user %s between %s and %s",
-		userId, start.Format(time.RFC3339), end.Format(time.RFC3339),
-	)
 
 	query := `
         SELECT
@@ -174,14 +185,14 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
           transaction_type, amount, transaction_status,
           date_transaction, transaction_fee, notes
         FROM public.transactions
-        WHERE (sender_id = $1 OR receiver_id = $1)
-          AND date_transaction BETWEEN $2 AND $3
+        WHERE sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3)
+          AND date_transaction BETWEEN $4 AND $5
         ORDER BY date_transaction;
     `
 
-	rows, err := s.db.Query(ctx, query, userId, start, end)
+	rows, err := s.db.Query(ctx, query, creditId, debitId, savingsId, start, end)
 	if err != nil {
-		s.l.Error("Error fetching by timestamp for user %s: %v", userId, err)
+		s.l.Error("Error fetching by timestamp for user %d %d %d: %v", creditId, debitId, savingsId, err)
 		return nil, fmt.Errorf("failed to fetch transactions in range: %w", err)
 	}
 	defer rows.Close()
@@ -201,7 +212,7 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 			&t.TransactionFee,
 			&t.Notes,
 		); err != nil {
-			s.l.Error("Scan error for user %s: %v", userId, err)
+			s.l.Error("Scan error for user %d %d %d: %v", creditId, debitId, savingsId, err)
 			return nil, fmt.Errorf("scan error: %w", err)
 		}
 		txns = append(txns, t)
@@ -211,6 +222,5 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 		return nil, fmt.Errorf("row error: %w", err)
 	}
 
-	s.l.Info("Fetched %d transactions in range for user %s", len(txns), userId)
 	return txns, nil
 }
