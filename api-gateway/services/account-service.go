@@ -111,12 +111,11 @@ func (a *AccountService) SignupUser(ctx *gin.Context) {
 	// {email, auth_id, full_name}}
 	query := fmt.Sprintf(`mutation {
 		create_account( account : { email: "%s", password: "%s", first_name: "%s", last_name: "%s", phone_number: "%s", address: "%s", account_type: "%s", nationality: "%s" } ) {
-			email
-			auth_id
+			account_id
 		}
 	}`, req.Email, req.Password, req.FirstName, req.LastName, req.PhoneNumber, req.Address, req.AccountType, req.Nationality)
 
-	qlrequestBody := map[string]interface{}{
+	qlrequestBody := map[string]any{
 		"query": query,
 	}
 	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)

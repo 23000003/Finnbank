@@ -3,12 +3,12 @@ package services
 import (
 	"context"
 	"finnbank/common/utils"
+	t "finnbank/graphql-api/types"
 	"fmt"
 	"time"
-	t "finnbank/graphql-api/types"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
 
 type OpenedAccountService struct {
 	db *pgxpool.Pool
@@ -62,7 +62,7 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
-	
+
 	s.l.Info("All opened accounts: %v", results)
 	return results, nil
 }
@@ -151,7 +151,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCServic
 	}
 	defer conn.Release()
 
-	var bankcardId []int = nil;
+	var bankcardId []int = nil
 	id, err := BCService.CreateCardRequest(ctx, user_id)
 	s.l.Info("Bankcard ID: %d", id)
 	if err != nil {
