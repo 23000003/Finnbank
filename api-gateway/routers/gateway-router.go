@@ -54,7 +54,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	statement := gr.r.Group("/statement")
 	statement.Use(middleware.AuthMiddleware())
 	{
-		statement.POST("/generate-statement", gr.s.StatementService.GenerateStatement)
+		statement.GET("/generate-statement", gr.s.StatementService.GenerateStatement)
 	}
 
 	bankcard := gr.r.Group("/bankcard")
@@ -68,7 +68,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	transaction := gr.r.Group("/transaction")
 	transaction.Use(middleware.AuthMiddleware())
 	{
-		transaction.GET("/get-all/:id", gr.s.TransactionService.GetTransactionByOpenAccountId)
+		transaction.GET("/get-all", gr.s.TransactionService.GetTransactionByOpenAccountId)
 		transaction.POST("/generate-transaction", gr.s.TransactionService.CreateTransaction)
 	}
 
@@ -86,6 +86,8 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	{
 		openedAccount.GET("/get-all/:id", gr.s.OpenedAccountService.GetAllOpenedAccountsByUserId)
 		openedAccount.GET("/:id", gr.s.OpenedAccountService.GetOpenedAccountOfUserById)
+		openedAccount.GET("/get-both-account-number/:sent_id/:receive_id", gr.s.OpenedAccountService.GetBothAccountNumberForReceipt)
+		openedAccount.GET("/find-by-account-number/:acc_num", gr.s.OpenedAccountService.GetOpenedAccountIdByAccountNumber)
 		openedAccount.POST("/create-account", gr.s.OpenedAccountService.OpenAnAccountByAccountType)
 		openedAccount.PATCH("/update-status/:id/:status", gr.s.OpenedAccountService.UpdateOpenedAccountStatus)
 	}

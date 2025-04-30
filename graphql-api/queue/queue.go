@@ -16,9 +16,9 @@ import (
 // **********************************************************************
 
 type Queue struct {
-	transacId	 []int
-	openAccId	 []int
-	openAccAmount []float64
+	transacId	 []int // To update status
+	openAccId	 []int // To deduct
+	openAccAmount []float64 // Num to deduct
 	mu    sync.Mutex
 	l 		*utils.Logger
 	ctx  	context.Context
@@ -71,21 +71,22 @@ func (q *Queue) Dequeue() (int, int, float64, bool) {
 }
 
 // StartAutoDequeue starts a ticker that dequeues every 1 minute
-func (q *Queue) StartAutoDequeue(OADBPool *pgxpool.Pool, TXDBPool *pgxpool.Pool) {
+func (q *Queue) StartAutoDequeue(OADBPool *pgxpool.Pool, TXDBPool *pgxpool.Pool, ACCDBPool *pgxpool.Pool) {
 	ticker := time.NewTicker(1 * time.Minute)
 	go func() {
 		for range ticker.C {
 			transacId, openAccId, openAccAmount, ok := q.Dequeue()
 			if ok {
-				err := h.SuccessTransaction(q.ctx, TXDBPool, transacId)
+				q.l.Info("Dequeued:")
+				err := h.SuccessTransaction(q.ctx, TXDBPool, ACCDBPool, transacId)
 				if err != nil {
-					q.l.Error("Failed to update transaction status: %v", err)
-					h.FailedTransaction(q.ctx, TXDBPool, transacId)
-					break
-				}
-				err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, openAccId, openAccAmount)
-				if err1 != nil {
-					q.l.Error("Failed to deduct opened account balance: %v", err1)
+					_ = h.FailedTransaction(q.ctx, TXDBPool, transacId)
+					q.l.Error("Failed to update: %v", err)
+				} else {
+					err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, openAccId, openAccAmount)
+					if err1 != nil {
+						q.l.Error("Failed to deduct opened account balance: %v", err1)
+					}
 				}
 			} else {
 				fmt.Println("Queue is empty.")

@@ -39,7 +39,7 @@ func main() {
 
 	server := initializeGraphQL(logger, dbServicesPool, q)
 
-	q.StartAutoDequeue(dbServicesPool.OpenedAccountDBPool, dbServicesPool.TransactionDBPool)
+	q.StartAutoDequeue(dbServicesPool.OpenedAccountDBPool, dbServicesPool.TransactionDBPool, dbServicesPool.AccountDBPool)
 
 	startAndShutdownServer(server, logger)
 }

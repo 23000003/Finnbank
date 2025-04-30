@@ -144,7 +144,7 @@ func (a *AccountService) SignupUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "Registered successfully", "data": data.Data.CreateAccount})
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.CreateAccount})
 }
 
 func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
@@ -160,6 +160,7 @@ func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 			account_id
 			account_status
 			account_type
+			account_number
 			address
 			auth_id
 			birthdate
