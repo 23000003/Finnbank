@@ -300,9 +300,9 @@ func (s *AccountService) UpdateUserDetails(ctx *context.Context, in *types.Updat
 	var query string
 	var args []any
 	const (
-		UpdateTypeEmail   = "Email"
-		UpdateTypePhone   = "Phone"
-		UpdateTypeAddress = "Address"
+		UpdateTypeEmail   = "Emails"
+		UpdateTypePhone   = "Numbers"
+		UpdateTypeAddress = "Addresses"
 	)
 	switch in.Type {
 	case UpdateTypeEmail:
