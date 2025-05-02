@@ -399,12 +399,15 @@ func (a *AccountService) UpdateUserPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully", "id": res.Data.UpdatedPassword.AccountID})
 }
 
-func (a *AccountService) UpdateUserName(c *gin.Context) {
+func (a *AccountService) UpdateUser(c *gin.Context) {
 	var req struct {
 		AccountID  string `json:"account_id"`
 		FirstName  string `json:"first_name"`
 		MiddleName string `json:"middle_name"`
 		LastName   string `json:"last_name"`
+		Email      string `json:"email"`
+		Phone      string `json:"phone"`
+		Address    string `json:"address"`
 	}
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
 		a.log.Info("Request Error: %v", err)
@@ -417,10 +420,13 @@ func (a *AccountService) UpdateUserName(c *gin.Context) {
 		first_name: "%s"
 		middle_name: "%s"
 		last_name: "%s"
+		email: "%s"
+		phone: "%s"
+		address: "%s"
 		}){
 		account_id
 		}
-	}`, req.AccountID, req.FirstName, req.MiddleName, req.LastName)
+	}`, req.AccountID, req.FirstName, req.MiddleName, req.LastName, req.Email, req.Phone, req.Address)
 
 	qlRequestBody := map[string]any{
 		"query": query,
@@ -454,7 +460,7 @@ func (a *AccountService) UpdateUserName(c *gin.Context) {
 	}
 
 	fmt.Println("RAW GQL Response:", string(body))
-	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully", "id": res.Data.AccountID})
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
 func (a *AccountService) UpdateUserDetails(c *gin.Context) {
@@ -514,5 +520,5 @@ func (a *AccountService) UpdateUserDetails(c *gin.Context) {
 	}
 
 	fmt.Println("RAW GQL Response:", string(body))
-	c.JSON(http.StatusOK, gin.H{"message": "User details updated successfully", "id": res.Data.AccountID})
+	c.JSON(http.StatusOK, gin.H{"message": "User details updated successfully"})
 }

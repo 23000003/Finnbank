@@ -119,6 +119,9 @@ type UpdateAccountRequest struct {
 	FirstName  string `json:"first_name"`
 	MiddleName string `json:"middle_name"`
 	LastName   string `json:"last_name"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Address    string `json:"address"`
 }
 
 type UpdateAccountDetailsRequest struct {
@@ -217,6 +220,15 @@ var UpdateAccountInputType = graphql.NewInputObject(
 				Type: graphql.String,
 			},
 			"last_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"email": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"phone": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"address": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
 		},

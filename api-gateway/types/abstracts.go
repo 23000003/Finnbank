@@ -30,7 +30,7 @@ type IAccountService interface {
 	GetUserAccountByEmail(*gin.Context)
 	UpdateUserPassword(*gin.Context)
 	UpdateUserDetails(*gin.Context)
-	UpdateUserName(c *gin.Context)
+	UpdateUser(c *gin.Context)
 }
 
 type IStatementService interface {

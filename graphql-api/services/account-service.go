@@ -286,9 +286,10 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 
 func (s *AccountService) UpdateUser(ctx *context.Context, in *types.UpdateAccountRequest) (*types.Account, error) {
 	query := `
-		UPDATE account SET first_name = $1, middle_name = $2, last_name = $3 WHERE id = $4
+		UPDATE account SET first_name = $1, middle_name = $2, last_name = $3, 
+		email = $4, phone = $5, address = $6 WHERE id = $7
 	`
-	_, err := s.db.Exec(*ctx, query, in.FirstName, in.MiddleName, in.LastName, in.AccountID)
+	_, err := s.db.Exec(*ctx, query, in.FirstName, in.MiddleName, in.LastName, in.Email, in.Phone, in.Address, in.AccountID)
 	if err != nil {
 		return nil, err
 	}
