@@ -284,10 +284,56 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	return res, nil
 }
 
-// TODO: This is not implemented yet, but i think it should be done by tommorow
-// func (s* AccountService) UpdateUser(ctx* context.Context, in * types.UpdateAccountRequest)(*types.UpdateAccountResponse, error) {
+func (s *AccountService) UpdateUser(ctx *context.Context, in *types.UpdateAccountRequest) (*types.Account, error) {
+	query := `
+		UPDATE account SET first_name = $1, middle_name = $2, last_name = $3 WHERE id = $4
+	`
+	_, err := s.db.Exec(*ctx, query, in.FirstName, in.MiddleName, in.LastName, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	res, _ := s.FetchUserById(ctx, in.AccountID)
 
-// }
+	return &res.Account, nil
+}
+func (s *AccountService) UpdateUserDetails(ctx *context.Context, in *types.UpdateAccountDetailsRequest) (*types.Account, error) {
+	var query string
+	var args []any
+	const (
+		UpdateTypeEmail   = "Email"
+		UpdateTypePhone   = "Phone"
+		UpdateTypeAddress = "Address"
+	)
+	switch in.Type {
+	case UpdateTypeEmail:
+		err := s.UpdateAuthEmail(*ctx, in.AccountID, in.Email)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update email in auth service: %v", err)
+		}
+		query = "UPDATE account SET email = $1 WHERE id = $2"
+		args = []any{in.Email, in.AccountID}
+	case UpdateTypePhone:
+		query = "UPDATE account SET phone_number = $1 WHERE id = $2"
+		args = []any{in.Phone, in.AccountID}
+	case UpdateTypeAddress:
+		query = "UPDATE account SET address = $1 WHERE id = $2"
+		args = []any{in.Address, in.AccountID}
+	default:
+		return nil, fmt.Errorf("invalid update type: %s", in.Type)
+	}
+
+	_, err := s.db.Exec(*ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update account: %v", err)
+	}
+
+	res, err := s.FetchUserById(ctx, in.AccountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated account: %v", err)
+	}
+
+	return &res.Account, nil
+}
 
 // This too i guess
 func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string, error) {
@@ -298,4 +344,16 @@ func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string
 		return "", fmt.Errorf("error querying auth user: %v", err)
 	}
 	return encrypted_password, nil
+}
+func (s *AccountService) UpdateAuthEmail(ctx context.Context, id, email string) error {
+	var auth_id string
+	err := s.db.QueryRow(ctx, "SELECT auth_id from account WHERE id = $1", id).Scan(&auth_id)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(ctx, "UPDATE auth.users SET email = $1 WHERE id = $2", email, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
