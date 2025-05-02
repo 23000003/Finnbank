@@ -6,8 +6,9 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+
 func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedAccountService, BCService *sv.BankcardService) *graphql.Object {
-	
+
 	return graphql.NewObject(
 		graphql.ObjectConfig{
 			Name: "Query",
@@ -51,53 +52,53 @@ func (s *StructGraphQLResolvers) GetOpenedAccountQueryType(OAService *sv.OpenedA
 						return nil, fmt.Errorf("invalid argument: %v", p.Args["openedaccount_id"])
 					},
 				},
-			"find_by_account_num": &graphql.Field{
-				Type:        graphql.Int,
-				Description: "Get opened account by account number",
-				Args: graphql.FieldConfigArgument{
-					"account_number": &graphql.ArgumentConfig{
-						Type: graphql.String,
+				"find_by_account_num": &graphql.Field{
+					Type:        graphql.Int,
+					Description: "Get opened account by account number",
+					Args: graphql.FieldConfigArgument{
+						"account_number": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						accountNum, ok := p.Args["account_number"].(string)
+						if ok {
+							data, err := OAService.GetOpenedAccountIdByAccountNumber(p.Context, accountNum)
+							return data, err
+						}
+						return nil, fmt.Errorf("invalid argument: %v", p.Args["account_number"])
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					accountNum, ok := p.Args["account_number"].(string)
-					if ok {
-						data, err := OAService.GetOpenedAccountIdByAccountNumber(p.Context, accountNum)
-						return data, err
-					}
-					return nil, fmt.Errorf("invalid argument: %v", p.Args["account_number"])
-				},
-			},
-			"find_both_account_num": &graphql.Field{
-				Type: graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
-					Name: "ReceiptAccountNumbers",
-					Fields: graphql.Fields{
-						"openedaccount_id": &graphql.Field{Type: graphql.Int},
-						"account_number":   &graphql.Field{Type: graphql.String},
+				"find_both_account_num": &graphql.Field{
+					Type: graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
+						Name: "ReceiptAccountNumbers",
+						Fields: graphql.Fields{
+							"openedaccount_id": &graphql.Field{Type: graphql.Int},
+							"account_number":   &graphql.Field{Type: graphql.String},
+						},
+					})),
+					Description: "Get both account number by sender and receiver id",
+					Args: graphql.FieldConfigArgument{
+						"sender_id": &graphql.ArgumentConfig{
+							Type: graphql.Int,
+						},
+						"receiver_id": &graphql.ArgumentConfig{
+							Type: graphql.Int,
+						},
 					},
-				})),
-				Description: "Get both account number by sender and receiver id",
-				Args: graphql.FieldConfigArgument{
-					"sender_id": &graphql.ArgumentConfig{
-						Type: graphql.Int,
-					},
-					"receiver_id": &graphql.ArgumentConfig{
-						Type: graphql.Int,
-					},
-				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					senderId, ok := p.Args["sender_id"].(int)
-					receiverId, ok1 := p.Args["receiver_id"].(int)
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						senderId, ok := p.Args["sender_id"].(int)
+						receiverId, ok1 := p.Args["receiver_id"].(int)
 
-					if ok && ok1 {
-						data, err := OAService.GetBothAccountNumberForReceipt(p.Context, senderId, receiverId)
-						return data, err
-					}
-					return nil, fmt.Errorf("invalid argument: %v %v", p.Args["sender_id"], p.Args["receiver_id"])
+						if ok && ok1 {
+							data, err := OAService.GetBothAccountNumberForReceipt(p.Context, senderId, receiverId)
+							return data, err
+						}
+						return nil, fmt.Errorf("invalid argument: %v %v", p.Args["sender_id"], p.Args["receiver_id"])
+					},
 				},
 			},
-		},
-	})
+		})
 }
 
 func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.OpenedAccountService, BCService *sv.BankcardService) *graphql.Object {
@@ -119,11 +120,11 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 					account_id, ok := params.Args["account_id"].(string)
 
 					if ok {
-						data, err := OAService.CreateOpenedAccount(params.Context, BCService, account_id);
+						data, err := OAService.CreateOpenedAccount(params.Context, BCService, account_id)
 						return data, err
 					}
-					
-					return nil, fmt.Errorf("invalid argument: %v", params.Args["account_id"]);
+
+					return nil, fmt.Errorf("invalid argument: %v", params.Args["account_id"])
 				},
 			},
 			/* Update account Status
@@ -148,8 +149,8 @@ func (s *StructGraphQLResolvers) GetOpenedAccountMutationType(OAService *sv.Open
 						data, err := OAService.UpdateOpenedAccountStatus(params.Context, id, status)
 						return data, err
 					}
-					
-					return nil, fmt.Errorf("invalid argument: %v %v", params.Args["openedaccount_id"], params.Args["openedaccount_status"]);
+
+					return nil, fmt.Errorf("invalid argument: %v %v", params.Args["openedaccount_id"], params.Args["openedaccount_status"])
 				},
 			},
 		},

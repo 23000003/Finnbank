@@ -115,14 +115,18 @@ type AddAccountResponse struct {
 }
 
 type UpdateAccountRequest struct {
-	Email       string `json:"email"`
-	FirstName   string `json:"first_name"`
-	MiddleName  string `json:"middle_name"`
-	LastName    string `json:"last_name"`
-	PhoneNumber string `json:"phone_number"`
+	AccountID  string `json:"account_id"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
 }
-type UpdateAccountResponse struct {
-	Account Account `json:"account"`
+
+type UpdateAccountDetailsRequest struct {
+	Type      string `json:"tpye"`
+	Email     string `json:"email"`
+	Phone     string `json:"phone"`
+	Address   string `json:"address"`
+	AccountID string `json:"account_id"`
 }
 
 // For signup input
@@ -194,6 +198,47 @@ var UpdatePasswordInputType = graphql.NewInputObject(
 				Type: graphql.String,
 			},
 			"new_password": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+var UpdateAccountInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdateAccountInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"account_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"first_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"middle_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"last_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+var UpdateAccountDetailsInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdateAccountDetailsInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"account_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"email": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"phone": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"address": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"type": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
 		},
