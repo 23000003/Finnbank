@@ -30,6 +30,8 @@ type IAccountService interface {
 	GetUserAccountByAccountNumber(*gin.Context)
 	GetUserAccountByEmail(*gin.Context)
 	UpdateUserPassword(*gin.Context)
+	UpdateUserDetails(*gin.Context)
+	UpdateUser(c *gin.Context)
 }
 
 type IStatementService interface {
@@ -43,7 +45,7 @@ type ITransactionService interface {
 
 type IBankcardService interface {
 	GetAllBankCardOfUserById(*gin.Context)
-	UpdateBankcardExpiryDateByUserId(*gin.Context)    // update req
+	UpdateBankcardExpiryDateByUserId(*gin.Context) // update req
 	UpdateBankcardPinNumberById(*gin.Context)
 }
 
@@ -51,7 +53,7 @@ type INotificationService interface {
 	GetAllNotificationByUserId(*gin.Context)
 	GetAllUnreadNotificationByUserId(*gin.Context)
 	GetNotificationByUserId(*gin.Context)
-	GenerateNotification(*gin.Context)   // post req
+	GenerateNotification(*gin.Context)     // post req
 	ReadNotificationByUserId(*gin.Context) // update req
 }
 

@@ -13,12 +13,22 @@ import (
 	t "finnbank/api-gateway/types"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
+
+// func CorsMiddleware(r *gin.Engine) {
+// 	r.Use(cors.New(cors.Config{
+// 		AllowOrigins:     []string{"http://localhost:5173"},
+// 		AllowMethods:     []string{"*"},
+// 		AllowCredentials: true,
+// 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+// 	}))
+// }
 
 func CorsMiddleware(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowMethods:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 	}))
@@ -26,6 +36,7 @@ func CorsMiddleware(r *gin.Engine) {
 
 func main() {
 	router := gin.New()
+	godotenv.Load()
 	logger, err := utils.NewLogger()
 	if err != nil {
 		panic(err)

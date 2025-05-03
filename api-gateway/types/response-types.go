@@ -125,9 +125,9 @@ type AccountLoginGraphQLResponse struct {
 type AccountSignUpGraphQLResponse struct {
 	Data struct {
 		CreateAccount struct {
-			AccessToken string `json:"access_token"`
-			Email       string `json:"email"`
-			AuthID      string `json:"auth_id"`
+			Email     string `json:"email"`
+			AuthID    string `json:"auth_id"`
+			AccountID string `json:"account_id"`
 		} `json:"create_account"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
