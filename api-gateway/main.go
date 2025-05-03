@@ -27,7 +27,7 @@ import (
 
 func CorsMiddleware(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:8083"},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},

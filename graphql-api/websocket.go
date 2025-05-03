@@ -4,15 +4,19 @@ import (
 	"context"
 	"finnbank/common/utils"
 	"finnbank/graphql-api/types"
+	"net/http"
 	"github.com/gorilla/websocket"
 )
 
 func initializeWebsockets(log *utils.Logger, ctx context.Context) *types.StructWebSocketConnections {
+	
+	headers := http.Header{}
+	headers.Add("Origin", "http://localhost:8083")
 	transacUrl := "ws://localhost:8080/api/ws/listen-to-transaction"
 	notifUrl := "ws://localhost:8080/api/ws/listen-to-notification"
 
-	transacConn, _, err := websocket.DefaultDialer.Dial(transacUrl, nil)
-	notifConn, _, err1 := websocket.DefaultDialer.Dial(notifUrl, nil)
+	transacConn, _, err := websocket.DefaultDialer.Dial(transacUrl, headers)
+	notifConn, _, err1 := websocket.DefaultDialer.Dial(notifUrl, headers)
 
 	if err != nil || err1 != nil {
 		log.Fatal("Error connecting to websocket: %v %v", err, err1)

@@ -121,7 +121,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 
 	query := `
 		SELECT 
-			openedaccount_id, bankcard_id, balance, account_id
+			openedaccount_id, bankcard_id, balance, account_id,
 			account_type, openedaccount_status, date_created, account_number
 		FROM openedaccount 
 		WHERE openedaccount_id = $1
@@ -131,11 +131,11 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 		&acc.OpenedAccountID,
 		&acc.BankCardID,
 		&acc.Balance,
+		&acc.AccountID,
 		&acc.AccountType,
 		&acc.OpenedAccountStatus,
 		&acc.DateCreated,
 		&acc.AccountNumber,
-		&acc.AccountID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch opened account: %w", err)

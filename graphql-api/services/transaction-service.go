@@ -153,7 +153,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 	}
 
 	if err := transacConn.WriteJSON(sendTransac); err != nil {
-		s.l.Error("Error sending notification: %v", err)
+		s.l.Error("Error sending transaction: %v", err)
 		return t.Transaction{}, err
 	}
 

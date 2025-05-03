@@ -191,7 +191,7 @@ func (a *NotificationService) GenerateNotification(ctx *gin.Context) {
 
 	a.log.Info("Response: %v", resp.Body)
 
-	var data t.CreateOpenedAccountsGraphQLResponse
+	var data t.GetCreatedNotificationsGraphQLResponse
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		a.log.Info("Error decoding response: %v", err)
@@ -212,9 +212,7 @@ func (a *NotificationService) ReadNotificationByUserId(ctx *gin.Context) {
 	id := ctx.Param("id");
 
 	query := fmt.Sprintf(`mutation {
-		readNotificationByUserId(notif_id: "%s") {
-			notif_id
-		}
+		readNotificationByUserId(notif_id: "%s")
 	}`, id)
 
 	qlrequestBody := map[string]interface{}{

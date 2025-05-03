@@ -65,7 +65,7 @@ type GetOpenedAccountsGraphQLResponse struct {
 type GetUserIdByOpenedAccountIdGraphQLResponse struct {
 	Data struct {
 		GetById struct {
-			AccountID     int       `json:"account_id"`
+			AccountID     string       `json:"account_id"`
 		} `json:"get_by_id"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
@@ -283,6 +283,23 @@ type GetNotificationGraphQLResponse struct {
 	Errors interface{} `json:"errors"`
 }
 
+type GetCreatedNotificationsGraphQLResponse struct {
+	Data struct {
+		GenerateNotificaton struct {
+			NotifID       string    `json:"notif_id"`
+		} `json:"generateNotification"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+type ReadNotificationGraphQLResponse struct {
+	Data struct {
+		ReadNotificationByUserId bool `json:"readNotificationByUserId"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+
 // ===================== Bankcard Types ====================
 
 type GetAllBankCardsGraphQLResponse struct {
@@ -342,9 +359,10 @@ type GetStatementGraphQLResponse struct {
 // ===================== RealTime Types ====================
 
 type GetRealTimeNotification struct {
-	NotifID       int    `json:"notif_id"`
+	NotifID       string    `json:"notif_id"`
 	NotifType     string    `json:"notif_type"`
 	NotifFromName string    `json:"notif_from_name"`
+	NotifToID		 	string       `json:"notif_to_id"`
 	Content       string    `json:"content"`
 	IsRead        bool      `json:"is_read"`
 	DateNotified  time.Time `json:"date_notified"`

@@ -99,6 +99,7 @@ func (r *RealTimeService) GetRealTimeNotification(ctx *gin.Context) {
 		r.l.Error("Error upgrading notification connection: %v", err)
 		return
 	}
+	r.l.Info("Notification WebSocket connection established")
 
 	r.mutex.Lock()
 	r.notificationClients[conn] = true
@@ -121,20 +122,23 @@ func (r *RealTimeService) GetRealTimeNotification(ctx *gin.Context) {
 			break
 		}
 
+		r.l.Info("Raw notification message: %s", string(message))
+
 		var notif types.GetRealTimeNotification
 		if err := json.Unmarshal(message, &notif); err != nil {
 			r.l.Error("Error unmarshaling notification: %v", err)
 			continue
 		}
 
-		r.l.Info("Received notification - ID: %d, Content: %s", notif.NotifID, notif.Content)
+		r.l.Info("Received notification - ID: %s, Content: %s", notif.NotifID, notif.Content)
 
 		// Create and broadcast response
 		ack := map[string]string{
-			"notif_id":        strconv.Itoa(notif.NotifID),
+			"notif_id":        notif.NotifID,
 			"notif_type":      notif.NotifType,
 			"notif_from_name": notif.NotifFromName,
 			"content":         notif.Content,
+			"notif_to_id":    notif.NotifToID,
 			"is_read":         strconv.FormatBool(notif.IsRead),
 			"date_notified":   notif.DateNotified.Format(time.RFC3339),
 		}
@@ -151,7 +155,7 @@ func (r *RealTimeService) broadcastToTransactionClients(message []byte) {
 
 	for client := range r.transactionClients {
 		// Timeout connection after 10 seconds since its not global
-		client.SetWriteDeadline(time.Now().Add(10 * time.Second)) 
+		// client.SetWriteDeadline(time.Now().Add(10 * time.Second)) 
 		err := client.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
 			r.l.Error("Error writing to transaction client: %v", err)
