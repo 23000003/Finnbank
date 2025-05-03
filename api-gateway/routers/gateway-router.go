@@ -49,7 +49,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 		account.GET("/get-user-by-email/:email", gr.s.AccountService.GetUserAccountByEmail)
 		account.GET("/get-user-by-account-number/:account_number", gr.s.AccountService.GetUserAccountByAccountNumber)
 		account.PATCH("/update-password", gr.s.AccountService.UpdateUserPassword)
-		account.PATCH("/update-user", gr.s.AccountService.UpdateUserName)
+		account.PATCH("/update-user", gr.s.AccountService.UpdateUser)
 		account.PATCH("/update-user-details", gr.s.AccountService.UpdateUserDetails)
 	}
 

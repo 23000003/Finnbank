@@ -253,12 +253,18 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					firstName, _ := updateInput["first_name"].(string)
 					middleName, _ := updateInput["middle_name"].(string)
 					lastName, _ := updateInput["last_name"].(string)
+					email, _ := updateInput["email"].(string)
+					phone, _ := updateInput["phone"].(string)
+					address, _ := updateInput["address"].(string)
 
 					req := &types.UpdateAccountRequest{
 						AccountID:  accountID,
 						FirstName:  firstName,
 						MiddleName: middleName,
 						LastName:   lastName,
+						Email:      email,
+						Phone:      phone,
+						Address:    address,
 					}
 
 					res, err := ACCService.UpdateUser(&p.Context, req)
