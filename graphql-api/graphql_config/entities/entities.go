@@ -139,7 +139,7 @@ func GetOpenedAccountEntityType() *graphql.Object {
 			Name: "OpenedAccount",
 			Fields: graphql.Fields{
 				"openedaccount_id":     &graphql.Field{Type: graphql.Int},
-				"account_id":           &graphql.Field{Type: graphql.Int},
+				"account_id":           &graphql.Field{Type: graphql.String},
 				"bankcard_id":          &graphql.Field{Type: graphql.Int},
 				"account_type":         &graphql.Field{Type: graphql.String},
 				"balance":              &graphql.Field{Type: graphql.Float},

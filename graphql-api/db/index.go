@@ -34,17 +34,22 @@ func InitializeServiceDatabases(logger *utils.Logger) *types.StructServiceDataba
 }
 
 func CleanupDatabase(dbPools *types.StructServiceDatabasePools, logger *utils.Logger) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	// Cleanup all pools in parallel (error channel)
 	errChan := make(chan error, 5)
 
 	go cleanupPool(ctx, dbPools.OpenedAccountDBPool, "OpenedAccount", errChan, logger)
+	time.Sleep(3 * time.Second)
 	go cleanupPool(ctx, dbPools.AccountDBPool, "Account", errChan, logger)
+	time.Sleep(3 * time.Second)
 	go cleanupPool(ctx, dbPools.TransactionDBPool, "Transaction", errChan, logger)
+	time.Sleep(3 * time.Second)
 	go cleanupPool(ctx, dbPools.BankCardDBPool, "BankCard", errChan, logger)
+	time.Sleep(3 * time.Second)
 	go cleanupPool(ctx, dbPools.NotificationDBPool, "Notification", errChan, logger)
+	time.Sleep(3 * time.Second)
 
 	// Wait for all cleanups to complete
 	for range 5 {

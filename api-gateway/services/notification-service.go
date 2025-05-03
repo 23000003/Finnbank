@@ -1,12 +1,14 @@
 package services
 
 import (
-	"finnbank/common/utils"
 	"bytes"
 	"encoding/json"
+	t "finnbank/api-gateway/types"
+	"finnbank/common/utils"
 	"fmt"
 	"net/http"
-	t "finnbank/api-gateway/types"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,9 +26,16 @@ func newNotificationService(log *utils.Logger) *NotificationService {
 
 func (a *NotificationService) GetAllNotificationByUserId(ctx *gin.Context) {
 	id := ctx.Param("id");
+	limit, err := strconv.Atoi(ctx.Param("limit"))
+
+	if err != nil {
+		a.log.Info("Error converting limit to int: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit format"})
+		return
+	}
 
 	query := fmt.Sprintf(`{
-		getAllNotificationByUserId(notif_to_id: "%s") {
+		getAllNotificationByUserId(notif_to_id: "%s", limit: %d) {
 			notif_id
 			notif_type
 			notif_from_name
@@ -34,7 +43,7 @@ func (a *NotificationService) GetAllNotificationByUserId(ctx *gin.Context) {
 			is_read
 			date_notified
 		}
-	}`, id)
+	}`, id, limit)
 
 	qlrequestBody := map[string]interface{}{
 		"query": query,
@@ -65,6 +74,47 @@ func (a *NotificationService) GetAllNotificationByUserId(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetAllNotificationByUserId})
+}
+
+func (a *NotificationService) GetAllUnreadNotificationByUserId(ctx *gin.Context) {
+	id := ctx.Param("id");
+
+	query := fmt.Sprintf(`{
+		getAllUnreadNotificationByUserId(notif_to_id: "%s") {
+			total_notification
+			unread_notification
+		}
+	}`, id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetAllUnreadNotificationGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetAllUnreadNotificationByUserId})
 }
 
 func (a *NotificationService) GetNotificationByUserId(ctx *gin.Context) {

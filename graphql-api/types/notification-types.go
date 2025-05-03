@@ -14,3 +14,8 @@ type Notification struct {
 	DateNotified  time.Time  `json:"date_notified"`
 	DateRead      *time.Time `json:"date_read"` // pointer for nullable
 }
+
+type UnreadAndTotalNotification struct {
+	TotalNotification int `json:"total_notification"`
+	UnreadNotification int `json:"unread_notification"`
+}

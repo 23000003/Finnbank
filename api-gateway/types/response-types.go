@@ -62,6 +62,15 @@ type GetOpenedAccountsGraphQLResponse struct {
 	Errors interface{} `json:"errors"`
 }
 
+type GetUserIdByOpenedAccountIdGraphQLResponse struct {
+	Data struct {
+		GetById struct {
+			AccountID     int       `json:"account_id"`
+		} `json:"get_by_id"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
 type GetBothAccountNumberGraphQLResponse struct {
 	Data struct {
 		FindBothAccountNumber []struct {
@@ -248,6 +257,18 @@ type GetAllNotificationsGraphQLResponse struct {
 	Errors interface{} `json:"errors"`
 }
 
+
+type GetAllUnreadNotificationGraphQLResponse struct {
+	Data struct {
+		GetAllUnreadNotificationByUserId struct {
+			TotalNotification   int `json:"total_notification"`
+			UnreadNotification int `json:"unread_notification"`
+		} `json:"getAllUnreadNotificationByUserId"`
+	} `json:"data"`
+	Errors interface{} `json:"errors"`
+}
+
+
 type GetNotificationGraphQLResponse struct {
 	Data struct {
 		GetNotificationById struct {
@@ -315,4 +336,29 @@ type GetStatementGraphQLResponse struct {
 		} `json:"generate_statement"`
 	} `json:"data"`
 	Errors interface{} `json:"errors"`
+}
+
+
+// ===================== RealTime Types ====================
+
+type GetRealTimeNotification struct {
+	NotifID       int    `json:"notif_id"`
+	NotifType     string    `json:"notif_type"`
+	NotifFromName string    `json:"notif_from_name"`
+	Content       string    `json:"content"`
+	IsRead        bool      `json:"is_read"`
+	DateNotified  time.Time `json:"date_notified"`
+}
+
+type GetRealTimeTransaction struct {
+	TransactionID     int       `json:"transaction_id"`
+	RefNo             string    `json:"ref_no"`
+	SenderID          int       `json:"sender_id"`
+	ReceiverID        int       `json:"receiver_id"`
+	TransactionType   string    `json:"transaction_type"`
+	Amount            float64   `json:"amount"`
+	TransactionStatus string    `json:"transaction_status"`
+	DateTransaction   time.Time `json:"date_transaction"`
+	TransactionFee    float64   `json:"transaction_fee"`
+	Notes             string    `json:"notes"`
 }
