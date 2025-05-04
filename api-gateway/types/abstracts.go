@@ -12,7 +12,7 @@ type ApiGatewayServices struct {
 	BankcardService      IBankcardService
 	NotificationService  INotificationService
 	OpenedAccountService IOpenedAccountService
-	RealTimeService     IRealTimeService
+	RealTimeService      IRealTimeService
 }
 
 type IProductService interface {
@@ -32,6 +32,7 @@ type IAccountService interface {
 	UpdateUserPassword(*gin.Context)
 	UpdateUserDetails(*gin.Context)
 	UpdateUser(c *gin.Context)
+	UpdateAccountStatus(c *gin.Context)
 }
 
 type IStatementService interface {

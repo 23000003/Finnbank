@@ -336,7 +336,34 @@ func (s *AccountService) UpdateUserDetails(ctx *context.Context, in *types.Updat
 	return &res.Account, nil
 }
 
-// This too i guess
+func (s *AccountService) UpdateAccountStatus(c *context.Context, in *types.UpdateAccountStatusRequest) (*types.Account, error) {
+	var query string
+	const (
+		DEACTIVATE_ACCOUNT = "DEACTIVATE"
+		REACTIVATE_ACCOUNT = "ACTIVATE"
+		SUSPEND_ACCOUNT    = "SUSPEND"
+	)
+	switch in.Type {
+	case DEACTIVATE_ACCOUNT:
+		query = `UPDATE account SET account_status = 'Closed' WHERE id = $1`
+	case REACTIVATE_ACCOUNT:
+		query = `UPDATE account set account_status = 'Active' WHERE id = $1`
+	case SUSPEND_ACCOUNT:
+		query = `UPDATE account set account_status = 'Suspended' WHERE id = $1`
+	}
+	_, err := s.db.Exec(*c, query, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	res, err := s.FetchUserById(c, in.AccountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated account: %v", err)
+	}
+
+	return &res.Account, nil
+}
+
+// Helper functions
 func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string, error) {
 	var encrypted_password string
 	query := `SELECT encrypted_password FROM auth.users WHERE id = $1;`

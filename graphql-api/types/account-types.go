@@ -125,11 +125,15 @@ type UpdateAccountRequest struct {
 }
 
 type UpdateAccountDetailsRequest struct {
-	Type      string `json:"tpye"`
+	Type      string `json:"type"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
 	Address   string `json:"address"`
 	AccountID string `json:"account_id"`
+}
+type UpdateAccountStatusRequest struct {
+	AccountID string `json:"account_id"`
+	Type      string `json:"type"`
 }
 
 // For signup input
@@ -248,6 +252,19 @@ var UpdateAccountDetailsInputType = graphql.NewInputObject(
 				Type: graphql.String,
 			},
 			"address": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"type": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+var UpdateAccountStatusInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdateAccountStatusInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"account_id": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
 			"type": &graphql.InputObjectFieldConfig{
