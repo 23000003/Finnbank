@@ -15,7 +15,7 @@ type GetAllProductGraphQLResponse struct {
 			Price float64 `json:"price"`
 		} `json:"list"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type CreateProductGraphQLResponse struct {
@@ -27,7 +27,7 @@ type CreateProductGraphQLResponse struct {
 			Price float64 `json:"price"`
 		} `json:"create"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 // =============== Opened Account Types ====================
@@ -44,7 +44,7 @@ type GetAllOpenedAccountsGraphQLResponse struct {
 			AccountNumber       string    `json:"account_number"`
 		} `json:"get_all"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type GetOpenedAccountsGraphQLResponse struct {
@@ -59,16 +59,16 @@ type GetOpenedAccountsGraphQLResponse struct {
 			AccountNumber       string    `json:"account_number"`
 		} `json:"get_by_id"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type GetUserIdByOpenedAccountIdGraphQLResponse struct {
 	Data struct {
 		GetById struct {
-			AccountID     string       `json:"account_id"`
+			AccountID string `json:"account_id"`
 		} `json:"get_by_id"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type GetBothAccountNumberGraphQLResponse struct {
@@ -78,14 +78,14 @@ type GetBothAccountNumberGraphQLResponse struct {
 			AccountNumber   string `json:"account_number"`
 		} `json:"find_both_account_num"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type GetOpenedAccountIdGraphQLResponse struct {
 	Data struct {
 		FindByAccountNum int `json:"find_by_account_num"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type CreateOpenedAccountsGraphQLResponse struct {
@@ -99,14 +99,14 @@ type CreateOpenedAccountsGraphQLResponse struct {
 			OpenedAccountStatus string    `json:"openedaccount_status"`
 		} `json:"create_account"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type UpdateOpenedAccountsGraphQLResponse struct {
 	Data struct {
 		UpdateAccountStatus string `json:"update_account_status"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 // ===================== Account Types ====================
@@ -114,12 +114,13 @@ type UpdateOpenedAccountsGraphQLResponse struct {
 type AccountLoginGraphQLResponse struct {
 	Data struct {
 		Login struct {
-			AccessToken string `json:"access_token"`
-			FullName    string `json:"full_name"`
-			AccountId   string `json:"account_id"`
+			AccessToken   string `json:"access_token"`
+			FullName      string `json:"full_name"`
+			AccountId     string `json:"account_id"`
+			AccountStatus string `json:"account_status"`
 		} `json:"login"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type AccountSignUpGraphQLResponse struct {
@@ -130,7 +131,7 @@ type AccountSignUpGraphQLResponse struct {
 			AccountID string `json:"account_id"`
 		} `json:"create_account"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type GetAccountDetailsGraphQLResponse struct {
@@ -151,7 +152,7 @@ type GetAccountDetailsGraphQLResponse struct {
 			AccountType   string    `json:"account_type"`
 		} `json:"account_by_id"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type AccountNumberFetchResponse struct {
@@ -220,7 +221,7 @@ type GetAllTransactionsGraphQLResponse struct {
 			Notes             string    `json:"notes"`
 		} `json:"getTransactionsByUserId"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type CreateTransactionsGraphQLResponse struct {
@@ -238,7 +239,7 @@ type CreateTransactionsGraphQLResponse struct {
 			Notes             string    `json:"notes"`
 		} `json:"createTransaction"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 // ===================== Notification Types ====================
@@ -254,20 +255,18 @@ type GetAllNotificationsGraphQLResponse struct {
 			DateNotified  time.Time `json:"date_notified"`
 		} `json:"getAllNotificationByUserId"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
-
 
 type GetAllUnreadNotificationGraphQLResponse struct {
 	Data struct {
 		GetAllUnreadNotificationByUserId struct {
-			TotalNotification   int `json:"total_notification"`
+			TotalNotification  int `json:"total_notification"`
 			UnreadNotification int `json:"unread_notification"`
 		} `json:"getAllUnreadNotificationByUserId"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
-
 
 type GetNotificationGraphQLResponse struct {
 	Data struct {
@@ -280,25 +279,24 @@ type GetNotificationGraphQLResponse struct {
 			DateNotified  time.Time `json:"date_notified"`
 		} `json:"getNotificationById"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type GetCreatedNotificationsGraphQLResponse struct {
 	Data struct {
 		GenerateNotificaton struct {
-			NotifID       string    `json:"notif_id"`
+			NotifID string `json:"notif_id"`
 		} `json:"generateNotification"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type ReadNotificationGraphQLResponse struct {
 	Data struct {
 		ReadNotificationByUserId bool `json:"readNotificationByUserId"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
-
 
 // ===================== Bankcard Types ====================
 
@@ -313,7 +311,7 @@ type GetAllBankCardsGraphQLResponse struct {
 			CVV         string    `json:"cvv"`
 		} `json:"get_all_bankcard"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type UpdateBankCardGraphQLResponse struct {
@@ -327,7 +325,7 @@ type UpdateBankCardGraphQLResponse struct {
 			CVV            string    `json:"cvv"`
 		} `json:"update_bankcard_expiry"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 type UpdateBankCardPinNumberGraphQLResponse struct {
@@ -341,7 +339,7 @@ type UpdateBankCardPinNumberGraphQLResponse struct {
 			CVV            string    `json:"cvv"`
 		} `json:"update_pin_number"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 // ===================== Statement Types ====================
@@ -352,9 +350,8 @@ type GetStatementGraphQLResponse struct {
 			PdfBuffer string `json:"pdf_buffer"`
 		} `json:"generate_statement"`
 	} `json:"data"`
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
-
 
 // ===================== RealTime Types ====================
 
@@ -362,7 +359,7 @@ type GetRealTimeNotification struct {
 	NotifID       string    `json:"notif_id"`
 	NotifType     string    `json:"notif_type"`
 	NotifFromName string    `json:"notif_from_name"`
-	NotifToID		 	string       `json:"notif_to_id"`
+	NotifToID     string    `json:"notif_to_id"`
 	Content       string    `json:"content"`
 	IsRead        bool      `json:"is_read"`
 	DateNotified  time.Time `json:"date_notified"`

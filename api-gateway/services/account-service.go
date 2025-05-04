@@ -61,10 +61,11 @@ func (a *AccountService) LoginUser(ctx *gin.Context) {
 			access_token
 			full_name
 			account_id
+			account_status
 		}
 	}`, req.Email, req.Password)
 
-	qlrequestBody := map[string]interface{}{
+	qlrequestBody := map[string]any{
 		"query": query,
 	}
 	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
