@@ -121,7 +121,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 
 	query := `
 		SELECT 
-			openedaccount_id, bankcard_id, balance, 
+			openedaccount_id, bankcard_id, balance, account_id,
 			account_type, openedaccount_status, date_created, account_number
 		FROM openedaccount 
 		WHERE openedaccount_id = $1
@@ -131,6 +131,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 		&acc.OpenedAccountID,
 		&acc.BankCardID,
 		&acc.Balance,
+		&acc.AccountID,
 		&acc.AccountType,
 		&acc.OpenedAccountStatus,
 		&acc.DateCreated,
@@ -175,7 +176,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCServic
 			($1, $5, $3, $6, $8, $11),
 			($1, NULL, $3, $7, $9, $12)
 		RETURNING openedaccount_id, account_type, bankcard_id, balance, openedaccount_status`,
-		user_id, bankcardId[0], 0, "Credit",
+		user_id, bankcardId[0], 10000, "Credit",
 		bankcardId[1], "Checking", "Savings", "Closed", "Active", credit, debit, savings,
 	)
 	if err != nil {

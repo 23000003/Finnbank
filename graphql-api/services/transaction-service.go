@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 	"finnbank/common/utils"
+	q "finnbank/graphql-api/queue"
 	t "finnbank/graphql-api/types"
 	"fmt"
 	"time"
+
+	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
-	q "finnbank/graphql-api/queue"
 )
 
 const (
@@ -77,7 +79,7 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, creditI
 }
 
 // CreateTransaction creates a new transaction, auto‑generating a numeric ref_no.
-func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transaction) (t.Transaction, error) {
+func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transaction, transacConn *websocket.Conn) (t.Transaction, error) {
 
 	if req.Amount < 0 {
 		return t.Transaction{}, fmt.Errorf("amount cannot be negative")
@@ -135,7 +137,25 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 
 	s.l.Info("Transaction created: %+v", created)
 
-	s.queue.Enqueue(created.TransactionID, created.SenderID, created.Amount)
+	s.queue.Enqueue(created.TransactionID, created.SenderID, created.ReceiverID, created.Amount)
+
+	sendTransac := t.Transaction{
+		TransactionID:     created.TransactionID,
+		RefNo:             created.RefNo,
+		SenderID:          created.SenderID,
+		ReceiverID:        created.ReceiverID,
+		TransactionType:   created.TransactionType,
+		Amount:            created.Amount,
+		TransactionStatus: created.TransactionStatus,
+		DateTransaction:   created.DateTransaction,
+		TransactionFee:    created.TransactionFee,
+		Notes:             created.Notes,
+	}
+
+	if err := transacConn.WriteJSON(sendTransac); err != nil {
+		s.l.Error("Error sending transaction: %v", err)
+		return t.Transaction{}, err
+	}
 
 	return created, nil
 }

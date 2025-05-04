@@ -19,5 +19,6 @@ func NewApiGatewayServices(log *utils.Logger) *types.ApiGatewayServices {
 		BankcardService:     newBankcardService(log),
 		NotificationService: newNotificationService(log),
 		OpenedAccountService: newOpenedAccountService(log),
+		RealTimeService: 		 newRealTimeService(log),
 	}
 }
