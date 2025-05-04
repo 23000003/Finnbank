@@ -4,6 +4,7 @@ import (
 	"finnbank/api-gateway/middleware"
 	"finnbank/api-gateway/types"
 	"finnbank/common/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,6 +51,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 		account.PATCH("/update-password", gr.s.AccountService.UpdateUserPassword)
 		account.PATCH("/update-user", gr.s.AccountService.UpdateUser)
 		account.PATCH("/update-user-details", gr.s.AccountService.UpdateUserDetails)
+		account.PATCH("/update-account-status", gr.s.AccountService.UpdateAccountStatus)
 	}
 
 	statement := gr.r.Group("/statement")

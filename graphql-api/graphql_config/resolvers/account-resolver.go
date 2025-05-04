@@ -314,6 +314,37 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					return res, nil
 				},
 			},
+			"update_account_status": &graphql.Field{
+				Type:        accountType,
+				Description: "Update account status",
+				Args: graphql.FieldConfigArgument{
+					"UpdateAccountStatusInput": &graphql.ArgumentConfig{
+						Type: types.UpdateAccountStatusInputType,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (any, error) {
+					updateInput, ok := p.Args["UpdateAccountStatusInput"].(map[string]any)
+					if !ok {
+						return nil, fmt.Errorf("invalid account input")
+					}
+					accountID, _ := updateInput["account_id"].(string)
+					_type, _ := updateInput["type"].(string)
+
+					req := &types.UpdateAccountStatusRequest{
+						AccountID: accountID,
+						Type:      _type,
+					}
+
+					res, err := ACCService.UpdateAccountStatus(&p.Context, req)
+					if err != nil {
+						s.log.Error("Error updating account status: %v", err)
+						return nil, fmt.Errorf("error updating account status: %v", err)
+					}
+
+					s.log.Info("Account status updated successfully: %v", res.ID)
+					return res, nil
+				},
+			},
 		},
 	})
 }
