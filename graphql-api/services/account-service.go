@@ -260,6 +260,7 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	// for auth context
 	res.DisplayName = acc.Account.FirstName + " " + acc.Account.MiddleName + " " + acc.Account.LastName
 	res.AccountId = acc.Account.ID
+	res.AccountStatus = acc.Account.AccountStatus
 
 	return &res, nil
 }
