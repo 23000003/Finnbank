@@ -36,7 +36,7 @@ func NewGraphQL(log *utils.Logger, h types.IGraphQLHandlers) *StructGraphQL {
 	}
 }
 
-func (gql *StructGraphQL) ConfigureGraphQLHandlers(q *q.Queue) {
+func (gql *StructGraphQL) ConfigureGraphQLHandlers(q *q.Queue, wsConn *types.StructWebSocketConnections) {
 
 	gql.log.Info("Configuring GraphQL Handlers...")
 
@@ -44,8 +44,8 @@ func (gql *StructGraphQL) ConfigureGraphQLHandlers(q *q.Queue) {
 	accountHandler := gql.h.AccountServicesHandler(gql.s.AuthServer)
 	bankCardHandler := gql.h.BankCardServicesHandler(gql.s.BankCardServer)
 	statementHandler := gql.h.StatementServicesHandler(gql.s.StatementServer)
-	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer, q)
-	notificationHandler := gql.h.NotificationServicesHandler(gql.s.NotificationServer)
+	transactionHandler := gql.h.TransactionServicesHandler(gql.s.TransactionServer, q, wsConn.TransactionConn)
+	notificationHandler := gql.h.NotificationServicesHandler(gql.s.NotificationServer, wsConn.NotificationConn)
 	openedAccountHandler := gql.h.OpenedAccountServicesHandler(gql.s.OpenedAccountServer)
 
 	http.Handle("/graphql/account", accountHandler)

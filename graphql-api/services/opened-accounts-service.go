@@ -3,12 +3,12 @@ package services
 import (
 	"context"
 	"finnbank/common/utils"
+	t "finnbank/graphql-api/types"
 	"fmt"
 	"time"
-	t "finnbank/graphql-api/types"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
 
 type OpenedAccountService struct {
 	db *pgxpool.Pool
@@ -62,7 +62,7 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
-	
+
 	s.l.Info("All opened accounts: %v", results)
 	return results, nil
 }
@@ -121,7 +121,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 
 	query := `
 		SELECT 
-			openedaccount_id, bankcard_id, balance, 
+			openedaccount_id, bankcard_id, balance, account_id,
 			account_type, openedaccount_status, date_created, account_number
 		FROM openedaccount 
 		WHERE openedaccount_id = $1
@@ -131,6 +131,7 @@ func (s *OpenedAccountService) GetOpenedAccountById(ctx context.Context, id int)
 		&acc.OpenedAccountID,
 		&acc.BankCardID,
 		&acc.Balance,
+		&acc.AccountID,
 		&acc.AccountType,
 		&acc.OpenedAccountStatus,
 		&acc.DateCreated,
@@ -151,7 +152,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCServic
 	}
 	defer conn.Release()
 
-	var bankcardId []int = nil;
+	var bankcardId []int = nil
 	id, err := BCService.CreateCardRequest(ctx, user_id)
 	s.l.Info("Bankcard ID: %d", id)
 	if err != nil {
@@ -175,7 +176,7 @@ func (s *OpenedAccountService) CreateOpenedAccount(ctx context.Context, BCServic
 			($1, $5, $3, $6, $8, $11),
 			($1, NULL, $3, $7, $9, $12)
 		RETURNING openedaccount_id, account_type, bankcard_id, balance, openedaccount_status`,
-		user_id, bankcardId[0], 0, "Credit",
+		user_id, bankcardId[0], 10000, "Credit",
 		bankcardId[1], "Checking", "Savings", "Closed", "Active", credit, debit, savings,
 	)
 	if err != nil {

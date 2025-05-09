@@ -15,6 +15,7 @@ import (
 	t "finnbank/graphql-api/types"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/graphql-go/graphql"
 )
 
@@ -62,34 +63,37 @@ type TransactionResolver struct {
 // creates a transaction object from the input
 // calls the CreateTransaction method of the TrsanctionService to create the transaction
 // GetTransactionMutationType defines the mutation for creating a transaction.
-func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.TransactionService) *graphql.Object {
-	return graphql.NewObject(graphql.ObjectConfig{
-		Name: "Mutation", // or "TransactionMutation"
-		Fields: graphql.Fields{
-			"createTransaction": &graphql.Field{
-				Type:        transactionType,
-				Description: "Create a new transaction (ref_no auto‑generated).",
-				Args: graphql.FieldConfigArgument{
-					"transaction": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(transactionInputType),
-					},
-				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					in := p.Args["transaction"].(map[string]interface{})
-					txn := t.Transaction{
-						SenderID:        in["sender_id"].(int),
-						ReceiverID:      in["receiver_id"].(int),
-						TransactionType: in["transaction_type"].(string),
-						Amount:          in["amount"].(float64),
-						TransactionFee:  in["transaction_fee"].(float64),
-						Notes:           in["notes"].(string),
-					}
-					return txSvc.CreateTransaction(p.Context, txn)
-				},
-			},
-		},
-	})
-}
+// ===========
+// func (r *StructGraphQLResolvers) GetTransactionMutationType(txSvc *services.TransactionService) *graphql.Object {
+// 	return graphql.NewObject(graphql.ObjectConfig{
+// 		Name: "Mutation", // or "TransactionMutation"
+// 		Fields: graphql.Fields{
+// 			"createTransaction": &graphql.Field{
+// 				Type:        transactionType,
+// 				Description: "Create a new transaction (ref_no auto‑generated).",
+// 				Args: graphql.FieldConfigArgument{
+// 					"transaction": &graphql.ArgumentConfig{
+// 						Type: graphql.NewNonNull(transactionInputType),
+// 					},
+// 				},
+// 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+// 					in := p.Args["transaction"].(map[string]interface{})
+// 					txn := t.Transaction{
+// 						SenderID:        in["sender_id"].(int),
+// 						ReceiverID:      in["receiver_id"].(int),
+// 						TransactionType: in["transaction_type"].(string),
+// 						Amount:          in["amount"].(float64),
+// 						TransactionFee:  in["transaction_fee"].(float64),
+// 						Notes:           in["notes"].(string),
+// 					}
+// 					return txSvc.CreateTransaction(p.Context, txn)
+// 				},
+// 			},
+// 		},
+// 	})
+// }
+
+
 
 // for cmmit: change because to define one only. No duplicate names. easier maintenance. cleaner.
 //GetTransactionQueryType: Defines a query to fetch all transactions for a specific user by their userId.
@@ -126,19 +130,26 @@ func (r *StructGraphQLResolvers) TransactionTimeQueryFields(
 	txSvc *services.TransactionService,
 ) graphql.Fields {
 	return graphql.Fields{
+		// http://localhost:8083/graphql/transaction?query=
+		// {getTransactionsByTimeStampByUserId(creditId:1, debitId:2, savingsId:3, 
+		// startTime:"2025-04-19T00:00:00Z", endTime:"2025-04-29T00:00:00Z"){ref_no}}
 		"getTransactionsByTimeStampByUserId": &graphql.Field{
 			Type:        graphql.NewList(e.GetTransactionEntityType()),
 			Description: "Fetch transactions for a user between two timestamps.",
 			Args: graphql.FieldConfigArgument{
-				"userId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+				"creditId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"debitId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"savingsId":    &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
 				"startTime": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.DateTime)},
 				"endTime":   &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.DateTime)},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Args["userId"].(string)
+				creditId := p.Args["creditId"].(int)
+				debitId := p.Args["debitId"].(int)
+				savingsId := p.Args["savingsId"].(int)
 				start := p.Args["startTime"].(time.Time)
 				end := p.Args["endTime"].(time.Time)
-				return txSvc.GetTransactionByTimestampByUserId(p.Context, userId, start, end)
+				return txSvc.GetTransactionByTimestampByUserId(p.Context, creditId, debitId, savingsId, start, end)
 			},
 		},
 	}
@@ -147,6 +158,7 @@ func (r *StructGraphQLResolvers) TransactionTimeQueryFields(
 // returns the fields for your createTransaction mutation
 func (r *StructGraphQLResolvers) TransactionMutationFields(
 	txSvc *services.TransactionService,
+	transacConn *websocket.Conn,
 ) graphql.Fields {
 	return graphql.Fields{
 		"createTransaction": &graphql.Field{
@@ -165,7 +177,7 @@ func (r *StructGraphQLResolvers) TransactionMutationFields(
 					TransactionFee:  in["transaction_fee"].(float64),
 					Notes:           in["notes"].(string),
 				}
-				return txSvc.CreateTransaction(p.Context, txn)
+				return txSvc.CreateTransaction(p.Context, txn, transacConn)
 			},
 		},
 	}

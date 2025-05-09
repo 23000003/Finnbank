@@ -12,6 +12,7 @@ type ApiGatewayServices struct {
 	BankcardService      IBankcardService
 	NotificationService  INotificationService
 	OpenedAccountService IOpenedAccountService
+	RealTimeService      IRealTimeService
 }
 
 type IProductService interface {
@@ -29,6 +30,9 @@ type IAccountService interface {
 	GetUserAccountByAccountNumber(*gin.Context)
 	GetUserAccountByEmail(*gin.Context)
 	UpdateUserPassword(*gin.Context)
+	UpdateUserDetails(*gin.Context)
+	UpdateUser(c *gin.Context)
+	UpdateAccountStatus(c *gin.Context)
 }
 
 type IStatementService interface {
@@ -42,14 +46,15 @@ type ITransactionService interface {
 
 type IBankcardService interface {
 	GetAllBankCardOfUserById(*gin.Context)
-	UpdateBankcardExpiryDateByUserId(*gin.Context)    // update req
+	UpdateBankcardExpiryDateByUserId(*gin.Context) // update req
 	UpdateBankcardPinNumberById(*gin.Context)
 }
 
 type INotificationService interface {
 	GetAllNotificationByUserId(*gin.Context)
+	GetAllUnreadNotificationByUserId(*gin.Context)
 	GetNotificationByUserId(*gin.Context)
-	GenerateNotification(*gin.Context)   // post req
+	GenerateNotification(*gin.Context)     // post req
 	ReadNotificationByUserId(*gin.Context) // update req
 }
 
@@ -60,4 +65,11 @@ type IOpenedAccountService interface {
 	GetBothAccountNumberForReceipt(*gin.Context)
 	OpenAnAccountByAccountType(*gin.Context)
 	UpdateOpenedAccountStatus(*gin.Context)
+	GetUserIdByOpenedAccountId(*gin.Context)
+}
+
+type IRealTimeService interface {
+	GetRealTimeTransaction(*gin.Context)
+	GetRealTimeNotification(*gin.Context)
+	Shutdown()
 }

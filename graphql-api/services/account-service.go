@@ -132,8 +132,8 @@ func (s *AccountService) FetchUserByAccountNumber(ctx *context.Context, req stri
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -162,8 +162,8 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -192,8 +192,8 @@ func (s *AccountService) FetchUserById(ctx *context.Context, req string) (*types
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -223,8 +223,8 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -260,6 +260,7 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	// for auth context
 	res.DisplayName = acc.Account.FirstName + " " + acc.Account.MiddleName + " " + acc.Account.LastName
 	res.AccountId = acc.Account.ID
+	res.AccountStatus = acc.Account.AccountStatus
 
 	return &res, nil
 }
@@ -284,12 +285,86 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	return res, nil
 }
 
-// TODO: This is not implemented yet, but i think it should be done by tommorow
-// func (s* AccountService) UpdateUser(ctx* context.Context, in * types.UpdateAccountRequest)(*types.UpdateAccountResponse, error) {
+func (s *AccountService) UpdateUser(ctx *context.Context, in *types.UpdateAccountRequest) (*types.Account, error) {
+	query := `
+		UPDATE account SET first_name = $1, middle_name = $2, last_name = $3, 
+		email = $4, phone_number = $5, address = $6 WHERE id = $7
+	`
+	_, err := s.db.Exec(*ctx, query, in.FirstName, in.MiddleName, in.LastName, in.Email, in.Phone, in.Address, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	res, _ := s.FetchUserById(ctx, in.AccountID)
 
-// }
+	return &res.Account, nil
+}
+func (s *AccountService) UpdateUserDetails(ctx *context.Context, in *types.UpdateAccountDetailsRequest) (*types.Account, error) {
+	var query string
+	var args []any
+	const (
+		UpdateTypeEmail   = "Email"
+		UpdateTypePhone   = "Phone"
+		UpdateTypeAddress = "Address"
+	)
+	switch in.Type {
+	case UpdateTypeEmail:
+		err := s.UpdateAuthEmail(*ctx, in.AccountID, in.Email)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update email in auth service: %v", err)
+		}
+		query = "UPDATE account SET email = $1 WHERE id = $2"
+		args = []any{in.Email, in.AccountID}
+	case UpdateTypePhone:
+		query = "UPDATE account SET phone_number = $1 WHERE id = $2"
+		args = []any{in.Phone, in.AccountID}
+	case UpdateTypeAddress:
+		query = "UPDATE account SET address = $1 WHERE id = $2"
+		args = []any{in.Address, in.AccountID}
+	default:
+		return nil, fmt.Errorf("invalid update type: %s", in.Type)
+	}
 
-// This too i guess
+	_, err := s.db.Exec(*ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update account: %v", err)
+	}
+
+	res, err := s.FetchUserById(ctx, in.AccountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated account: %v", err)
+	}
+
+	return &res.Account, nil
+}
+
+func (s *AccountService) UpdateAccountStatus(c *context.Context, in *types.UpdateAccountStatusRequest) (*types.Account, error) {
+	var query string
+	const (
+		DEACTIVATE_ACCOUNT = "DEACTIVATE"
+		REACTIVATE_ACCOUNT = "ACTIVATE"
+		SUSPEND_ACCOUNT    = "SUSPEND"
+	)
+	switch in.Type {
+	case DEACTIVATE_ACCOUNT:
+		query = `UPDATE account SET account_status = 'Closed' WHERE id = $1`
+	case REACTIVATE_ACCOUNT:
+		query = `UPDATE account set account_status = 'Active' WHERE id = $1`
+	case SUSPEND_ACCOUNT:
+		query = `UPDATE account set account_status = 'Suspended' WHERE id = $1`
+	}
+	_, err := s.db.Exec(*c, query, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	res, err := s.FetchUserById(c, in.AccountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated account: %v", err)
+	}
+
+	return &res.Account, nil
+}
+
+// Helper functions
 func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string, error) {
 	var encrypted_password string
 	query := `SELECT encrypted_password FROM auth.users WHERE id = $1;`
@@ -298,4 +373,16 @@ func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string
 		return "", fmt.Errorf("error querying auth user: %v", err)
 	}
 	return encrypted_password, nil
+}
+func (s *AccountService) UpdateAuthEmail(ctx context.Context, id, email string) error {
+	var auth_id string
+	err := s.db.QueryRow(ctx, "SELECT auth_id from account WHERE id = $1", id).Scan(&auth_id)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(ctx, "UPDATE auth.users SET email = $1 WHERE id = $2", email, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

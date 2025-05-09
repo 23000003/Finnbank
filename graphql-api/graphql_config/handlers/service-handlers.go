@@ -3,16 +3,18 @@ package handlers
 import (
 	"finnbank/common/grpc/auth"
 	"finnbank/common/grpc/products"
+	"finnbank/common/grpc/statement"
 	"finnbank/common/utils"
 	"finnbank/graphql-api/graphql_config/resolvers"
 	"finnbank/graphql-api/grpc_client"
+	q "finnbank/graphql-api/queue"
 	sv "finnbank/graphql-api/services"
 	"finnbank/graphql-api/types"
-	q "finnbank/graphql-api/queue"
 	"fmt"
 	"net/http"
 	"os"
 
+	"github.com/gorilla/websocket"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 )
@@ -115,7 +117,7 @@ func (g *StructGraphQLHandler) BankCardServicesHandler(connAddress string) *hand
 	return bankcardHandler
 }
 
-func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *handler.Handler {
+func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string, notifConn *websocket.Conn) *handler.Handler {
 
 	// Follow AccountServiceHandler | OpenedAccountServicesHandler
 
@@ -126,7 +128,7 @@ func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *
 
 	notifSchema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query:    g.r.GetNotificationQueryType(notifService),
-		Mutation: g.r.GetNotificationMutationType(notifService),
+		Mutation: g.r.GetNotificationMutationType(notifService, notifConn),
 	})
 	if err != nil {
 		g.l.Fatal("Failed to configure Notification Handler Schema: %v", err)
@@ -144,12 +146,27 @@ func (g *StructGraphQLHandler) NotificationServicesHandler(connAddress string) *
 
 func (g *StructGraphQLHandler) StatementServicesHandler(connAddress string) *handler.Handler {
 
-	// Follow AccountServiceHandler | OpenedAccountServicesHandler
+	grpcConnection := grpc_client.NewGRPCClient(connAddress)
+	statementServer := statement.NewStatementServiceClient(grpcConnection)
 
-	// grpcConnection := grpc_client.NewGRPCClient(connAddress)
-	// proto server
+	STservice := sv.NewStatementService(g.db.AccountDBPool, g.l, statementServer)
 
-	return nil
+	accountSchema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query:    g.r.GetStatementQueryType(STservice),
+		},
+	)
+	if err != nil {
+		g.l.Fatal("Failed to configure Statement Handler Schema: %v", err)
+	}
+
+	statementHandler := handler.New(&handler.Config{
+		Schema:   &accountSchema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	return statementHandler
 }
 
 func mergeFields(fieldMaps ...graphql.Fields) graphql.Fields {
@@ -162,7 +179,7 @@ func mergeFields(fieldMaps ...graphql.Fields) graphql.Fields {
 	return out
 }
 
-func (g *StructGraphQLHandler) transactionServicesHandler(queue *q.Queue) (http.Handler, error) {
+func (g *StructGraphQLHandler) transactionServicesHandler(queue *q.Queue, transacConn *websocket.Conn) (http.Handler, error) {
 	if g.db.TransactionDBPool == nil {
 		return nil, fmt.Errorf("transaction DB pool is not initialized")
 	}
@@ -171,7 +188,7 @@ func (g *StructGraphQLHandler) transactionServicesHandler(queue *q.Queue) (http.
 	// pull the three field-maps
 	q1 := g.r.TransactionQueryFields(txSvc)
 	q2 := g.r.TransactionTimeQueryFields(txSvc)
-	m := g.r.TransactionMutationFields(txSvc)
+	m := g.r.TransactionMutationFields(txSvc, transacConn)
 
 	// build root Query and Mutation
 	rootQuery := graphql.NewObject(graphql.ObjectConfig{
@@ -200,8 +217,8 @@ func (g *StructGraphQLHandler) transactionServicesHandler(queue *q.Queue) (http.
 	return h, nil
 }
 
-func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string, queue *q.Queue) *handler.Handler {
-	h, err := g.transactionServicesHandler(queue)
+func (g *StructGraphQLHandler) TransactionServicesHandler(connAddress string, queue *q.Queue, transacConn *websocket.Conn) *handler.Handler {
+	h, err := g.transactionServicesHandler(queue, transacConn)
 	if err != nil {
 		g.l.Fatal("Could not initialize TransactionServicesHandler: %v", err)
 	}
