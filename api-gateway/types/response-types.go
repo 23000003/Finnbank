@@ -224,6 +224,24 @@ type GetAllTransactionsGraphQLResponse struct {
 	Errors any `json:"errors"`
 }
 
+type GetAllTransactionsByTimeStampGraphQLResponse struct {
+	Data struct {
+		GetTransactionsByTimeStampByUserId []struct {
+			TransactionID     int       `json:"transaction_id"`
+			RefNo             string    `json:"ref_no"`
+			SenderID          int       `json:"sender_id"`
+			ReceiverID        int       `json:"receiver_id"`
+			TransactionType   string    `json:"transaction_type"`
+			Amount            float64   `json:"amount"`
+			TransactionStatus string    `json:"transaction_status"`
+			DateTransaction   time.Time `json:"date_transaction"`
+			TransactionFee    float64   `json:"transaction_fee"`
+			Notes             string    `json:"notes"`
+		} `json:"getTransactionsByTimeStampByUserId"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
 type CreateTransactionsGraphQLResponse struct {
 	Data struct {
 		CreateTransaction struct {

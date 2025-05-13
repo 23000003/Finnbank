@@ -200,15 +200,15 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 ) ([]t.Transaction, error) {
 
 	query := `
-        SELECT
-          transaction_id, ref_no, sender_id, receiver_id,
-          transaction_type, amount, transaction_status,
-          date_transaction, transaction_fee, notes
-        FROM public.transactions
-        WHERE sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3)
-          AND date_transaction BETWEEN $4 AND $5
-        ORDER BY date_transaction;
-    `
+		SELECT
+		  transaction_id, ref_no, sender_id, receiver_id,
+		  transaction_type, amount, transaction_status,
+		  date_transaction, transaction_fee, notes
+		FROM public.transactions
+		WHERE (sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3))
+		  AND date_transaction BETWEEN $4 AND $5
+		ORDER BY date_transaction DESC;
+	`
 
 	rows, err := s.db.Query(ctx, query, creditId, debitId, savingsId, start, end)
 	if err != nil {

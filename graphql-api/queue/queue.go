@@ -101,7 +101,7 @@ func (q *Queue) StartAutoDequeue(OADBPool *pgxpool.Pool, TXDBPool *pgxpool.Pool,
 							q.l.Error("Failed to send transaction update: %v", err)
 						}
 					} else {
-						err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, senderId, openAccAmount)
+						err1 := h.DeductOpenedAccountBalance(q.ctx, OADBPool, senderId, receiverId, openAccAmount)
 						err2 := h.SendTransactionUpdate(q.ctx, transacConn, transacId, "COMPLETED")
 						if err1 != nil {
 							q.l.Error("Failed to deduct opened account balance: %v", err1)

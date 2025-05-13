@@ -34,7 +34,8 @@ func (s *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx context.Context,
 			openedaccount_id, bankcard_id, balance, 
 			account_type, openedaccount_status, date_created, account_number
 		FROM openedaccount 
-		WHERE account_id = $1`,
+		WHERE account_id = $1
+		ORDER BY openedaccount_id ASC`,
 		id,
 	)
 	if err != nil {

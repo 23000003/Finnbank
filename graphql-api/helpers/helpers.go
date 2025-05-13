@@ -85,7 +85,7 @@ func FailedTransaction(ctx context.Context, db *pgxpool.Pool, transacId int) err
 	return nil
 }
 
-func DeductOpenedAccountBalance(ctx context.Context, db *pgxpool.Pool, openAccId int, amount float64) error {
+func DeductOpenedAccountBalance(ctx context.Context, db *pgxpool.Pool, senderId int, receiverId int, amount float64) error {
 	conn, err := db.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %w", err)
@@ -97,10 +97,19 @@ func DeductOpenedAccountBalance(ctx context.Context, db *pgxpool.Pool, openAccId
 		 RETURNING openedaccount_id`
 
 	var open_acc_id int
-	err = conn.QueryRow(ctx, query, amount, openAccId).Scan(&open_acc_id)
+	err = conn.QueryRow(ctx, query, amount, senderId).Scan(&open_acc_id)
 
 	if err != nil {
 		return fmt.Errorf("deduct update failed: %w", err)
+	}
+
+	query = `UPDATE openedaccount SET balance = balance + $1
+		 WHERE openedaccount_id = $2
+		 RETURNING openedaccount_id`
+
+	err = conn.QueryRow(ctx, query, amount, receiverId).Scan(&open_acc_id)
+	if err != nil {
+		return fmt.Errorf("add update failed: %w", err)
 	}
 
 	return nil

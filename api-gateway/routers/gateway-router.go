@@ -72,6 +72,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	transaction.Use(middleware.AuthMiddleware())
 	{
 		transaction.GET("/get-all", gr.s.TransactionService.GetTransactionByOpenAccountId)
+		transaction.GET("/get-all-by-timestamp", gr.s.TransactionService.GetTransactionByTimestamp)
 		transaction.POST("/generate-transaction", gr.s.TransactionService.CreateTransaction)
 	}
 
