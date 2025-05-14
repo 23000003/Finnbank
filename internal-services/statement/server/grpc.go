@@ -15,12 +15,12 @@ import (
 // START THE GRPC SERVER HERE PLEAESE AND RETURN THE CLIENT
 func StartGrpcServer(s service.StatementService, logger *utils.Logger) error {
 	// START THE GRPC SERVER HERE PLEAESE AND RETURN THE CLIENT
-	lis, err := net.Listen("tcp", "localhost:8084")
+	lis, err := net.Listen("tcp", "localhost:9004")
 	if err != nil {
-		logger.Fatal("Could not start gRPC server on port 8084: %s", err)
+		logger.Fatal("Could not start gRPC server on port 9004: %s", err)
 		return err
 	}
-	logger.Info("Port 8084 listening success")
+	logger.Info("Port 9004 listening success")
 	grpcServer := grpc.NewServer()
 	statement.RegisterStatementServiceServer(grpcServer, &s)
 	c := make(chan os.Signal, 1)

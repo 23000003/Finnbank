@@ -19,16 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StatementService_AddStatement_FullMethodName = "/StatementService/AddStatement"
-	StatementService_GetStatement_FullMethodName = "/StatementService/GetStatement"
+	StatementService_GenerateStatement_FullMethodName = "/StatementService/GenerateStatement"
 )
 
 // StatementServiceClient is the client API for StatementService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StatementServiceClient interface {
-	AddStatement(ctx context.Context, in *AddStatementRequest, opts ...grpc.CallOption) (*AddStatementResponse, error)
-	GetStatement(ctx context.Context, in *GetStatementRequest, opts ...grpc.CallOption) (*GetStatementResponse, error)
+	GenerateStatement(ctx context.Context, in *ClientRequest, opts ...grpc.CallOption) (*ClientResponse, error)
 }
 
 type statementServiceClient struct {
@@ -39,20 +37,10 @@ func NewStatementServiceClient(cc grpc.ClientConnInterface) StatementServiceClie
 	return &statementServiceClient{cc}
 }
 
-func (c *statementServiceClient) AddStatement(ctx context.Context, in *AddStatementRequest, opts ...grpc.CallOption) (*AddStatementResponse, error) {
+func (c *statementServiceClient) GenerateStatement(ctx context.Context, in *ClientRequest, opts ...grpc.CallOption) (*ClientResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddStatementResponse)
-	err := c.cc.Invoke(ctx, StatementService_AddStatement_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *statementServiceClient) GetStatement(ctx context.Context, in *GetStatementRequest, opts ...grpc.CallOption) (*GetStatementResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetStatementResponse)
-	err := c.cc.Invoke(ctx, StatementService_GetStatement_FullMethodName, in, out, cOpts...)
+	out := new(ClientResponse)
+	err := c.cc.Invoke(ctx, StatementService_GenerateStatement_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +51,7 @@ func (c *statementServiceClient) GetStatement(ctx context.Context, in *GetStatem
 // All implementations must embed UnimplementedStatementServiceServer
 // for forward compatibility.
 type StatementServiceServer interface {
-	AddStatement(context.Context, *AddStatementRequest) (*AddStatementResponse, error)
-	GetStatement(context.Context, *GetStatementRequest) (*GetStatementResponse, error)
+	GenerateStatement(context.Context, *ClientRequest) (*ClientResponse, error)
 	mustEmbedUnimplementedStatementServiceServer()
 }
 
@@ -75,11 +62,8 @@ type StatementServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedStatementServiceServer struct{}
 
-func (UnimplementedStatementServiceServer) AddStatement(context.Context, *AddStatementRequest) (*AddStatementResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddStatement not implemented")
-}
-func (UnimplementedStatementServiceServer) GetStatement(context.Context, *GetStatementRequest) (*GetStatementResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStatement not implemented")
+func (UnimplementedStatementServiceServer) GenerateStatement(context.Context, *ClientRequest) (*ClientResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateStatement not implemented")
 }
 func (UnimplementedStatementServiceServer) mustEmbedUnimplementedStatementServiceServer() {}
 func (UnimplementedStatementServiceServer) testEmbeddedByValue()                          {}
@@ -102,38 +86,20 @@ func RegisterStatementServiceServer(s grpc.ServiceRegistrar, srv StatementServic
 	s.RegisterService(&StatementService_ServiceDesc, srv)
 }
 
-func _StatementService_AddStatement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddStatementRequest)
+func _StatementService_GenerateStatement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StatementServiceServer).AddStatement(ctx, in)
+		return srv.(StatementServiceServer).GenerateStatement(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StatementService_AddStatement_FullMethodName,
+		FullMethod: StatementService_GenerateStatement_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatementServiceServer).AddStatement(ctx, req.(*AddStatementRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StatementService_GetStatement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatementRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StatementServiceServer).GetStatement(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: StatementService_GetStatement_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatementServiceServer).GetStatement(ctx, req.(*GetStatementRequest))
+		return srv.(StatementServiceServer).GenerateStatement(ctx, req.(*ClientRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -146,12 +112,8 @@ var StatementService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*StatementServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddStatement",
-			Handler:    _StatementService_AddStatement_Handler,
-		},
-		{
-			MethodName: "GetStatement",
-			Handler:    _StatementService_GetStatement_Handler,
+			MethodName: "GenerateStatement",
+			Handler:    _StatementService_GenerateStatement_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

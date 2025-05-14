@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,4 +21,9 @@ type StructServiceDatabasePools struct {
 	TransactionDBPool   *pgxpool.Pool
 	NotificationDBPool  *pgxpool.Pool
 	OpenedAccountDBPool *pgxpool.Pool
+}
+
+type StructWebSocketConnections struct {
+	TransactionConn *websocket.Conn
+	NotificationConn   *websocket.Conn
 }

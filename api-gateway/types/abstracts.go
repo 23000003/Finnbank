@@ -12,6 +12,7 @@ type ApiGatewayServices struct {
 	BankcardService      IBankcardService
 	NotificationService  INotificationService
 	OpenedAccountService IOpenedAccountService
+	RealTimeService      IRealTimeService
 }
 
 type IProductService interface {
@@ -25,9 +26,13 @@ type IProductService interface {
 type IAccountService interface {
 	LoginUser(*gin.Context)
 	SignupUser(*gin.Context)
+	GetUserAccountById(*gin.Context)
 	GetUserAccountByAccountNumber(*gin.Context)
 	GetUserAccountByEmail(*gin.Context)
 	UpdateUserPassword(*gin.Context)
+	UpdateUserDetails(*gin.Context)
+	UpdateUser(c *gin.Context)
+	UpdateAccountStatus(c *gin.Context)
 }
 
 type IStatementService interface {
@@ -35,27 +40,36 @@ type IStatementService interface {
 }
 
 type ITransactionService interface {
-	GetAllTransaction(*gin.Context)
-	GetTransaction(*gin.Context)
-	GenerateTransaction(*gin.Context) // post req
+	GetTransactionByOpenAccountId(*gin.Context)
+	CreateTransaction(*gin.Context) // post req
 }
 
 type IBankcardService interface {
-	GetUserBankcard(*gin.Context)
-	GenerateBankcardForUser(*gin.Context) // post req
-	RenewBankcardForUser(*gin.Context)    // update req
+	GetAllBankCardOfUserById(*gin.Context)
+	UpdateBankcardExpiryDateByUserId(*gin.Context) // update req
+	UpdateBankcardPinNumberById(*gin.Context)
 }
 
 type INotificationService interface {
-	GetUserNotifications(*gin.Context)
-	GenerateNotification(*gin.Context)   // post req
-	MarkAsReadNotification(*gin.Context) // update req
-	DeleteNotification(*gin.Context)
+	GetAllNotificationByUserId(*gin.Context)
+	GetAllUnreadNotificationByUserId(*gin.Context)
+	GetNotificationByUserId(*gin.Context)
+	GenerateNotification(*gin.Context)     // post req
+	ReadNotificationByUserId(*gin.Context) // update req
 }
 
 type IOpenedAccountService interface {
 	GetAllOpenedAccountsByUserId(*gin.Context)
 	GetOpenedAccountOfUserById(*gin.Context)
+	GetOpenedAccountIdByAccountNumber(*gin.Context)
+	GetBothAccountNumberForReceipt(*gin.Context)
 	OpenAnAccountByAccountType(*gin.Context)
 	UpdateOpenedAccountStatus(*gin.Context)
+	GetUserIdByOpenedAccountId(*gin.Context)
+}
+
+type IRealTimeService interface {
+	GetRealTimeTransaction(*gin.Context)
+	GetRealTimeNotification(*gin.Context)
+	Shutdown()
 }

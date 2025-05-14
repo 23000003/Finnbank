@@ -36,6 +36,7 @@ func (a *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx *gin.Context) {
 			account_type
 			date_created
 			openedaccount_status
+			account_number
 		}
 	}`, id)
 
@@ -67,7 +68,6 @@ func (a *OpenedAccountService) GetAllOpenedAccountsByUserId(ctx *gin.Context) {
 		return
 	}
 
-	a.log.Info("Response data: %+v", data.Data.GetAll)
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetAll})
 }
 
@@ -91,6 +91,7 @@ func (a *OpenedAccountService) GetOpenedAccountOfUserById(ctx *gin.Context) {
 			account_type
 			date_created
 			openedaccount_status
+			account_number
 		}
 	}`, id)
 
@@ -125,6 +126,138 @@ func (a *OpenedAccountService) GetOpenedAccountOfUserById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetById})
 }
 
+func (a *OpenedAccountService) GetUserIdByOpenedAccountId(ctx *gin.Context) {
+
+	id, err := strconv.Atoi(ctx.Param("id"))
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid account id"})
+		return
+	}
+
+	a.log.Info("GetOpenedAccount: %v", id)
+
+	query := fmt.Sprintf(`{
+		get_by_id(openedaccount_id: %d) {
+			account_id
+		}
+	}`, id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetUserIdByOpenedAccountIdGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetById})
+}
+
+func (a *OpenedAccountService) GetOpenedAccountIdByAccountNumber(ctx *gin.Context) {
+	id := ctx.Param("acc_num")
+
+	query := fmt.Sprintf(`{
+		find_by_account_num(account_number: "%s")
+	}`, id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetOpenedAccountIdGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.FindByAccountNum})
+}
+
+func (a *OpenedAccountService) GetBothAccountNumberForReceipt(ctx *gin.Context) {
+
+	sent_id, err := strconv.Atoi(ctx.Param("sent_id"))
+	receive_id, err1 := strconv.Atoi(ctx.Param("receive_id"))
+
+	if err != nil || err1 != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid account id"})
+		return
+	}
+
+	query := fmt.Sprintf(`{
+		find_both_account_num(sender_id: %d, receiver_id: %d) {
+			openedaccount_id
+			account_number
+		}
+	}`, sent_id, receive_id)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetBothAccountNumberGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.FindBothAccountNumber})
+}
 
 func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 
@@ -135,11 +268,11 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 		return
 	}
 
-	a.log.Info("OpenAnAccountByAccountType: %s %s %f", req.AccountId, req.AccountType, req.Balance)
+	a.log.Info("OpenAnAccountByAccountType: %s", req.AccountId)
 
 	// http://localhost:8083/graphql/opened-account?query=mutation+_{create_account(account_id:1,account_type:"string",balance:1.99){<entities>}}
 	query := fmt.Sprintf(`mutation {
-		create_account(account_id: "%s", account_type: "%s", balance: %f) {
+		create_account(account_id: "%s") {
 			openedaccount_id
 			bankcard_id
 			balance
@@ -147,7 +280,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 			date_created
 			openedaccount_status
 		}
-	}`, req.AccountId, req.AccountType, req.Balance)
+	}`, req.AccountId)
 
 	qlrequestBody := map[string]interface{}{
 		"query": query,
@@ -178,8 +311,7 @@ func (a *OpenedAccountService) OpenAnAccountByAccountType(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.CreateAccount})
-
+	ctx.JSON(http.StatusOK, gin.H{"data": "Opened account created successfully"})
 }
 
 func (a *OpenedAccountService) UpdateOpenedAccountStatus(ctx *gin.Context) {

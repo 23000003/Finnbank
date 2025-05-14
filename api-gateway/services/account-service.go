@@ -61,10 +61,11 @@ func (a *AccountService) LoginUser(ctx *gin.Context) {
 			access_token
 			full_name
 			account_id
+			account_status
 		}
 	}`, req.Email, req.Password)
 
-	qlrequestBody := map[string]interface{}{
+	qlrequestBody := map[string]any{
 		"query": query,
 	}
 	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
@@ -111,12 +112,11 @@ func (a *AccountService) SignupUser(ctx *gin.Context) {
 	// {email, auth_id, full_name}}
 	query := fmt.Sprintf(`mutation {
 		create_account( account : { email: "%s", password: "%s", first_name: "%s", last_name: "%s", phone_number: "%s", address: "%s", account_type: "%s", nationality: "%s" } ) {
-			email
-			auth_id
+			account_id
 		}
 	}`, req.Email, req.Password, req.FirstName, req.LastName, req.PhoneNumber, req.Address, req.AccountType, req.Nationality)
 
-	qlrequestBody := map[string]interface{}{
+	qlrequestBody := map[string]any{
 		"query": query,
 	}
 	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
@@ -145,10 +145,10 @@ func (a *AccountService) SignupUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": "Registered successfully"})
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.CreateAccount})
 }
 
-func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
+func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 
 	id := ctx.Param("id")
 
@@ -158,14 +158,23 @@ func (a *AccountService) GetAccountNumberById(ctx *gin.Context) {
 	// To add : account status, nationalIdNumber
 	query := fmt.Sprintf(`{
 		account_by_id(id: "%s") {
-			email
-			full_name
-			phone_number
-			date_created
+			account_id
+			account_status
+			account_type
 			account_number
 			address
-			nationality,
-			account_type
+			auth_id
+			birthdate
+			date_created
+			date_updated
+			email
+			first_name
+			has_card
+			last_name
+			middle_name
+			national_id
+			nationality
+			phone_number
 		}
 	}`, id)
 
@@ -389,4 +398,186 @@ func (a *AccountService) UpdateUserPassword(c *gin.Context) {
 
 	fmt.Println("RAW GQL Response:", string(body))
 	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully", "id": res.Data.UpdatedPassword.AccountID})
+}
+
+func (a *AccountService) UpdateUser(c *gin.Context) {
+	var req struct {
+		AccountID  string `json:"account_id"`
+		FirstName  string `json:"first_name"`
+		MiddleName string `json:"middle_name"`
+		LastName   string `json:"last_name"`
+		Email      string `json:"email"`
+		Phone      string `json:"phone"`
+		Address    string `json:"address"`
+	}
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	query := fmt.Sprintf(`mutation{
+	update_user(UpdateAccountInput:{
+		account_id: "%s"
+		first_name: "%s"
+		middle_name: "%s"
+		last_name: "%s"
+		email: "%s"
+		phone: "%s"
+		address: "%s"
+		}){
+		account_id
+		}
+	}`, req.AccountID, req.FirstName, req.MiddleName, req.LastName, req.Email, req.Phone, req.Address)
+
+	qlRequestBody := map[string]any{
+		"query": query,
+	}
+	qlRequestJSON, _ := json.Marshal(qlRequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlRequestJSON))
+	if err != nil {
+		a.log.Info("GraphQL Request Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Decode response
+	var res struct {
+		Data struct {
+			AccountID string `json:"account_id"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	fmt.Println("RAW GQL Response:", string(body))
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+}
+
+func (a *AccountService) UpdateUserDetails(c *gin.Context) {
+	var req struct {
+		AccountID string `json:"account_id"`
+		Type      string `json:"type"`
+		Email     string `json:"email"`
+		Phone     string `json:"phone"`
+		Address   string `json:"address"`
+	}
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	query := fmt.Sprintf(`mutation{
+	update_user_details(UpdateAccountDetailsInput:{
+		account_id: "%s"
+		email: "%s"
+		phone: "%s"
+		address: "%s"
+		type: "%s"
+		}){
+		account_id
+		}
+	}`, req.AccountID, req.Email, req.Phone, req.Address, req.Type)
+
+	qlRequestBody := map[string]any{
+		"query": query,
+	}
+	qlRequestJSON, _ := json.Marshal(qlRequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlRequestJSON))
+	if err != nil {
+		a.log.Info("GraphQL Request Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Decode response
+	var res struct {
+		Data struct {
+			AccountID string `json:"account_id"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	fmt.Println("RAW GQL Response:", string(body))
+	c.JSON(http.StatusOK, gin.H{"message": "User details updated successfully"})
+}
+func (a *AccountService) UpdateAccountStatus(c *gin.Context) {
+	var req struct {
+		AccountID string `json:"account_id"`
+		Type      string `json:"type"`
+	}
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	query := fmt.Sprintf(`mutation {
+	update_account_status(
+		UpdateAccountStatusInput: {
+		account_id: "%s"
+		type: "%s"
+		}
+		) {
+			account_id
+		}
+	}
+	`, req.AccountID, req.Type)
+
+	qlRequestBody := map[string]any{
+		"query": query,
+	}
+	qlRequestJSON, _ := json.Marshal(qlRequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlRequestJSON))
+	if err != nil {
+		a.log.Info("GraphQL Request Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Decode response
+	var res struct {
+		Data struct {
+			AccountID string `json:"account_id"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	fmt.Println("RAW GQL Response:", string(body))
+	c.JSON(http.StatusOK, gin.H{"message": "Account status updated succesfully"})
+
 }

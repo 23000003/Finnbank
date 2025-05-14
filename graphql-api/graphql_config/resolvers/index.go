@@ -17,13 +17,11 @@ func NewGraphQLResolvers(log *utils.Logger) *StructGraphQLResolvers {
 	}
 }
 
+var bankCardType *graphql.Object = entities.GetBankCardEntity()
 var productType *graphql.Object = entities.GetProductEntityType()
 var accountType *graphql.Object = entities.GetAccountEntityType()
-var openedAccountType *graphql.Object = entities.GetOpenedAccountEntityType()
-var bankCardType *graphql.Object = entities.GetAccountEntityType()
-var notificationType *graphql.Object = entities.GetNotificationEntityType()
 var transactionType *graphql.Object = entities.GetTransactionEntityType()
+var notificationType *graphql.Object = entities.GetNotificationEntityType()
+var openedAccountType *graphql.Object = entities.GetOpenedAccountEntityType()
 var transactionInputType *graphql.InputObject = entities.GetTransactionInputType()
-
-// === Unused Warning ==
-// var transaction_type *graphql.Object = entities.GetTransactionEntityType()
+var statementType *graphql.Object = entities.GetStatementEntityType()

@@ -5,9 +5,11 @@ package services
 import (
 	"context"
 	"finnbank/common/utils"
+	t "finnbank/graphql-api/types"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,36 +25,26 @@ func NewNotificationService(db *pgxpool.Pool, logger *utils.Logger) *Notificatio
 	}
 }
 
-type Notification struct {
-	NotifID       string     `json:"notif_id"`
-	NotifType     string     `json:"notif_type"`
-	NotifToID     string     `json:"notif_to_id"`
-	NotifFromName string     `json:"notif_from_name"`
-	Content       string     `json:"content"`
-	IsRead        bool       `json:"is_read"`
-	RedirectURL   string     `json:"redirect_url"`
-	DateNotified  time.Time  `json:"date_notified"`
-	DateRead      *time.Time `json:"date_read"` // pointer for nullable
-}
 
 // GetAllNotificationByUserId, (Query)
-func (s *NotificationService) GetAllNotificationByUserId(notifToID string) ([]Notification, error) {
+func (s *NotificationService) GetAllNotificationByUserId(notifToID string, limit int) ([]t.Notification, error) {
 	rows, err := s.db.Query(context.Background(), `
 		SELECT notif_id, notif_type, notif_to_id, notif_from_name,
 		       content, is_read, redirect_url, date_notified, date_read
 		FROM notifications
 		WHERE notif_to_id = $1
 		ORDER BY date_notified DESC
-	`, notifToID)
+		LIMIT $2
+	`, notifToID, limit)
 	if err != nil {
 		s.l.Error("DB query failed: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var notifications []Notification
+	var notifications []t.Notification
 	for rows.Next() {
-		var notif Notification
+		var notif t.Notification
 		err := rows.Scan(
 			&notif.NotifID, &notif.NotifType, &notif.NotifToID,
 			&notif.NotifFromName, &notif.Content, &notif.IsRead,
@@ -67,8 +59,60 @@ func (s *NotificationService) GetAllNotificationByUserId(notifToID string) ([]No
 	return notifications, nil
 }
 
+func (s *NotificationService) GetAllUnreadNotificationByUserId(notifToID string) (*t.UnreadAndTotalNotification, error) {
+	var unreadAndTotal t.UnreadAndTotalNotification
+	err := s.db.QueryRow(context.Background(), `
+		SELECT COUNT(*)
+		FROM notifications
+		WHERE notif_to_id = $1 AND is_read = FALSE
+	`, notifToID).Scan(&unreadAndTotal.UnreadNotification)
+
+	if err != nil {
+		s.l.Error("Unread Notif DB query failed: %v", err)
+		return nil, err
+	}
+
+	err1 := s.db.QueryRow(context.Background(), `
+		SELECT COUNT(*)
+		FROM notifications
+		WHERE notif_to_id = $1
+	`, notifToID).Scan(&unreadAndTotal.TotalNotification)
+
+	if err1 != nil {
+		s.l.Error("Total Notif DB query failed: %v", err1)
+		return nil, err1
+	}
+
+
+	return &unreadAndTotal, nil
+}
+
+// GetNotificationByUserId, (Query)
+func (s *NotificationService) GetNotificationByUserId(notifID string) (*t.Notification, error) {
+	query := `
+		SELECT notif_id, notif_type, notif_to_id, notif_from_name,
+		       content, is_read, redirect_url, date_notified, date_read
+		FROM notifications
+		WHERE notif_id = $1
+	`
+
+	var notif t.Notification
+	err := s.db.QueryRow(context.Background(), query, notifID).Scan(
+		&notif.NotifID, &notif.NotifType, &notif.NotifToID,
+		&notif.NotifFromName, &notif.Content, &notif.IsRead,
+		&notif.RedirectURL, &notif.DateNotified, &notif.DateRead,
+	)
+
+	if err != nil {
+		s.l.Error("GetNotificationByUserId failed: %v", err)
+		return nil, err
+	}
+
+	return &notif, nil
+}
+
 // GenerateNotification, (Mutation)
-func (s *NotificationService) GenerateNotification(notif Notification) (*Notification, error) {
+func (s *NotificationService) GenerateNotification(notif t.Notification, notifConn *websocket.Conn) (*t.Notification, error) {
 	notifID := uuid.New().String()  // Generate UUID
 	notif.NotifID = notifID         // Assign it to the model
 	notif.DateNotified = time.Now() // Make sure this is set before insert
@@ -104,27 +148,21 @@ func (s *NotificationService) GenerateNotification(notif Notification) (*Notific
 	notif.NotifID = returnedID
 	notif.DateNotified = dateNotified
 
-	return &notif, nil
-}
 
-// GetNotificationByUserId, (Query)
-func (s *NotificationService) GetNotificationByUserId(notifID string) (*Notification, error) {
-	query := `
-		SELECT notif_id, notif_type, notif_to_id, notif_from_name,
-		       content, is_read, redirect_url, date_notified, date_read
-		FROM notifications
-		WHERE notif_id = $1
-	`
+	sendNotif := t.Notification{
+		NotifID:       notif.NotifID,
+		NotifType:     notif.NotifType,
+		NotifToID:     notif.NotifToID,
+		NotifFromName: notif.NotifFromName,
+		Content:       notif.Content,
+		IsRead:        notif.IsRead,
+		RedirectURL:   notif.RedirectURL,
+		DateNotified:  notif.DateNotified,
+	}
 
-	var notif Notification
-	err := s.db.QueryRow(context.Background(), query, notifID).Scan(
-		&notif.NotifID, &notif.NotifType, &notif.NotifToID,
-		&notif.NotifFromName, &notif.Content, &notif.IsRead,
-		&notif.RedirectURL, &notif.DateNotified, &notif.DateRead,
-	)
-
-	if err != nil {
-		s.l.Error("GetNotificationByUserId failed: %v", err)
+	// Send the notification to the WebSocket connection
+	if err := notifConn.WriteJSON(sendNotif); err != nil {
+		s.l.Error("Error sending notification: %v", err)
 		return nil, err
 	}
 

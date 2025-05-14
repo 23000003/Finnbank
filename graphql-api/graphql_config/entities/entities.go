@@ -11,18 +11,10 @@ func GetProductEntityType() *graphql.Object {
 		graphql.ObjectConfig{
 			Name: "Product",
 			Fields: graphql.Fields{
-				"id": &graphql.Field{
-					Type: graphql.Int,
-				},
-				"name": &graphql.Field{
-					Type: graphql.String,
-				},
-				"info": &graphql.Field{
-					Type: graphql.String,
-				},
-				"price": &graphql.Field{
-					Type: graphql.Float,
-				},
+				"id":    &graphql.Field{Type: graphql.Int},
+				"name":  &graphql.Field{Type: graphql.String},
+				"info":  &graphql.Field{Type: graphql.String},
+				"price": &graphql.Field{Type: graphql.Float},
 			},
 		},
 	)
@@ -33,141 +25,42 @@ func GetAccountEntityType() *graphql.Object {
 		graphql.ObjectConfig{
 			Name: "Account",
 			Fields: graphql.Fields{
-				"account_id": &graphql.Field{
-					Type: graphql.String, // UUID in DB
-				},
-				"email": &graphql.Field{
-					Type: graphql.String,
-				},
-
-				"first_name": &graphql.Field{
-					Type: graphql.String,
-				},
-
-				"middle_name": &graphql.Field{
-					Type: graphql.String,
-				},
-
-				"last_name": &graphql.Field{
-					Type: graphql.String,
-				},
-				"phone_number": &graphql.Field{
-					Type: graphql.String,
-				},
-				"password": &graphql.Field{
-					Type: graphql.String, // encrypted
-				},
-				"date_created": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-				"date_updated": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-				"account_number": &graphql.Field{
-					Type: graphql.String,
-				},
-				"has_card": &graphql.Field{
-					Type: graphql.Boolean,
-				},
-				"address": &graphql.Field{
-					Type: graphql.String,
-				},
-				"balance": &graphql.Field{
-					Type: graphql.Float,
-				},
-				"account_type": &graphql.Field{
-					Type: graphql.String,
-				},
-				"nationality": &graphql.Field{
-					Type: graphql.String,
-				},
-				"auth_id": &graphql.Field{
-					Type: graphql.String,
-				},
-				"birthdate": &graphql.Field{
-					Type: graphql.DateTime,
-				},
-				"national_id": &graphql.Field{
-					Type: graphql.String,
-				},
-				"account_status": &graphql.Field{
-					Type: graphql.String,
-				},
+				"account_id":     &graphql.Field{Type: graphql.String},
+				"email":          &graphql.Field{Type: graphql.String},
+				"first_name":     &graphql.Field{Type: graphql.String},
+				"middle_name":    &graphql.Field{Type: graphql.String},
+				"last_name":      &graphql.Field{Type: graphql.String},
+				"phone_number":   &graphql.Field{Type: graphql.String},
+				"password":       &graphql.Field{Type: graphql.String},
+				"date_created":   &graphql.Field{Type: graphql.DateTime},
+				"date_updated":   &graphql.Field{Type: graphql.DateTime},
+				"account_number": &graphql.Field{Type: graphql.String},
+				"has_card":       &graphql.Field{Type: graphql.Boolean},
+				"address":        &graphql.Field{Type: graphql.String},
+				"account_type":   &graphql.Field{Type: graphql.String},
+				"nationality":    &graphql.Field{Type: graphql.String},
+				"auth_id":        &graphql.Field{Type: graphql.String},
+				"birthdate":      &graphql.Field{Type: graphql.DateTime},
+				"national_id":    &graphql.Field{Type: graphql.String},
+				"account_status": &graphql.Field{Type: graphql.String},
 			},
 		},
 	)
 }
 
-var bankCardReponseType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "BankCardResponse",
-	Fields: graphql.Fields{
-		"id": &graphql.Field{
-			Type: graphql.Int,
-		},
-		"first_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"last_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"card_type": &graphql.Field{
-			Type: graphql.String,
-		},
-		"status": &graphql.Field{
-			Type: graphql.String,
-		},
-	},
-})
-
-var bankCardRequestType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "BankCardRequest",
-	Fields: graphql.Fields{
-		"first_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"last_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"card_type": &graphql.Field{
-			Type: graphql.String,
-		},
-	},
-})
-
 var bankCardEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "BankCardEntity",
 	Fields: graphql.Fields{
-		"first_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"last_name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"bankcard_number": &graphql.Field{
-			Type: graphql.String,
-		},
-		"bankcard_pin": &graphql.Field{
-			Type: graphql.String,
-		},
-		"card_type": &graphql.Field{
-			Type: graphql.String,
-		},
-		"expiry_date": &graphql.Field{
-			Type: graphql.DateTime,
-		},
-		"account_id": &graphql.Field{
-			Type: graphql.String,
-		},
+		"bankcard_id":  &graphql.Field{Type: graphql.Int},
+		"card_number":  &graphql.Field{Type: graphql.String},
+		"expiry_date":  &graphql.Field{Type: graphql.DateTime},
+		"account_id":   &graphql.Field{Type: graphql.String},
+		"cvv":          &graphql.Field{Type: graphql.String},
+		"pin_number":   &graphql.Field{Type: graphql.String},
+		"card_type":    &graphql.Field{Type: graphql.String},
+		"date_created": &graphql.Field{Type: graphql.DateTime},
 	},
 })
-
-func GetBankCardResponseEntity() *graphql.Object {
-	return bankCardReponseType
-}
-
-func GetBankCardRequestEntity() *graphql.Object {
-	return bankCardRequestType
-}
 
 func GetBankCardEntity() *graphql.Object {
 	return bankCardEntityType
@@ -176,10 +69,10 @@ func GetBankCardEntity() *graphql.Object {
 var TransactionEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Transaction",
 	Fields: graphql.Fields{
-		"transaction_id":     &graphql.Field{Type: graphql.String},
+		"transaction_id":     &graphql.Field{Type: graphql.Int},
 		"ref_no":             &graphql.Field{Type: graphql.String},
-		"sender_id":          &graphql.Field{Type: graphql.String},
-		"receiver_id":        &graphql.Field{Type: graphql.String},
+		"sender_id":          &graphql.Field{Type: graphql.Int},
+		"receiver_id":        &graphql.Field{Type: graphql.Int},
 		"transaction_type":   &graphql.Field{Type: ty.TransactionTypeEnum},
 		"amount":             &graphql.Field{Type: graphql.Float},
 		"transaction_status": &graphql.Field{Type: ty.TransactionStatusEnum},
@@ -194,8 +87,8 @@ var TransactionInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name: "TransactionInput",
 	Fields: graphql.InputObjectConfigFieldMap{
 		// "ref_no":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-		"sender_id":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-		"receiver_id":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		"sender_id":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+		"receiver_id":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
 		"transaction_type": &graphql.InputObjectFieldConfig{Type: ty.TransactionTypeEnum},
 		"amount":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Float)},
 		"transaction_fee":  &graphql.InputObjectFieldConfig{Type: graphql.Float},
@@ -226,7 +119,6 @@ var notificationEntityType = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		"notif_id":        &graphql.Field{Type: graphql.String},
 		"notif_type":      &graphql.Field{Type: notifTypeEnum},
-		"auth_id":         &graphql.Field{Type: graphql.String},
 		"notif_to_id":     &graphql.Field{Type: graphql.String},
 		"notif_from_name": &graphql.Field{Type: graphql.String},
 		"content":         &graphql.Field{Type: graphql.String},
@@ -247,12 +139,24 @@ func GetOpenedAccountEntityType() *graphql.Object {
 			Name: "OpenedAccount",
 			Fields: graphql.Fields{
 				"openedaccount_id":     &graphql.Field{Type: graphql.Int},
-				"account_id":           &graphql.Field{Type: graphql.Int},
+				"account_id":           &graphql.Field{Type: graphql.String},
 				"bankcard_id":          &graphql.Field{Type: graphql.Int},
 				"account_type":         &graphql.Field{Type: graphql.String},
 				"balance":              &graphql.Field{Type: graphql.Float},
 				"openedaccount_status": &graphql.Field{Type: graphql.String},
 				"date_created":         &graphql.Field{Type: graphql.DateTime},
+				"account_number":       &graphql.Field{Type: graphql.String},
+			},
+		},
+	)
+}
+
+func GetStatementEntityType() *graphql.Object {
+	return graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "OpenedAccount",
+			Fields: graphql.Fields{
+				"pdf_buffer": &graphql.Field{Type: graphql.String},
 			},
 		},
 	)

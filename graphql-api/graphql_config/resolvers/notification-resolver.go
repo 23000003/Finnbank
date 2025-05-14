@@ -3,8 +3,10 @@ package resolvers
 import (
 	"finnbank/graphql-api/graphql_config/entities"
 	sv "finnbank/graphql-api/services"
+	t "finnbank/graphql-api/types"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/graphql-go/graphql"
 )
 
@@ -20,10 +22,14 @@ func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.Notif
 					"notif_to_id": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
+					"limit": &graphql.ArgumentConfig{
+						Type: graphql.Int,
+					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					notifToID := p.Args["notif_to_id"].(string)
-					notifications, err := NotifService.GetAllNotificationByUserId(notifToID)
+					limit := p.Args["limit"].(int)
+					notifications, err := NotifService.GetAllNotificationByUserId(notifToID, limit)
 					if err != nil {
 						return nil, err
 					}
@@ -46,7 +52,32 @@ func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.Notif
 					return result, nil
 				},
 			},
-
+			"getAllUnreadNotificationByUserId": &graphql.Field{
+				Type: graphql.NewObject(graphql.ObjectConfig{
+					Name: "UnreadAndTotalNotification",
+					Fields: graphql.Fields{
+						"total_notification": &graphql.Field{
+							Type: graphql.Int,
+						},
+						"unread_notification": &graphql.Field{
+							Type: graphql.Int,
+						},
+					},
+				}),
+				Args: graphql.FieldConfigArgument{
+					"notif_to_id": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					notifToID := p.Args["notif_to_id"].(string)
+					count, err := NotifService.GetAllUnreadNotificationByUserId(notifToID)
+					if err != nil {
+						return nil, err
+					}
+					return count, nil
+				},
+			},
 			// GetNotificationById
 			"getNotificationById": &graphql.Field{
 				Type: entities.GetNotificationEntityType(),
@@ -79,7 +110,7 @@ func (s *StructGraphQLResolvers) GetNotificationQueryType(NotifService *sv.Notif
 //   }
 
 // func (s *StructGraphQLResolvers) GetNotificationMutationType(#) *graphql.Object
-func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.NotificationService) *graphql.Object {
+func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.NotificationService, notifConn *websocket.Conn) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
@@ -94,7 +125,7 @@ func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.No
 					"redirect_url":    &graphql.ArgumentConfig{Type: graphql.String},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					notif := sv.Notification{
+					notif := t.Notification{
 						NotifType:     p.Args["notif_type"].(string),
 						NotifToID:     p.Args["notif_to_id"].(string),
 						NotifFromName: p.Args["notif_from_name"].(string),
@@ -109,7 +140,7 @@ func (s *StructGraphQLResolvers) GetNotificationMutationType(NotifService *sv.No
 						notif.RedirectURL = val
 					}
 
-					createdNotif, err := NotifService.GenerateNotification(notif)
+					createdNotif, err := NotifService.GenerateNotification(notif, notifConn)
 					if err != nil {
 						return nil, err
 					}

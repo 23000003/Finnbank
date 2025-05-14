@@ -19,8 +19,9 @@ type LoginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	AuthID       string `json:"auth_id"`
 	// below are values for auth context in FE
-	DisplayName string `json:"full_name"`
-	AccountId   string `json:"account_id"`
+	DisplayName   string `json:"full_name"`
+	AccountId     string `json:"account_id"`
+	AccountStatus string `json:"account_status"`
 }
 
 // Account represents an account.
@@ -36,7 +37,6 @@ type Account struct {
 	AccountNumber string    `json:"account_number"`
 	AuthID        string    `json:"auth_id"`
 	HasCard       bool      `json:"has_card"`
-	Balance       float64   `json:"balance"`
 	DateCreated   time.Time `json:"date_created"`
 	DateUpdated   time.Time `json:"date_updated"`
 	Nationality   string    `json:"nationality"`
@@ -116,14 +116,25 @@ type AddAccountResponse struct {
 }
 
 type UpdateAccountRequest struct {
-	Email       string `json:"email"`
-	FirstName   string `json:"first_name"`
-	MiddleName  string `json:"middle_name"`
-	LastName    string `json:"last_name"`
-	PhoneNumber string `json:"phone_number"`
+	AccountID  string `json:"account_id"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Address    string `json:"address"`
 }
-type UpdateAccountResponse struct {
-	Account Account `json:"account"`
+
+type UpdateAccountDetailsRequest struct {
+	Type      string `json:"type"`
+	Email     string `json:"email"`
+	Phone     string `json:"phone"`
+	Address   string `json:"address"`
+	AccountID string `json:"account_id"`
+}
+type UpdateAccountStatusRequest struct {
+	AccountID string `json:"account_id"`
+	Type      string `json:"type"`
 }
 
 // For signup input
@@ -200,18 +211,82 @@ var UpdatePasswordInputType = graphql.NewInputObject(
 		},
 	},
 )
+var UpdateAccountInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdateAccountInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"account_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"first_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"middle_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"last_name": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"email": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"phone": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"address": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+var UpdateAccountDetailsInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdateAccountDetailsInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"account_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"email": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"phone": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"address": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"type": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
+var UpdateAccountStatusInputType = graphql.NewInputObject(
+	graphql.InputObjectConfig{
+		Name: "UpdateAccountStatusInput",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"account_id": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"type": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	},
+)
 
 var AuthResponseType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "AuthResponse",
 		Fields: graphql.Fields{
-			"access_token":  &graphql.Field{Type: graphql.String},
-			"token_type":    &graphql.Field{Type: graphql.String},
-			"expires_in":    &graphql.Field{Type: graphql.Int},
-			"refresh_token": &graphql.Field{Type: graphql.String},
-			"auth_id":       &graphql.Field{Type: graphql.String},
-			"full_name":     &graphql.Field{Type: graphql.String},
-			"account_id":    &graphql.Field{Type: graphql.String},
+			"access_token":   &graphql.Field{Type: graphql.String},
+			"token_type":     &graphql.Field{Type: graphql.String},
+			"expires_in":     &graphql.Field{Type: graphql.Int},
+			"refresh_token":  &graphql.Field{Type: graphql.String},
+			"auth_id":        &graphql.Field{Type: graphql.String},
+			"full_name":      &graphql.Field{Type: graphql.String},
+			"account_id":     &graphql.Field{Type: graphql.String},
+			"account_status": &graphql.Field{Type: graphql.String},
 		},
 	},
 )

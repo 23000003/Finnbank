@@ -3,15 +3,11 @@ package services
 import (
 	"context"
 	pb "finnbank/common/grpc/auth"
+	"finnbank/common/utils"
 	"finnbank/graphql-api/types"
 	"fmt"
-	"math/rand"
-	"time"
-
-	"finnbank/common/utils"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AccountService struct {
@@ -26,17 +22,6 @@ func NewAccountService(db *pgxpool.Pool, logger *utils.Logger, pb pb.AuthService
 		l:           logger,
 		authService: pb,
 	}
-}
-
-// This just generates a random 16 digit account number
-// this works for now until i come up with a better solution
-func GenAccNum() string {
-	rand.Seed(time.Now().UnixNano())
-	var accNum string
-	for i := 0; i < 16; i++ {
-		accNum += string(rune('0' + rand.Intn(10)))
-	}
-	return accNum
 }
 
 func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRequest) (*types.AddAccountResponse, error) {
@@ -58,7 +43,11 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		return nil, fmt.Errorf("account with phone number already exists")
 	}
 
-	accNum := GenAccNum()
+	accNum, err := generateRandomNumber(16)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate account number: %v", err)
+	}
 
 	// TODO: This seems really bad, will have to find a better way for this somehow
 	authRes, err := s.authService.SignUpUser(*ctx, req)
@@ -73,12 +62,12 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 	createQuery := `
 	INSERT INTO account (
 		email, first_name, middle_name, last_name, phone_number, address, nationality,
-		account_type, account_number, has_card, balance, auth_id, birthdate, national_id
+		account_type, account_number, has_card, auth_id, birthdate, national_id
 	) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	RETURNING 
 		id, email, first_name, middle_name, last_name, phone_number, address, nationality,
-		account_type, account_number, has_card, balance, date_created, date_updated, auth_id, birthdate, national_id, account_status
+		account_type, account_number, has_card, date_created, date_updated, auth_id, birthdate, national_id, account_status
 	`
 
 	s.l.Info("Creating account for user: %s", authRes)
@@ -95,7 +84,7 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 		in.Nationality,
 		in.AccountType,
 		accNum,
-		false, 0.00,
+		false,
 		authRes.User.Id,
 		in.BirthDate,
 		in.NationalID).
@@ -111,7 +100,6 @@ func (s *AccountService) CreateUser(ctx *context.Context, in *types.AddAccountRe
 			&acc.AccountType,
 			&acc.AccountNumber,
 			&acc.HasCard,
-			&acc.Balance,
 			&acc.DateCreated,
 			&acc.DateUpdated,
 			&acc.AuthID,
@@ -140,13 +128,12 @@ func (s *AccountService) FetchUserByAccountNumber(ctx *context.Context, req stri
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -171,13 +158,12 @@ func (s *AccountService) FetchUserByEmail(ctx *context.Context, req string) (*ty
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -202,13 +188,12 @@ func (s *AccountService) FetchUserById(ctx *context.Context, req string) (*types
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -234,13 +219,12 @@ func (s *AccountService) FetchUserByAuthID(ctx *context.Context, req string) (*t
 		&acc.HasCard,
 		&acc.AccountNumber,
 		&acc.Address,
-		&acc.Balance,
 		&acc.AccountType,
 		&acc.DateCreated,
 		&acc.DateUpdated,
 		&acc.Nationality,
-		&acc.NationalID,
 		&acc.AccountStatus,
+		&acc.NationalID,
 		&acc.BirthDate,
 		&acc.FirstName,
 		&acc.MiddleName,
@@ -276,6 +260,7 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	// for auth context
 	res.DisplayName = acc.Account.FirstName + " " + acc.Account.MiddleName + " " + acc.Account.LastName
 	res.AccountId = acc.Account.ID
+	res.AccountStatus = acc.Account.AccountStatus
 
 	return &res, nil
 }
@@ -285,10 +270,10 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	if err != nil {
 		return nil, err
 	}
-	if !VerifyPassword(old_encrpyptedPassword, in.OldPassword) {
+	if !verifyPassword(old_encrpyptedPassword, in.OldPassword) {
 		return nil, fmt.Errorf("old password is incorrect")
 	}
-	new_encryptedPassword, err := HashPassword(in.NewPassword)
+	new_encryptedPassword, err := hashPassword(in.NewPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -300,12 +285,86 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	return res, nil
 }
 
-// TODO: This is not implemented yet, but i think it should be done by tommorow
-// func (s* AccountService) UpdateUser(ctx* context.Context, in * types.UpdateAccountRequest)(*types.UpdateAccountResponse, error) {
+func (s *AccountService) UpdateUser(ctx *context.Context, in *types.UpdateAccountRequest) (*types.Account, error) {
+	query := `
+		UPDATE account SET first_name = $1, middle_name = $2, last_name = $3, 
+		email = $4, phone_number = $5, address = $6 WHERE id = $7
+	`
+	_, err := s.db.Exec(*ctx, query, in.FirstName, in.MiddleName, in.LastName, in.Email, in.Phone, in.Address, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	res, _ := s.FetchUserById(ctx, in.AccountID)
 
-// }
+	return &res.Account, nil
+}
+func (s *AccountService) UpdateUserDetails(ctx *context.Context, in *types.UpdateAccountDetailsRequest) (*types.Account, error) {
+	var query string
+	var args []any
+	const (
+		UpdateTypeEmail   = "Email"
+		UpdateTypePhone   = "Phone"
+		UpdateTypeAddress = "Address"
+	)
+	switch in.Type {
+	case UpdateTypeEmail:
+		err := s.UpdateAuthEmail(*ctx, in.AccountID, in.Email)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update email in auth service: %v", err)
+		}
+		query = "UPDATE account SET email = $1 WHERE id = $2"
+		args = []any{in.Email, in.AccountID}
+	case UpdateTypePhone:
+		query = "UPDATE account SET phone_number = $1 WHERE id = $2"
+		args = []any{in.Phone, in.AccountID}
+	case UpdateTypeAddress:
+		query = "UPDATE account SET address = $1 WHERE id = $2"
+		args = []any{in.Address, in.AccountID}
+	default:
+		return nil, fmt.Errorf("invalid update type: %s", in.Type)
+	}
 
-// This too i guess
+	_, err := s.db.Exec(*ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update account: %v", err)
+	}
+
+	res, err := s.FetchUserById(ctx, in.AccountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated account: %v", err)
+	}
+
+	return &res.Account, nil
+}
+
+func (s *AccountService) UpdateAccountStatus(c *context.Context, in *types.UpdateAccountStatusRequest) (*types.Account, error) {
+	var query string
+	const (
+		DEACTIVATE_ACCOUNT = "DEACTIVATE"
+		REACTIVATE_ACCOUNT = "ACTIVATE"
+		SUSPEND_ACCOUNT    = "SUSPEND"
+	)
+	switch in.Type {
+	case DEACTIVATE_ACCOUNT:
+		query = `UPDATE account SET account_status = 'Closed' WHERE id = $1`
+	case REACTIVATE_ACCOUNT:
+		query = `UPDATE account set account_status = 'Active' WHERE id = $1`
+	case SUSPEND_ACCOUNT:
+		query = `UPDATE account set account_status = 'Suspended' WHERE id = $1`
+	}
+	_, err := s.db.Exec(*c, query, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	res, err := s.FetchUserById(c, in.AccountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated account: %v", err)
+	}
+
+	return &res.Account, nil
+}
+
+// Helper functions
 func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string, error) {
 	var encrypted_password string
 	query := `SELECT encrypted_password FROM auth.users WHERE id = $1;`
@@ -315,16 +374,15 @@ func (s *AccountService) GetUserAuth(ctx context.Context, authID string) (string
 	}
 	return encrypted_password, nil
 }
-
-// These are just helper functions
-func VerifyPassword(hashedPassword, plainPassword string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
-	return err == nil
-}
-func HashPassword(plainPassword string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
+func (s *AccountService) UpdateAuthEmail(ctx context.Context, id, email string) error {
+	var auth_id string
+	err := s.db.QueryRow(ctx, "SELECT auth_id from account WHERE id = $1", id).Scan(&auth_id)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return string(hashedPassword), nil
+	_, err = s.db.Exec(ctx, "UPDATE auth.users SET email = $1 WHERE id = $2", email, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
