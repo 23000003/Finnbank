@@ -3,6 +3,7 @@ package resolvers
 import (
 	sv "finnbank/graphql-api/services"
 	"fmt"
+
 	"github.com/graphql-go/graphql"
 )
 
@@ -12,7 +13,7 @@ func (s *StructGraphQLResolvers) GetBankCardQueryType(BCService *sv.BankcardServ
 			Name: "Query",
 			Fields: graphql.Fields{
 				"get_all_bankcard": &graphql.Field{
-					Type: graphql.NewList(bankCardType),
+					Type:        graphql.NewList(bankCardType),
 					Description: "Get all bank card of user",
 					Args: graphql.FieldConfigArgument{
 						"user_id": &graphql.ArgumentConfig{
