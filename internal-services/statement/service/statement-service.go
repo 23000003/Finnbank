@@ -42,39 +42,7 @@ type Transaction struct {
 }
 
 func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, startTime, endTime string) ([]Transaction, error) {
-	const layoutWithTime = "2006-01-02T15:04:05"
-	const layoutDateOnly = "2006-01-02"
-
-	var parsedStartTime, parsedEndTime time.Time
-	var err error
-
-	// Parse startTime
-	if len(startTime) == len(layoutDateOnly) {
-		parsedStartTime, err = time.Parse(layoutDateOnly, startTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid startTime format: %w", err)
-		}
-	} else {
-		parsedStartTime, err = time.Parse(layoutWithTime, startTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid startTime format: %w", err)
-		}
-	}
-
-	// Parse endTime
-	if len(endTime) == len(layoutDateOnly) {
-		parsedEndTime, err = time.Parse(layoutDateOnly, endTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid endTime format: %w", err)
-		}
-		parsedEndTime = parsedEndTime.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
-	} else {
-		parsedEndTime, err = time.Parse(layoutWithTime, endTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid endTime format: %w", err)
-		}
-	}
-
+	
 	query := `
 		query($creditId: Int!, $debitId: Int!, $savingsId: Int!, $startTime: DateTime!, $endTime: DateTime!) {
 			getTransactionsByTimeStampByUserId(
@@ -98,13 +66,17 @@ func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, 
 		}
 	`
 
+	fmt.Println("Parsed Start Time:", startTime)
+	fmt.Println("Parsed End Time:", endTime)
+
 	vars := map[string]interface{}{
 		"creditId":  creditId,
 		"debitId":   debitId,
 		"savingsId": savingsId,
-		"startTime": parsedStartTime.Format(time.RFC3339),
-		"endTime":   parsedEndTime.Format(time.RFC3339),
+		"startTime": startTime,
+		"endTime":   endTime,
 	}
+
 	payload := map[string]interface{}{
 		"query":     query,
 		"variables": vars,
@@ -121,7 +93,6 @@ func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, 
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	fmt.Println("Raw response:", string(bodyBytes))
 
 	var result struct {
 		Data struct {

@@ -244,3 +244,38 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 
 	return txns, nil
 }
+
+func (s *TransactionService) GetIsAccountAtLimitByAccountId(
+	ctx context.Context,
+	creditId int, debitId int, savingsId int,
+) ([]bool, error) {
+
+	query := `
+		SELECT
+			EXISTS (
+				SELECT 1 FROM transactions 
+				WHERE sender_id = $1 AND amount > 10000 
+				AND date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
+			) AS credit_limit_exceeded,
+			EXISTS (
+				SELECT 1 FROM transactions 
+				WHERE sender_id = $2 AND amount > 10000 
+				AND date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
+			) AS debit_limit_exceeded,
+			EXISTS (
+				SELECT 1 FROM transactions 
+				WHERE sender_id = $3 AND amount > 10000 
+				AND date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
+			) AS savings_limit_exceeded
+	`
+
+	row := s.db.QueryRow(ctx, query, creditId, debitId, savingsId)
+
+	var creditExceeded, debitExceeded, savingsExceeded bool
+	if err := row.Scan(&creditExceeded, &debitExceeded, &savingsExceeded); err != nil {
+		s.l.Error("Error scanning limit check: %v", err)
+		return nil, fmt.Errorf("failed to scan limit check: %w", err)
+	}
+
+	return []bool{creditExceeded, debitExceeded, savingsExceeded}, nil
+}

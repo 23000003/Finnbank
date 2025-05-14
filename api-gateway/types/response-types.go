@@ -242,6 +242,13 @@ type GetAllTransactionsByTimeStampGraphQLResponse struct {
 	Errors any `json:"errors"`
 }
 
+type GetIsAccountAtLimitGraphQLResponse struct {
+	Data struct {
+		GetIsAccountAtLimit []bool `json:"getIsAccountAtLimit"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
 type CreateTransactionsGraphQLResponse struct {
 	Data struct {
 		CreateTransaction struct {

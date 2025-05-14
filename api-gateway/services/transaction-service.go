@@ -82,6 +82,52 @@ func (a *TransactionService) GetTransactionByOpenAccountId(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetTransactionsByUserId})
 }
 
+func (a *TransactionService) GetIsAccountAtLimit(ctx *gin.Context) {
+	creditId, err := strconv.Atoi(ctx.Query("credit"))
+	debitId, err1 := strconv.Atoi(ctx.Query("debit"))
+	savingsId, err2 := strconv.Atoi(ctx.Query("savings"))
+
+	if err != nil || err1 != nil || err2 != nil {
+		a.log.Info("Error converting ID to int: %v, %v, %v", err, err1, err2)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+
+	query := fmt.Sprintf(`{
+		getIsAccountAtLimit(creditId: %d, debitId: %d, savingsId: %d)
+	}`, creditId, debitId, savingsId)
+
+	qlrequestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	qlrequestBodyJSON, _ := json.Marshal(qlrequestBody)
+
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlrequestBodyJSON))
+	if err != nil {
+		a.log.Info("Request Error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var data t.GetIsAccountAtLimitGraphQLResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		a.log.Info("Error decoding response: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.Errors != nil {
+		a.log.Info("GraphQL Errors: %v", data.Errors)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": data.Errors})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.GetIsAccountAtLimit})
+}
+
 func (a *TransactionService) GetTransactionByTimestamp(ctx *gin.Context) {
 	creditId, err := strconv.Atoi(ctx.Query("credit"))
 	debitId, err1 := strconv.Atoi(ctx.Query("debit"))

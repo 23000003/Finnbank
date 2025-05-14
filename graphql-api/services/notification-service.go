@@ -186,3 +186,4 @@ func (s *NotificationService) ReadNotificationByUserId(notifID string) error {
 
 	return nil
 }
+
