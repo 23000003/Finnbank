@@ -73,7 +73,6 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 	return results, nil
 }
 
-
 // called only in opened-account
 func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string) ([]int, error) {
 	conn, err := b.db.Acquire(ctx)
@@ -116,7 +115,7 @@ func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string)
 		}
 		bankcardIDs = append(bankcardIDs, id)
 	}
-	
+
 	return bankcardIDs, nil
 }
 
@@ -143,7 +142,6 @@ func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, 
 	return "Update Successful", nil
 }
 
-
 func (b *BankcardService) UpdateBankcardPinNumberById(ctx context.Context, bankcard_id int, pin_number string) (string, error) {
 	conn, err := b.db.Acquire(ctx)
 	if err != nil {
@@ -164,4 +162,3 @@ func (b *BankcardService) UpdateBankcardPinNumberById(ctx context.Context, bankc
 
 	return "Update Successful", nil
 }
-
