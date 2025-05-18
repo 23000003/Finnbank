@@ -50,6 +50,7 @@ type IBankcardService interface {
 	GetAllBankCardOfUserById(*gin.Context)
 	UpdateBankcardExpiryDateByUserId(*gin.Context) // update req
 	UpdateBankcardPinNumberById(*gin.Context)
+	VerifyBankcardPinNumber(*gin.Context)
 }
 
 type INotificationService interface {

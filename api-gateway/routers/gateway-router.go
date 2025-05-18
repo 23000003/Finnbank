@@ -64,6 +64,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	bankcard.Use(middleware.AuthMiddleware())
 	{
 		bankcard.GET("/get-all-bankcard/:id", gr.s.BankcardService.GetAllBankCardOfUserById)
+		bankcard.GET("/verify-pin-number/:id/:pin_number", gr.s.BankcardService.VerifyBankcardPinNumber)
 		bankcard.PATCH("/renew-bankcard/:id", gr.s.BankcardService.UpdateBankcardExpiryDateByUserId)
 		bankcard.PATCH("/update-pin-number/:id/:new-pin", gr.s.BankcardService.UpdateBankcardPinNumberById)
 	}	

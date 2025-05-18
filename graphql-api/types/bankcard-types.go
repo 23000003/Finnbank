@@ -17,6 +17,7 @@ type GetBankCardResponse struct {
 	BankCardId   int    	 `json:"bankcard_id"`
 	CardNumber   string    `json:"card_number"`
 	ExpiryDate   time.Time `json:"expiry_date"`
+	PinNumber   string     `json:"pin_number"`
 	CardType     string    `json:"card_type"`
 	CVV          string    `json:"cvv"`
 	DateCreated  time.Time `json:"date_created"`
