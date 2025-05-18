@@ -40,6 +40,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	{
 		auth.POST("/login", gr.s.AccountService.LoginUser)
 		auth.POST("/signup", gr.s.AccountService.SignupUser)
+		auth.POST("/validate-email", gr.s.AccountService.ValidateUserEmail)
 	}
 	account := gr.r.Group("/account")
 	account.Use(middleware.AuthMiddleware())
