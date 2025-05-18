@@ -26,6 +26,7 @@ type IProductService interface {
 type IAccountService interface {
 	LoginUser(*gin.Context)
 	SignupUser(*gin.Context)
+	ValidateUserEmail(c *gin.Context)
 	GetUserAccountById(*gin.Context)
 	GetUserAccountByAccountNumber(*gin.Context)
 	GetUserAccountByEmail(*gin.Context)

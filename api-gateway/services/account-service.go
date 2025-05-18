@@ -206,10 +206,6 @@ func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 		return
 	}
 
-	// Mock since this not in account schema
-	data.Data.AccountById.AccountStatus = "Active"
-	data.Data.AccountById.NationalId = "6342123456789"
-
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.AccountById})
 }
 
@@ -522,6 +518,54 @@ func (a *AccountService) UpdateUserDetails(c *gin.Context) {
 
 	fmt.Println("RAW GQL Response:", string(body))
 	c.JSON(http.StatusOK, gin.H{"message": "User details updated successfully"})
+}
+
+func (a *AccountService) ValidateUserEmail(c *gin.Context) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		a.log.Info("Request Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	query := fmt.Sprintf(`{
+	account_by_email(email: "%s")
+		{ account_id}}`, req.Email)
+	qlRequestBody := map[string]any{
+		"query": query,
+	}
+	qlRequestJSON, _ := json.Marshal(qlRequestBody)
+	resp, err := http.Post(a.url, "application/json", bytes.NewBuffer(qlRequestJSON))
+	if err != nil {
+		a.log.Info("GraphQL Request Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
+		return
+	}
+	defer resp.Body.Close()
+
+	var res struct {
+		Data struct {
+			AccountByEmail struct {
+				AccountID string `json:"account_id"`
+			} `json:"account_by_email"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		a.log.Info("Read Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response body"})
+		return
+	}
+	if err := json.Unmarshal(body, &res); err != nil {
+		a.log.Info("Unmarshal Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	fmt.Println("RAW GQL Response:", string(body))
+	c.JSON(http.StatusOK, gin.H{"message": "User email validated successfully", "account_id": res.Data.AccountByEmail.AccountID})
+
 }
 func (a *AccountService) UpdateAccountStatus(c *gin.Context) {
 	var req struct {
