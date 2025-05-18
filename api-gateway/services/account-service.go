@@ -206,10 +206,6 @@ func (a *AccountService) GetUserAccountById(ctx *gin.Context) {
 		return
 	}
 
-	// Mock since this not in account schema
-	data.Data.AccountById.AccountStatus = "Active"
-	data.Data.AccountById.NationalId = "6342123456789"
-
 	ctx.JSON(http.StatusOK, gin.H{"data": data.Data.AccountById})
 }
 
