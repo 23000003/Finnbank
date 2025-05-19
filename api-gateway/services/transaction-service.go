@@ -86,6 +86,7 @@ func (a *TransactionService) GetIsAccountAtLimit(ctx *gin.Context) {
 	creditId, err := strconv.Atoi(ctx.Query("credit"))
 	debitId, err1 := strconv.Atoi(ctx.Query("debit"))
 	savingsId, err2 := strconv.Atoi(ctx.Query("savings"))
+	accountType := ctx.Query("accountType")
 
 	if err != nil || err1 != nil || err2 != nil {
 		a.log.Info("Error converting ID to int: %v, %v, %v", err, err1, err2)
@@ -94,8 +95,8 @@ func (a *TransactionService) GetIsAccountAtLimit(ctx *gin.Context) {
 	}
 
 	query := fmt.Sprintf(`{
-		getIsAccountAtLimit(creditId: %d, debitId: %d, savingsId: %d)
-	}`, creditId, debitId, savingsId)
+		getIsAccountAtLimit(creditId: %d, debitId: %d, savingsId: %d, account_type: "%s") {
+	}`, creditId, debitId, savingsId, accountType)
 
 	qlrequestBody := map[string]interface{}{
 		"query": query,

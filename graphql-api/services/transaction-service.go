@@ -246,36 +246,36 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 }
 
 func (s *TransactionService) GetIsAccountAtLimitByAccountId(
-	ctx context.Context,
+	ctx context.Context, accountType string,
 	creditId int, debitId int, savingsId int,
 ) ([]bool, error) {
 
+	creditLimit := 100000
+	debitLimit := 100000
+	savingsLimit := 50000
+
+	if accountType == "Business" {
+		creditLimit = 300000
+		debitLimit = 250000
+		savingsLimit = 100000
+	}
+
 	query := `
 		SELECT
-			EXISTS (
-				SELECT 1 FROM transactions 
-				WHERE sender_id = $1 AND amount > 10000 
-				AND date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
-			) AS credit_limit_exceeded,
-			EXISTS (
-				SELECT 1 FROM transactions 
-				WHERE sender_id = $2 AND amount > 10000 
-				AND date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
-			) AS debit_limit_exceeded,
-			EXISTS (
-				SELECT 1 FROM transactions 
-				WHERE sender_id = $3 AND amount > 10000 
-				AND date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
-			) AS savings_limit_exceeded
+			COALESCE(SUM(CASE WHEN sender_id = $1 THEN amount ELSE 0 END), 0) > $4 AS credit_limit_exceeded,
+			COALESCE(SUM(CASE WHEN sender_id = $2 THEN amount ELSE 0 END), 0) > $5 AS debit_limit_exceeded,
+			COALESCE(SUM(CASE WHEN sender_id = $3 THEN amount ELSE 0 END), 0) > $6 AS savings_limit_exceeded
+		FROM transactions
+		WHERE date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
 	`
 
-	row := s.db.QueryRow(ctx, query, creditId, debitId, savingsId)
+	row := s.db.QueryRow(ctx, query, creditId, debitId, savingsId, creditLimit, debitLimit, savingsLimit)
 
-	var creditExceeded, debitExceeded, savingsExceeded bool
-	if err := row.Scan(&creditExceeded, &debitExceeded, &savingsExceeded); err != nil {
+	var credit_limit_exceeded, debit_limit_exceeded, savings_limit_exceeded bool
+	if err := row.Scan(&credit_limit_exceeded, &debit_limit_exceeded, &savings_limit_exceeded); err != nil {
 		s.l.Error("Error scanning limit check: %v", err)
 		return nil, fmt.Errorf("failed to scan limit check: %w", err)
 	}
 
-	return []bool{creditExceeded, debitExceeded, savingsExceeded}, nil
+	return []bool{credit_limit_exceeded, debit_limit_exceeded, savings_limit_exceeded}, nil
 }

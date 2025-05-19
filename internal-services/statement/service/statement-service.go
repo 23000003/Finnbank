@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"time"
-
 	"github.com/unidoc/unipdf/v3/core"
 	"github.com/unidoc/unipdf/v3/creator"
 	"github.com/unidoc/unipdf/v3/model"
@@ -42,7 +41,6 @@ type Transaction struct {
 }
 
 func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, startTime, endTime string) ([]Transaction, error) {
-	
 	query := `
 		query($creditId: Int!, $debitId: Int!, $savingsId: Int!, $startTime: DateTime!, $endTime: DateTime!) {
 			getTransactionsByTimeStampByUserId(
@@ -111,8 +109,15 @@ func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, 
 		return nil, fmt.Errorf("GraphQL errors: %+v", result.Errors)
 	}
 
-	return result.Data.GetTransactionsByTimeStampByUserId, nil
+	// Filter out failed transactions
+	successfulTransactions := make([]Transaction, 0)
+	for _, tx := range result.Data.GetTransactionsByTimeStampByUserId {
+		if tx.TransactionStatus != "FAILED" {
+			successfulTransactions = append(successfulTransactions, tx)
+		}
+	}
 
+	return successfulTransactions, nil
 }
 
 func fetchAccountNumbers(ctx context.Context, sender_id int, receiver_id int) (FindBothAccountNumber, error) {
@@ -145,7 +150,6 @@ func fetchAccountNumbers(ctx context.Context, sender_id int, receiver_id int) (F
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	fmt.Println("Raw response:", string(bodyBytes))
 
 	var result struct {
 		Data struct {
@@ -316,15 +320,10 @@ func (s *StatementService) GenerateStatement(ctx context.Context, req *statement
 
 	// Adjust as per correct userId
 	transactions, err := fetchTransactions(ctx, req.CreditId, req.SavingsId, req.DebitId, req.StartDate, req.EndDate)
-	accountNumber, err := fetchAccountNumbers(ctx, int(req.CreditId), int(req.DebitId))
+	accountNumber, err1 := fetchAccountNumbers(ctx, int(req.CreditId), int(req.DebitId))
 
-	if err != nil {
-		s.Logger.Error("Failed to fetch transactions data: %v", err)
-		return nil, err
-	}
-
-	if err != nil {
-		s.Logger.Error("Failed to fetch account numbers: %v", err)
+	if err != nil || err1 != nil {
+		s.Logger.Error("Failed to fetch transactions or account numbers: %v %v", err, err1)
 		return nil, err
 	}
 

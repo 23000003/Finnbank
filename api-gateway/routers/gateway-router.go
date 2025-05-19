@@ -41,6 +41,8 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 		auth.POST("/login", gr.s.AccountService.LoginUser)
 		auth.POST("/signup", gr.s.AccountService.SignupUser)
 		auth.POST("/validate-email", gr.s.AccountService.ValidateUserEmail)
+		auth.POST("/create-account", gr.s.OpenedAccountService.OpenAnAccountByAccountType)
+		auth.PATCH("/update-account-status", gr.s.AccountService.UpdateAccountStatus)
 	}
 	account := gr.r.Group("/account")
 	account.Use(middleware.AuthMiddleware())
@@ -52,7 +54,6 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 		account.PATCH("/update-password", gr.s.AccountService.UpdateUserPassword)
 		account.PATCH("/update-user", gr.s.AccountService.UpdateUser)
 		account.PATCH("/update-user-details", gr.s.AccountService.UpdateUserDetails)
-		account.PATCH("/update-account-status", gr.s.AccountService.UpdateAccountStatus)
 	}
 
 	statement := gr.r.Group("/statement")
@@ -97,7 +98,6 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 		openedAccount.GET("/get-user-id/:id", gr.s.OpenedAccountService.GetUserIdByOpenedAccountId)
 		openedAccount.GET("/get-both-account-number/:sent_id/:receive_id", gr.s.OpenedAccountService.GetBothAccountNumberForReceipt)
 		openedAccount.GET("/find-by-account-number/:acc_num", gr.s.OpenedAccountService.GetOpenedAccountIdByAccountNumber)
-		openedAccount.POST("/create-account", gr.s.OpenedAccountService.OpenAnAccountByAccountType)
 		openedAccount.PATCH("/update-status/:id/:status", gr.s.OpenedAccountService.UpdateOpenedAccountStatus)
 	}
 

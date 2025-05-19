@@ -129,12 +129,14 @@ func (r *StructGraphQLResolvers) TransactionQueryFields(
 				"creditId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
 				"debitId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
 				"savingsId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"account_type": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				creditId := p.Args["creditId"].(int)
 				debitId := p.Args["debitId"].(int)
 				savingsId := p.Args["savingsId"].(int)
-				return txSvc.GetIsAccountAtLimitByAccountId(p.Context, creditId, debitId, savingsId)
+				accountType := p.Args["account_type"].(string)
+				return txSvc.GetIsAccountAtLimitByAccountId(p.Context, accountType, creditId, debitId, savingsId)
 			},
 		},
 	}
