@@ -78,6 +78,56 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, creditI
 	return transactions, nil
 }
 
+func (s *TransactionService) GetRecentlySent(ctx context.Context, creditId int, debitId int, savingsId int) ([]t.Transaction, error) {
+
+	query := `
+		SELECT 
+			transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, 
+			transaction_status, date_transaction, transaction_fee, notes
+		FROM transactions
+		WHERE sender_id IN ($1, $2, $3) AND transaction_status = 'Completed'
+		ORDER BY date_transaction DESC
+		LIMIT 2;
+	`
+
+	rows, err := s.db.Query(ctx, query, creditId, debitId, savingsId)
+	if err != nil {
+		s.l.Error("Error fetching transactions %v", err)
+		return nil, fmt.Errorf("failed to fetch transactions %w", err)
+	}
+	defer rows.Close()
+
+	var transactions []t.Transaction
+	for rows.Next() {
+		var txn t.Transaction
+		err := rows.Scan(
+			&txn.TransactionID,
+			&txn.RefNo,
+			&txn.SenderID,
+			&txn.ReceiverID,
+			&txn.TransactionType,
+			&txn.Amount,
+			&txn.TransactionStatus,
+			&txn.DateTransaction,
+			&txn.TransactionFee,
+			&txn.Notes,
+		)
+		if err != nil {
+			s.l.Error("Error scanning transaction row %v", err)
+			return nil, fmt.Errorf("failed to scan transaction row %w", err)
+		}
+		transactions = append(transactions, txn)
+	}
+
+	if rows.Err() != nil {
+		s.l.Error("Error iterating through transaction rows %v", rows.Err())
+		return nil, fmt.Errorf("failed to iterate through transaction rows %w", rows.Err())
+	}
+
+	return transactions, nil
+}
+
+
 // CreateTransaction creates a new transaction, auto‑generating a numeric ref_no.
 func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transaction, transacConn *websocket.Conn) (t.Transaction, error) {
 
@@ -200,15 +250,15 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 ) ([]t.Transaction, error) {
 
 	query := `
-        SELECT
-          transaction_id, ref_no, sender_id, receiver_id,
-          transaction_type, amount, transaction_status,
-          date_transaction, transaction_fee, notes
-        FROM public.transactions
-        WHERE sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3)
-          AND date_transaction BETWEEN $4 AND $5
-        ORDER BY date_transaction;
-    `
+		SELECT
+		  transaction_id, ref_no, sender_id, receiver_id,
+		  transaction_type, amount, transaction_status,
+		  date_transaction, transaction_fee, notes
+		FROM public.transactions
+		WHERE (sender_id IN ($1, $2, $3) OR receiver_id IN ($1, $2, $3))
+		  AND date_transaction BETWEEN $4 AND $5
+		ORDER BY date_transaction DESC;
+	`
 
 	rows, err := s.db.Query(ctx, query, creditId, debitId, savingsId, start, end)
 	if err != nil {
@@ -243,4 +293,39 @@ func (s *TransactionService) GetTransactionByTimestampByUserId(
 	}
 
 	return txns, nil
+}
+
+func (s *TransactionService) GetIsAccountAtLimitByAccountId(
+	ctx context.Context, accountType string,
+	creditId int, debitId int, savingsId int,
+) ([]bool, error) {
+
+	creditLimit := 100000
+	debitLimit := 100000
+	savingsLimit := 50000
+
+	if accountType == "Business" {
+		creditLimit = 300000
+		debitLimit = 250000
+		savingsLimit = 100000
+	}
+
+	query := `
+		SELECT
+			COALESCE(SUM(CASE WHEN sender_id = $1 THEN amount ELSE 0 END), 0) > $4 AS credit_limit_exceeded,
+			COALESCE(SUM(CASE WHEN sender_id = $2 THEN amount ELSE 0 END), 0) > $5 AS debit_limit_exceeded,
+			COALESCE(SUM(CASE WHEN sender_id = $3 THEN amount ELSE 0 END), 0) > $6 AS savings_limit_exceeded
+		FROM transactions
+		WHERE date_transaction BETWEEN NOW() - INTERVAL '1 day' AND NOW()
+	`
+
+	row := s.db.QueryRow(ctx, query, creditId, debitId, savingsId, creditLimit, debitLimit, savingsLimit)
+
+	var credit_limit_exceeded, debit_limit_exceeded, savings_limit_exceeded bool
+	if err := row.Scan(&credit_limit_exceeded, &debit_limit_exceeded, &savings_limit_exceeded); err != nil {
+		s.l.Error("Error scanning limit check: %v", err)
+		return nil, fmt.Errorf("failed to scan limit check: %w", err)
+	}
+
+	return []bool{credit_limit_exceeded, debit_limit_exceeded, savings_limit_exceeded}, nil
 }

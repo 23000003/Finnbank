@@ -39,7 +39,7 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 	rows, err := conn.Query(ctx,
 		`SELECT 
 			bankcard_id, card_number, expiry_date, 
-			card_type, cvv, date_created
+			card_type, cvv, date_created, pin_number
 		FROM bankcard 
 		WHERE account_id = $1`,
 		user_id,
@@ -59,8 +59,12 @@ func (b *BankcardService) GetAllBankCardOfUserById(ctx context.Context, user_id 
 			&bc.CardType,
 			&bc.CVV,
 			&bc.DateCreated,
+			&bc.PinNumber,
 		); err != nil {
 			return nil, fmt.Errorf("row scan failed: %w", err)
+		}
+		if bc.PinNumber != "1234" {
+			bc.PinNumber = "****"
 		}
 		results = append(results, &bc)
 	}
@@ -93,7 +97,7 @@ func (b *BankcardService) CreateCardRequest(ctx context.Context, user_id string)
 	}
 	expiryDate := time.Now().AddDate(4, 0, 0)
 
-	defaultPin := 1234
+	defaultPin := "1234"
 	var bankcardIDs []int
 	rows, err := conn.Query(ctx,
 		`INSERT INTO bankcard (account_id, card_number, card_type, pin_number, cvv, expiry_date) 
@@ -142,23 +146,58 @@ func (b *BankcardService) UpdateBankcardExpiryDateByUserId(ctx context.Context, 
 	return "Update Successful", nil
 }
 
-func (b *BankcardService) UpdateBankcardPinNumberById(ctx context.Context, bankcard_id int, pin_number string) (string, error) {
+func (b *BankcardService) VerifyBankcardPinNumber(ctx context.Context, bankcard_id int, pin_number string) (bool, error) {
 	conn, err := b.db.Acquire(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to acquire connection: %w", err)
+		return false, fmt.Errorf("failed to acquire connection: %w", err)
 	}
 	defer conn.Release()
 
-	var bankcardId int
+	var hashedPin string
+
 	err = conn.QueryRow(ctx,
-		`UPDATE bankcard SET pin_number = $1 
-		 WHERE bankcard_id = $2 
-		 RETURNING bankcard_id`,
-		bankcard_id, pin_number).Scan(&bankcardId)
+		`SELECT pin_number 
+		 FROM bankcard 
+		 WHERE bankcard_id = $1`,
+		bankcard_id).Scan(&hashedPin)
 
 	if err != nil {
-		return "", fmt.Errorf("update failed: %w", err)
+		return false, fmt.Errorf("query failed: %w", err)
 	}
 
-	return "Update Successful", nil
+	b.l.Info("Hashed pin: %s", hashedPin)
+	b.l.Info("Pin number: %s", pin_number)
+
+	// this assumes hashedPin is "1234"
+	if hashedPin == pin_number {
+		return true, nil
+	} 
+
+	return verifyPassword(hashedPin, pin_number), nil
+}
+
+func (b *BankcardService) UpdateBankcardPinNumberById(ctx context.Context, bankcard_id int, pin_number string) (bool, error) {
+	conn, err := b.db.Acquire(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	hashedPin, err := hashPassword(pin_number)
+	if err != nil {
+		return false, fmt.Errorf("failed to hash pin: %w", err)
+	}
+
+	var bankcardId string
+	err = conn.QueryRow(ctx,
+		`UPDATE bankcard SET pin_number = $2 
+		 WHERE bankcard_id = $1 
+		 RETURNING bankcard_id`,
+		bankcard_id, hashedPin).Scan(&bankcardId)
+
+	if err != nil {
+		return false, fmt.Errorf("update failed: %w", err)
+	}
+
+	return true, nil
 }

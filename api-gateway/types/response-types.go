@@ -118,6 +118,7 @@ type AccountLoginGraphQLResponse struct {
 			FullName      string `json:"full_name"`
 			AccountId     string `json:"account_id"`
 			AccountStatus string `json:"account_status"`
+			AccountType	  string `json:"account_type"`
 		} `json:"login"`
 	} `json:"data"`
 	Errors any `json:"errors"`
@@ -224,6 +225,42 @@ type GetAllTransactionsGraphQLResponse struct {
 	Errors any `json:"errors"`
 }
 
+type GetRecentlySentGraphQLResponse struct {
+	Data struct {
+		GetRecentlySent []struct {
+			TransactionID     int       `json:"transaction_id"`
+			SenderID          int       `json:"sender_id"`
+			ReceiverID        int       `json:"receiver_id"`
+		} `json:"getRecentlySent"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
+type GetAllTransactionsByTimeStampGraphQLResponse struct {
+	Data struct {
+		GetTransactionsByTimeStampByUserId []struct {
+			TransactionID     int       `json:"transaction_id"`
+			RefNo             string    `json:"ref_no"`
+			SenderID          int       `json:"sender_id"`
+			ReceiverID        int       `json:"receiver_id"`
+			TransactionType   string    `json:"transaction_type"`
+			Amount            float64   `json:"amount"`
+			TransactionStatus string    `json:"transaction_status"`
+			DateTransaction   time.Time `json:"date_transaction"`
+			TransactionFee    float64   `json:"transaction_fee"`
+			Notes             string    `json:"notes"`
+		} `json:"getTransactionsByTimeStampByUserId"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
+type GetIsAccountAtLimitGraphQLResponse struct {
+	Data struct {
+		GetIsAccountAtLimit []bool `json:"getIsAccountAtLimit"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
 type CreateTransactionsGraphQLResponse struct {
 	Data struct {
 		CreateTransaction struct {
@@ -308,8 +345,24 @@ type GetAllBankCardsGraphQLResponse struct {
 			CardNumber  string    `json:"card_number"`
 			ExpiryDate  time.Time `json:"expiry_date"`
 			DateCreated time.Time `json:"date_created"`
+			PinNumber 	string    `json:"pin_number"`
 			CVV         string    `json:"cvv"`
 		} `json:"get_all_bankcard"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
+type VerifyBankCardGraphQLResponse struct {
+	Data struct {
+		VerifyPinNumber bool `json:"verify_pin_number"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
+
+type UpdatePinNumberBankCardGraphQLResponse struct {
+	Data struct {
+		UpdatePinNumber bool `json:"update_pin_number"`
 	} `json:"data"`
 	Errors any `json:"errors"`
 }
@@ -324,20 +377,6 @@ type UpdateBankCardGraphQLResponse struct {
 			DateCreated    time.Time `json:"date_created"`
 			CVV            string    `json:"cvv"`
 		} `json:"update_bankcard_expiry"`
-	} `json:"data"`
-	Errors any `json:"errors"`
-}
-
-type UpdateBankCardPinNumberGraphQLResponse struct {
-	Data struct {
-		UpdatePinNumber []struct {
-			BankCardID     int       `json:"bankcard_id"`
-			BankCardType   string    `json:"bankcard_type"`
-			BankCardNumber string    `json:"bankcard_number"`
-			ExpiryDate     time.Time `json:"expiry_date"`
-			DateCreated    time.Time `json:"date_created"`
-			CVV            string    `json:"cvv"`
-		} `json:"update_pin_number"`
 	} `json:"data"`
 	Errors any `json:"errors"`
 }

@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"time"
-
 	"github.com/unidoc/unipdf/v3/core"
 	"github.com/unidoc/unipdf/v3/creator"
 	"github.com/unidoc/unipdf/v3/model"
@@ -42,39 +41,6 @@ type Transaction struct {
 }
 
 func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, startTime, endTime string) ([]Transaction, error) {
-	const layoutWithTime = "2006-01-02T15:04:05"
-	const layoutDateOnly = "2006-01-02"
-
-	var parsedStartTime, parsedEndTime time.Time
-	var err error
-
-	// Parse startTime
-	if len(startTime) == len(layoutDateOnly) {
-		parsedStartTime, err = time.Parse(layoutDateOnly, startTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid startTime format: %w", err)
-		}
-	} else {
-		parsedStartTime, err = time.Parse(layoutWithTime, startTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid startTime format: %w", err)
-		}
-	}
-
-	// Parse endTime
-	if len(endTime) == len(layoutDateOnly) {
-		parsedEndTime, err = time.Parse(layoutDateOnly, endTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid endTime format: %w", err)
-		}
-		parsedEndTime = parsedEndTime.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
-	} else {
-		parsedEndTime, err = time.Parse(layoutWithTime, endTime)
-		if err != nil {
-			return nil, fmt.Errorf("invalid endTime format: %w", err)
-		}
-	}
-
 	query := `
 		query($creditId: Int!, $debitId: Int!, $savingsId: Int!, $startTime: DateTime!, $endTime: DateTime!) {
 			getTransactionsByTimeStampByUserId(
@@ -98,13 +64,17 @@ func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, 
 		}
 	`
 
+	fmt.Println("Parsed Start Time:", startTime)
+	fmt.Println("Parsed End Time:", endTime)
+
 	vars := map[string]interface{}{
 		"creditId":  creditId,
 		"debitId":   debitId,
 		"savingsId": savingsId,
-		"startTime": parsedStartTime.Format(time.RFC3339),
-		"endTime":   parsedEndTime.Format(time.RFC3339),
+		"startTime": startTime,
+		"endTime":   endTime,
 	}
+
 	payload := map[string]interface{}{
 		"query":     query,
 		"variables": vars,
@@ -121,7 +91,6 @@ func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, 
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	fmt.Println("Raw response:", string(bodyBytes))
 
 	var result struct {
 		Data struct {
@@ -140,8 +109,15 @@ func fetchTransactions(ctx context.Context, creditId, savingsId, debitId int32, 
 		return nil, fmt.Errorf("GraphQL errors: %+v", result.Errors)
 	}
 
-	return result.Data.GetTransactionsByTimeStampByUserId, nil
+	// Filter out failed transactions
+	successfulTransactions := make([]Transaction, 0)
+	for _, tx := range result.Data.GetTransactionsByTimeStampByUserId {
+		if tx.TransactionStatus != "FAILED" {
+			successfulTransactions = append(successfulTransactions, tx)
+		}
+	}
 
+	return successfulTransactions, nil
 }
 
 func fetchAccountNumbers(ctx context.Context, sender_id int, receiver_id int) (FindBothAccountNumber, error) {
@@ -174,7 +150,6 @@ func fetchAccountNumbers(ctx context.Context, sender_id int, receiver_id int) (F
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	fmt.Println("Raw response:", string(bodyBytes))
 
 	var result struct {
 		Data struct {
@@ -345,15 +320,10 @@ func (s *StatementService) GenerateStatement(ctx context.Context, req *statement
 
 	// Adjust as per correct userId
 	transactions, err := fetchTransactions(ctx, req.CreditId, req.SavingsId, req.DebitId, req.StartDate, req.EndDate)
-	accountNumber, err := fetchAccountNumbers(ctx, int(req.CreditId), int(req.DebitId))
+	accountNumber, err1 := fetchAccountNumbers(ctx, int(req.CreditId), int(req.DebitId))
 
-	if err != nil {
-		s.Logger.Error("Failed to fetch transactions data: %v", err)
-		return nil, err
-	}
-
-	if err != nil {
-		s.Logger.Error("Failed to fetch account numbers: %v", err)
+	if err != nil || err1 != nil {
+		s.Logger.Error("Failed to fetch transactions or account numbers: %v %v", err, err1)
 		return nil, err
 	}
 

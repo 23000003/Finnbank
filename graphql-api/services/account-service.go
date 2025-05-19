@@ -261,6 +261,7 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 	res.DisplayName = acc.Account.FirstName + " " + acc.Account.MiddleName + " " + acc.Account.LastName
 	res.AccountId = acc.Account.ID
 	res.AccountStatus = acc.Account.AccountStatus
+	res.AccountType = acc.Account.AccountType
 
 	return &res, nil
 }

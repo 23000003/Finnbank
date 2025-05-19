@@ -32,6 +32,23 @@ func (s *StructGraphQLResolvers) GetBankCardQueryType(BCService *sv.BankcardServ
 						return data, nil
 					},
 				},
+				"verify_pin_number": &graphql.Field{
+					Type: graphql.Boolean,
+					Description: "Verify bank card pin number",
+					Args: graphql.FieldConfigArgument{
+						"bankcard_id": &graphql.ArgumentConfig{
+							Type: graphql.Int,
+						},
+						"pin_number": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						bankcard_id, _ := p.Args["bankcard_id"].(int)
+						pin_number, _ := p.Args["pin_number"].(string)
+						return BCService.VerifyBankcardPinNumber(p.Context, bankcard_id, pin_number)
+					},
+				},
 			},
 		},
 	)
@@ -63,7 +80,7 @@ func (s *StructGraphQLResolvers) GetBankCardMutationType(BCService *sv.BankcardS
 					},
 				},
 				"update_pin_number": &graphql.Field{
-					Type:        bankCardType,
+					Type:        graphql.Boolean,
 					Description: "Update bankcard pin number",
 					Args: graphql.FieldConfigArgument{
 						"bankcard_id": &graphql.ArgumentConfig{
