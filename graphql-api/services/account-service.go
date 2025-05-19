@@ -267,7 +267,14 @@ func (s *AccountService) Login(ctx *context.Context, in *types.LoginRequest) (*t
 }
 
 func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePasswordRequest) (*types.AccountResponse, error) {
-	old_encrpyptedPassword, err := s.GetUserAuth(*ctx, in.AuthID)
+
+	var realAuthID string
+	err := s.db.QueryRow(*ctx, "SELECT auth_id FROM account WHERE id = $1", in.AccountID).Scan(&realAuthID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying auth user: %v", err)
+	}
+
+	old_encrpyptedPassword, err := s.GetUserAuth(*ctx, realAuthID)
 	if err != nil {
 		return nil, err
 	}
@@ -278,11 +285,12 @@ func (s *AccountService) UpdatePassword(ctx *context.Context, in *types.UpdatePa
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.db.Exec(*ctx, "UPDATE auth.users SET encrypted_password = $1 WHERE id = $2", new_encryptedPassword, in.AuthID)
+
+	_, err = s.db.Exec(*ctx, "UPDATE auth.users SET encrypted_password = $1 WHERE id = $2", new_encryptedPassword, realAuthID)
 	if err != nil {
 		return nil, err
 	}
-	res, _ := s.FetchUserByAuthID(ctx, in.AuthID)
+	res, _ := s.FetchUserByAuthID(ctx, realAuthID)
 	return res, nil
 }
 

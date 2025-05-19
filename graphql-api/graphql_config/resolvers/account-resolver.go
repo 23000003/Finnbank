@@ -223,10 +223,11 @@ func (s *StructGraphQLResolvers) GetAccountMutationType(ACCService *sv.AccountSe
 					oldPassword, _ := updateInput["old_password"].(string)
 					newPassword, _ := updateInput["new_password"].(string)
 					req := &types.UpdatePasswordRequest{
-						AuthID:      auth_id,
+						AccountID:   auth_id,
 						OldPassword: oldPassword,
 						NewPassword: newPassword,
 					}
+					s.log.Info("Trying to fetch auth_id for account id: '%s'\n", req.AccountID)
 					res, err := ACCService.UpdatePassword(&p.Context, req)
 					if err != nil {
 						s.log.Error("Error updating password: %v", err)

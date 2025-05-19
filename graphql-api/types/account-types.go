@@ -75,9 +75,9 @@ type CardUpdateResponse struct {
 
 // UpdatePasswordRequest represents a request to update a password.
 type UpdatePasswordRequest struct {
-	AuthID      string `json:"auth_id"`
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+	AccountID   string
+	OldPassword string
+	NewPassword string
 }
 
 // UpdatePasswordResponse represents a response for a password update request.
