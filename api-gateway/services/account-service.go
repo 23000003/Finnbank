@@ -380,6 +380,7 @@ func (a *AccountService) UpdateUserPassword(c *gin.Context) {
 				AccountID string `json:"account_id"`
 			} `json:"update_password"`
 		} `json:"data"`
+		Errors any `json:"errors"`
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -390,6 +391,12 @@ func (a *AccountService) UpdateUserPassword(c *gin.Context) {
 	if err := json.Unmarshal(body, &res); err != nil {
 		a.log.Info("Unmarshal Error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	if res.Errors != nil {
+		a.log.Info("GraphQL Error: %v", res.Errors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
 		return
 	}
 
@@ -444,6 +451,7 @@ func (a *AccountService) UpdateUser(c *gin.Context) {
 		Data struct {
 			AccountID string `json:"account_id"`
 		} `json:"data"`
+		Errors any `json:"errors"`
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -454,6 +462,12 @@ func (a *AccountService) UpdateUser(c *gin.Context) {
 	if err := json.Unmarshal(body, &res); err != nil {
 		a.log.Info("Unmarshal Error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	if res.Errors != nil {
+		a.log.Info("GraphQL Error: %v", res.Errors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
 		return
 	}
 
@@ -504,6 +518,7 @@ func (a *AccountService) UpdateUserDetails(c *gin.Context) {
 		Data struct {
 			AccountID string `json:"account_id"`
 		} `json:"data"`
+		Errors any `json:"errors"`
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -514,6 +529,11 @@ func (a *AccountService) UpdateUserDetails(c *gin.Context) {
 	if err := json.Unmarshal(body, &res); err != nil {
 		a.log.Info("Unmarshal Error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+	if res.Errors != nil {
+		a.log.Info("GraphQL Error: %v", res.Errors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": res.Errors})
 		return
 	}
 
