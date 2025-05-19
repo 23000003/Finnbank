@@ -139,6 +139,21 @@ func (r *StructGraphQLResolvers) TransactionQueryFields(
 				return txSvc.GetIsAccountAtLimitByAccountId(p.Context, accountType, creditId, debitId, savingsId)
 			},
 		},
+		"getRecentlySent": &graphql.Field{
+			Type:        graphql.NewList(e.GetTransactionEntityType()),
+			Description: "Identifies if opened account is at limit.",
+			Args: graphql.FieldConfigArgument{
+				"creditId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"debitId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+				"savingsId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				creditId := p.Args["creditId"].(int)
+				debitId := p.Args["debitId"].(int)
+				savingsId := p.Args["savingsId"].(int)
+				return txSvc.GetRecentlySent(p.Context, creditId, debitId, savingsId)
+			},
+		},
 	}
 }
 

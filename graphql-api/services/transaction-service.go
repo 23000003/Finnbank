@@ -78,6 +78,56 @@ func (s *TransactionService) GetTransactionByUserId(ctx context.Context, creditI
 	return transactions, nil
 }
 
+func (s *TransactionService) GetRecentlySent(ctx context.Context, creditId int, debitId int, savingsId int) ([]t.Transaction, error) {
+
+	query := `
+		SELECT 
+			transaction_id, ref_no, sender_id, receiver_id, transaction_type, amount, 
+			transaction_status, date_transaction, transaction_fee, notes
+		FROM transactions
+		WHERE sender_id IN ($1, $2, $3) AND transaction_status = 'Completed'
+		ORDER BY date_transaction DESC
+		LIMIT 2;
+	`
+
+	rows, err := s.db.Query(ctx, query, creditId, debitId, savingsId)
+	if err != nil {
+		s.l.Error("Error fetching transactions %v", err)
+		return nil, fmt.Errorf("failed to fetch transactions %w", err)
+	}
+	defer rows.Close()
+
+	var transactions []t.Transaction
+	for rows.Next() {
+		var txn t.Transaction
+		err := rows.Scan(
+			&txn.TransactionID,
+			&txn.RefNo,
+			&txn.SenderID,
+			&txn.ReceiverID,
+			&txn.TransactionType,
+			&txn.Amount,
+			&txn.TransactionStatus,
+			&txn.DateTransaction,
+			&txn.TransactionFee,
+			&txn.Notes,
+		)
+		if err != nil {
+			s.l.Error("Error scanning transaction row %v", err)
+			return nil, fmt.Errorf("failed to scan transaction row %w", err)
+		}
+		transactions = append(transactions, txn)
+	}
+
+	if rows.Err() != nil {
+		s.l.Error("Error iterating through transaction rows %v", rows.Err())
+		return nil, fmt.Errorf("failed to iterate through transaction rows %w", rows.Err())
+	}
+
+	return transactions, nil
+}
+
+
 // CreateTransaction creates a new transaction, auto‑generating a numeric ref_no.
 func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transaction, transacConn *websocket.Conn) (t.Transaction, error) {
 

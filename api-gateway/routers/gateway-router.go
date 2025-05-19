@@ -76,6 +76,7 @@ func (gr *StructGatewayRouter) ConfigureGatewayRouter() {
 	{
 		transaction.GET("/get-all", gr.s.TransactionService.GetTransactionByOpenAccountId)
 		transaction.GET("/get-all-by-timestamp", gr.s.TransactionService.GetTransactionByTimestamp)
+		transaction.GET("/get-recently-sent", gr.s.TransactionService.GetRecentlySentByOpenAccountId)
 		transaction.GET("/get-is-account-at-limit", gr.s.TransactionService.GetIsAccountAtLimit)
 		transaction.POST("/generate-transaction", gr.s.TransactionService.CreateTransaction)
 	}

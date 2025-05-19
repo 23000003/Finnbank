@@ -62,6 +62,7 @@ func (a *AccountService) LoginUser(ctx *gin.Context) {
 			full_name
 			account_id
 			account_status
+			account_type
 		}
 	}`, req.Email, req.Password)
 

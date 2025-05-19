@@ -22,6 +22,7 @@ type LoginResponse struct {
 	DisplayName   string `json:"full_name"`
 	AccountId     string `json:"account_id"`
 	AccountStatus string `json:"account_status"`
+	AccountType 	string `json:"account_type"`
 }
 
 // Account represents an account.
@@ -287,6 +288,7 @@ var AuthResponseType = graphql.NewObject(
 			"full_name":      &graphql.Field{Type: graphql.String},
 			"account_id":     &graphql.Field{Type: graphql.String},
 			"account_status": &graphql.Field{Type: graphql.String},
+			"account_type":   &graphql.Field{Type: graphql.String},
 		},
 	},
 )

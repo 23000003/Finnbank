@@ -118,6 +118,7 @@ type AccountLoginGraphQLResponse struct {
 			FullName      string `json:"full_name"`
 			AccountId     string `json:"account_id"`
 			AccountStatus string `json:"account_status"`
+			AccountType	  string `json:"account_type"`
 		} `json:"login"`
 	} `json:"data"`
 	Errors any `json:"errors"`
@@ -220,6 +221,17 @@ type GetAllTransactionsGraphQLResponse struct {
 			TransactionFee    float64   `json:"transaction_fee"`
 			Notes             string    `json:"notes"`
 		} `json:"getTransactionsByUserId"`
+	} `json:"data"`
+	Errors any `json:"errors"`
+}
+
+type GetRecentlySentGraphQLResponse struct {
+	Data struct {
+		GetRecentlySent []struct {
+			TransactionID     int       `json:"transaction_id"`
+			SenderID          int       `json:"sender_id"`
+			ReceiverID        int       `json:"receiver_id"`
+		} `json:"getRecentlySent"`
 	} `json:"data"`
 	Errors any `json:"errors"`
 }
