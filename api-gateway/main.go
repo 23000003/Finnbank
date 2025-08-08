@@ -27,7 +27,7 @@ import (
 
 func CorsMiddleware(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:8083"},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
@@ -60,7 +60,7 @@ func main() {
 
 func startAndShutdownServer(logger *utils.Logger, router *gin.Engine, apiServices *t.ApiGatewayServices) {
 	srv := &http.Server{
-		Addr:    "localhost:8080",
+		Addr:    "0.0.0.0:8080",
 		Handler: router,
 	}
 
