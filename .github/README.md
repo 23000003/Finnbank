@@ -1,5 +1,5 @@
 # Online Banking System
-IT 3101A - Microservices / QA Final Project
+IT 3101A - Microservices / QA Final Project - Deployed in a VPS
 
 ## Golang Commands
 
