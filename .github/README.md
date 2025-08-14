@@ -1,5 +1,5 @@
 # Online Banking System
-IT 3101A - Microservices / QA Final Project - Deployed in a VPS
+IT 3101A - Microservices / QA Final Project - Backend Deployed in a Digital Ocean Droplet VPS
 
 ## Golang Commands
 
