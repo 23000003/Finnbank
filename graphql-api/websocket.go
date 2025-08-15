@@ -8,28 +8,32 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// ***
+// Websocket gives bad handshake,, idk why didnt change shit when it was working 100%
+// will look into it soon if i hab time
+// ***
+
 func initializeWebsockets(log *utils.Logger, ctx context.Context) *types.StructWebSocketConnections {
 	
 	headers := http.Header{}
 	headers.Add("Origin", "http://localhost:8083")
-	transacUrl := "ws://localhost:8080/api/ws/listen-to-transaction"
-	notifUrl := "ws://localhost:8080/api/ws/listen-to-notification"
+	// transacUrl := "ws://localhost:8080/api/ws/listen-to-transaction"
+	// notifUrl := "ws://localhost:8080/api/ws/listen-to-notification"
 
-	transacConn, _, err := websocket.DefaultDialer.Dial(transacUrl, headers)
-	notifConn, _, err1 := websocket.DefaultDialer.Dial(notifUrl, headers)
+	// transacConn, _, err := websocket.DefaultDialer.Dial(transacUrl, headers)
+	// notifConn, _, err1 := websocket.DefaultDialer.Dial(notifUrl, headers)
 
-	if err != nil || err1 != nil {
-		log.Fatal("Error connecting to websocket: %v %v", err, err1)
-		return nil
-	}
+	// if err != nil || err1 != nil {
+	// 	log.Error("Error connecting to websocket: %v %v", err, err1)
+	// }
 
-	// Start listening on both connections
-	go listenAndHandle(ctx, transacConn, log, "transaction")
-	go listenAndHandle(ctx, notifConn, log, "notification")
+	// // Start listening on both connections
+	// go listenAndHandle(ctx, transacConn, log, "transaction")
+	// go listenAndHandle(ctx, notifConn, log, "notification")
 
 	return &types.StructWebSocketConnections{
-		TransactionConn:  transacConn,
-		NotificationConn: notifConn,
+		TransactionConn:  nil,
+		NotificationConn: nil,
 	}
 }
 

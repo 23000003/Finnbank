@@ -189,23 +189,23 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req t.Transa
 
 	s.queue.Enqueue(created.TransactionID, created.SenderID, created.ReceiverID, created.Amount)
 
-	sendTransac := t.Transaction{
-		TransactionID:     created.TransactionID,
-		RefNo:             created.RefNo,
-		SenderID:          created.SenderID,
-		ReceiverID:        created.ReceiverID,
-		TransactionType:   created.TransactionType,
-		Amount:            created.Amount,
-		TransactionStatus: created.TransactionStatus,
-		DateTransaction:   created.DateTransaction,
-		TransactionFee:    created.TransactionFee,
-		Notes:             created.Notes,
-	}
+	// sendTransac := t.Transaction{
+	// 	TransactionID:     created.TransactionID,
+	// 	RefNo:             created.RefNo,
+	// 	SenderID:          created.SenderID,
+	// 	ReceiverID:        created.ReceiverID,
+	// 	TransactionType:   created.TransactionType,
+	// 	Amount:            created.Amount,
+	// 	TransactionStatus: created.TransactionStatus,
+	// 	DateTransaction:   created.DateTransaction,
+	// 	TransactionFee:    created.TransactionFee,
+	// 	Notes:             created.Notes,
+	// }
 
-	if err := transacConn.WriteJSON(sendTransac); err != nil {
-		s.l.Error("Error sending transaction: %v", err)
-		return t.Transaction{}, err
-	}
+	// if err := transacConn.WriteJSON(sendTransac); err != nil {
+	// 	s.l.Error("Error sending transaction: %v", err)
+	// 	return t.Transaction{}, err
+	// }
 
 	return created, nil
 }

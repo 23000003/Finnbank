@@ -27,7 +27,7 @@ import (
 
 func CorsMiddleware(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173, https://finnbank.dcism.org"},
+		AllowOrigins:     []string{"http://localhost:5173", "https://finnbank.dcism.org"},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
@@ -74,7 +74,7 @@ func startAndShutdownServer(logger *utils.Logger, router *gin.Engine, apiService
 		}
 	}()
 
-	logger.Info("Server running on http://localhost:8080")
+	logger.Info("Server running on port 8080")
 
 	<-quit
 	logger.Info("Shutting down server...")
